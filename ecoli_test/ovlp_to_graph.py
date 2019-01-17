@@ -681,7 +681,7 @@ def generate_string_graph(args):
     def find_best_edges(edges):
         best_edge = None
         best_weight = 0
-        for v, w in edges:         
+        for v, w in edges:
             weight=G.edges[v,w]["weight"]
             if weight > best_weight:
                 best_edge = v, w
@@ -708,30 +708,30 @@ def generate_string_graph(args):
         v = mdata[k]
         if len(v) < 2 or len(v) > 45:
             continue
-       
+
         v.sort(key=lambda x:-x[1])
         v0 = v[0]
         rid = v0[0]//2
         r_pos = read_length[rid] - v0[1]
-        
+
         for v1 in v[1:]:
             rid = v1[0]//2
             r_pos2 = read_length[rid] - v1[1]
             if  r_pos2 < r_pos:
                 contained.add(rid)
             else:
-                r_pos = r_pos2  
+                r_pos = r_pos2
 
     G = nx.DiGraph()
 
     def reverse_end(s):
         s,e = s.split(":")
         e = "B" if e == "E" else "E"
-        return s + ":" + e 
+        return s + ":" + e
 
     def get_read_id(s):
         rid0, d0 = s // 2, s % 2
-        e0 = "B" if d0 == 0 else "E"
+        e0 = "E" if d0 == 0 else "B"
         n0 = "{:09d}:{:s}".format(rid0, e0)
         return n0
 
@@ -740,13 +740,13 @@ def generate_string_graph(args):
         v = mdata[k]
         if len(v) < 2 or len(v) > 45:
             continue
-       
+
         v.sort(key=lambda x:-x[1])
         v = [ x for x in v if x[0]//2 not in contained ]
         if len(v) < 2:
             continue
         v0 = v[0]
-        
+
         for v1 in v[1:]:
             rid0 = get_read_id(v0[0])
             rid1 = get_read_id(v1[0])
@@ -762,15 +762,15 @@ def generate_string_graph(args):
                 length = r_len0 - abs(v0[1] - v1[1])
                 score = length
                 if r_len0 - length > 24 and r_len1 - length > 24:
-                    G.add_edge(rid0, rid1, weight=1, length=length, score=score) 
+                    G.add_edge(rid0, rid1, weight=1, length=length, score=score)
                     G.add_edge(rrid1, rrid0, weight=1, length=length, score=score)
             v0 = v1
-            
+
 
     subG = nx.DiGraph()
     for n in list(G.nodes()):
 
-        best_edge, best_weight = find_best_edges(G.out_edges(n))        
+        best_edge, best_weight = find_best_edges(G.out_edges(n))
         if best_edge is not None:
             be0 = best_edge[0]
             be1 = best_edge[1]
@@ -781,25 +781,25 @@ def generate_string_graph(args):
 
             rid0, end0 = be0.split(":")
             rid1, end1 = be1.split(":")
-             
+
             rl0 = read_length[int(rid0)]
             rl1 = read_length[int(rid1)]
- 
+
             if end1 == "E":
                 sp = length
                 tp = rl1
             else:
                 sp = rl1 - length
                 tp = 0
-            sg.add_edge(be0, be1, label=(rid1, sp, tp), 
+            sg.add_edge(be0, be1, label=(rid1, sp, tp),
                         weight=best_weight, length=length, score=score, identity=100)
-             
+
             be0 = reverse_end(best_edge[1])
             be1 = reverse_end(best_edge[0])
 
             rid0, end0 = be0.split(":")
             rid1, end1 = be1.split(":")
-             
+
             rl0 = read_length[int(rid0)]
             rl1 = read_length[int(rid1)]
 
@@ -809,11 +809,11 @@ def generate_string_graph(args):
             else:
                 sp = rl1 - length
                 tp = 0
-            sg.add_edge(be0, be1, label=(rid1, sp, tp), 
+            sg.add_edge(be0, be1, label=(rid1, sp, tp),
                         weight=best_weight, length=length, score=score, identity=100)
-            
-            
-        best_edge, best_weight = find_best_edges(G.in_edges(n))        
+
+
+        best_edge, best_weight = find_best_edges(G.in_edges(n))
         if best_edge is not None:
             be0 = best_edge[0]
             be1 = best_edge[1]
@@ -824,25 +824,25 @@ def generate_string_graph(args):
 
             rid0, end0 = be0.split(":")
             rid1, end1 = be1.split(":")
-             
+
             rl0 = read_length[int(rid0)]
             rl1 = read_length[int(rid1)]
- 
+
             if end1 == "E":
                 sp = length
                 tp = rl1
             else:
                 sp = rl1 - length
                 tp = 0
-            sg.add_edge(be0, be1, label=(rid1, sp, tp), 
+            sg.add_edge(be0, be1, label=(rid1, sp, tp),
                         weight=best_weight, length=length, score=score, identity=100)
-             
+
             be0 = reverse_end(best_edge[1])
             be1 = reverse_end(best_edge[0])
 
             rid0, end0 = be0.split(":")
             rid1, end1 = be1.split(":")
-             
+
             rl0 = read_length[int(rid0)]
             rl1 = read_length[int(rid1)]
 
@@ -852,7 +852,7 @@ def generate_string_graph(args):
             else:
                 sp = rl1 - length
                 tp = 0
-            sg.add_edge(be0, be1, label=(rid1, sp, tp), 
+            sg.add_edge(be0, be1, label=(rid1, sp, tp),
                         weight=best_weight, length=length, score=score, identity=100)
 
     sg.init_reduce_dict()
