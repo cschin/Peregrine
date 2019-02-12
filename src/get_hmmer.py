@@ -2,8 +2,6 @@ from cffi import FFI
 import redis
 import FastaReader
 
-
-
 ffi = FFI()
 
 ffi.cdef("""
@@ -22,7 +20,7 @@ r_conn = redis.Redis(host='127.0.0.1', port=6379, db=0)
 
 rmap = dict(zip(b"ACGT", b"TGCA"))
 
-f = FastaReader.FastaReader("../ecoli_test/simreads.fa")
+f = FastaReader.FastaReader("./test.fa")
 #f = FastaReader.FastaReader("./test.fa")
 rid = 0
 km = ffi.NULL
@@ -30,80 +28,134 @@ L0dump = open("L0.txt", "w")
 L1dump = open("L1.txt", "w")
 L2dump = open("L2.txt", "w")
 
+p = ffi.new("mm128_v *")
+p_out = ffi.new("mm128_v *")
+p_out2 = ffi.new("mm128_v *")
+
+rid2name = {}
+rid2len = {}
 for r in f:
     bseq=r.sequence.encode("ascii")
+    sketch.mm_sketch(km, bseq, len(bseq), 80, 16, rid, 0, p)
+    rid2name[rid] = r.name
+    rid2len[rid] = len(bseq)
     rid += 1
 
-    #seq = ffi.new("char[]", bseq)
+"""
+* @param p      minimizers
+*               p->a[i].x = kMer<<8 | kmerSpan
+*               p->a[i].y = rid<<32 | lastPos<<1 | strand
+*               where lastPos is the position of the last base of the i-th minimizer,
+*               and strand indicates whether the minimizer comes from the top or the bottom strand.
+*               Callers may want to set "p->n = 0"; otherwise results are appended to p
+"""
 
-    p = ffi.new("mm128_v *")
-    p_out = ffi.new("mm128_v *")
-    p_out2 = ffi.new("mm128_v *")
+for i in range(p.n):
+    span = p.a[i].x & 0xFF
+    mmer = p.a[i].x >> 8
+    rid = p.a[i].y >> 32
+    pos_end = ((p.a[i].y & 0xFFFFFFFF) >> 1) + 1
+    strand = p.a[i].y & 0x1
+    #
+    # kmer = bseq[pos_end-span:pos_end]
+    # kmer_r =  bytes([rmap[c] for c in kmer[::-1]])
+    r_pos_end = rid2len[rid] - pos_end + span
+    print(r.name, pos_end, r_pos_end,
+          strand, "{:014X}".format(mmer), file=L0dump)
+    # r_conn.rpush(f"rid{rid}:L0", f"{pos_end} {r_pos_end} {strand} {kmer} {kmer_r}, {mmer}")
 
-    sketch.mm_sketch(km, bseq, len(bseq), 80, 14, rid, 0, p)
+mm_select.mm_select(p, p_out, 8)
+mmer_count = {}
+for i in range(p_out.n):
+    span = p_out.a[i].x & 0xFF
+    mmer = p_out.a[i].x >> 8
+    mmer_count.setdefault("{:014X}".format(mmer), 0)
+    mmer_count["{:014X}".format(mmer)] += 1
+    rid = p_out.a[i].y >> 32
+    pos_end = ((p_out.a[i].y & 0xFFFFFFFF) >> 1) + 1
+    strand = p_out.a[i].y & 0x1
+    #
+    # kmer = bseq[pos_end-span:pos_end]
+    # kmer_r =  bytes([rmap[c] for c in kmer[::-1]])
+    r_pos_end = rid2len[rid] - pos_end + span
+    name = rid2name[rid]
+    print(name, pos_end, r_pos_end, strand,
+          "{:014X}".format(mmer), file=L1dump)
+    # print(rid, pos_end, len(bseq)-pos_end+span, strand, kmer, kmer_r, mmer)
 
-    """
-    * @param p      minimizers
-    *               p->a[i].x = kMer<<8 | kmerSpan
-    *               p->a[i].y = rid<<32 | lastPos<<1 | strand
-    *               where lastPos is the position of the last base of the i-th minimizer,
-    *               and strand indicates whether the minimizer comes from the top or the bottom strand.
-    *               Callers may want to set "p->n = 0"; otherwise results are appended to p
-    """
+mm_select.mm_select(p_out, p_out2, 8)
+L2list = []
+for i in range(p_out2.n):
+    span = p_out2.a[i].x & 0xFF
+    mmer = p_out2.a[i].x >> 8
+    rid = p_out2.a[i].y >> 32
+    pos_end = ((p_out2.a[i].y & 0xFFFFFFFF) >> 1) + 1
+    strand = p_out2.a[i].y & 0x1
+    #
+    # kmer = bseq[pos_end-span:pos_end]
+    # kmer_r =  bytes([rmap[c] for c in kmer[::-1]])
+    r_pos_end = rid2len[rid] - pos_end + span
+    name = rid2name[rid]
+    print(name, pos_end, r_pos_end, strand,
+          "{:014X}".format(mmer), file=L2dump)
+    L2list.append((pos_end, r_pos_end, strand,
+                   "{:014X}".format(mmer), name, rid))
 
-    for i in range(p.n):
-        span = p.a[i].x & 0xFF
-        mmer = p.a[i].x >> 8
-        rid = p.a[i].y >> 32
-        pos_end =  ((p.a[i].y & 0xFFFFFFFF) >> 1) + 1
-        strand = p.a[i].y & 0x1
-        #kmer = bseq[pos_end-span:pos_end]
-        #kmer_r =  bytes([rmap[c] for c in kmer[::-1]])
-        r_pos_end = len(bseq)-pos_end+span
-        print(r.name, pos_end, r_pos_end, strand, "{:014X}".format(mmer), file=L0dump)
-        #r_conn.rpush(f"rid{rid}:L0", f"{pos_end} {r_pos_end} {strand} {kmer} {kmer_r}, {mmer}")
-
-    mm_select.mm_select(p, p_out, 8)
-    for i in range(p_out.n):
-        span = p_out.a[i].x & 0xFF
-        mmer = p_out.a[i].x >> 8
-        rid = p_out.a[i].y >> 32
-        pos_end =  ((p_out.a[i].y & 0xFFFFFFFF) >> 1) + 1
-        strand = p_out.a[i].y & 0x1
-        #kmer = bseq[pos_end-span:pos_end]
-        #kmer_r =  bytes([rmap[c] for c in kmer[::-1]])
-        r_pos_end = len(bseq)-pos_end+span
-        print(r.name, pos_end, r_pos_end, strand, "{:014X}".format(mmer), file=L1dump)
-        #print(rid, pos_end, len(bseq)-pos_end+span, strand, kmer, kmer_r, mmer)
-
-    mm_select.mm_select(p_out, p_out2, 8)
-    L2list = []
-    for i in range(p_out2.n):
-        span = p_out2.a[i].x & 0xFF
-        mmer = p_out2.a[i].x >> 8
-        rid = p_out2.a[i].y >> 32
-        pos_end =  ((p_out2.a[i].y & 0xFFFFFFFF) >> 1) + 1
-        strand = p_out2.a[i].y & 0x1
-        #kmer = bseq[pos_end-span:pos_end]
-        #kmer_r =  bytes([rmap[c] for c in kmer[::-1]])
-        r_pos_end = len(bseq)-pos_end+span
-        #print(rid, pos_end, len(bseq)-pos_end+span, strand, kmer, kmer_r, "{:014X}".format(mmer))
-        print(r.name, pos_end, r_pos_end, strand, "{:014X}".format(mmer), file=L2dump)
-        L2list.append( (pos_end, r_pos_end, strand, "{:014X}".format(mmer)) )
-
-    if len(L2list) > 2:
-        v = L2list[0]
-        for w in L2list[1:]:
-            print( v[-1], v[2], w[-1], w[2], 0, v[0], w[0], r.name )
+L2map = {}
+if len(L2list) > 2:
+    v = L2list[0]
+    for w in L2list[1:]:
+        v_pos_end, v_r_pos_end, v_strand, v_mmer, v_name, v_rid = v
+        if mmer_count[v_mmer] < 2:
             v = w
-        v = L2list[-1]
-        for w in L2list[-2:0:-1]:
-            print( v[-1], 1-v[2], w[-1], 1-w[2], 1, v[1], w[1], r.name )
+            continue
+        w_pos_end, w_r_pos_end, w_strand, w_mmer, w_name, w_rid = w
+        if mmer_count[w_mmer] < 2:
+            continue
+        if v_rid != w_rid:
             v = w
+            continue
+        key = v_mmer, v_strand, w_mmer, w_strand
+        L2map.setdefault(key, [])
+        L2map[key].append((v_name, v_rid, 0, v_pos_end, w_pos_end))
+        v = w
 
-    C.free(p_out2.a)
-    C.free(p_out.a)
-    C.free(p.a)
+    v = L2list[-1]
+    for w in L2list[-2::-1]:
+        v_pos_end, v_r_pos_end, v_strand, v_mmer, v_name, v_rid = v
+        if mmer_count[v_mmer] < 2:
+            v = w
+            continue
+        w_pos_end, w_r_pos_end, w_strand, w_mmer, w_name, v_rid = w
+        if mmer_count[w_mmer] < 2:
+            continue
+        if v_rid != w_rid:
+            v = w
+            continue
+        key = v_mmer, 1-v_strand, w_mmer, 1-w_strand
+        L2map.setdefault(key, [])
+        L2map[key].append((v_name, v_rid, 1, v_r_pos_end, w_r_pos_end))
+        v = w
+
+import networkx as nx
+G = nx.DiGraph()
+for key in L2map.keys():
+    v_mmer, v_strand, w_mmer, w_strand = key
+    for r in L2map[key]:
+        n = len(L2map[key])
+        v_name, v_rid, v_strand, v_pos_end, w_pos_end = r
+        print(v_mmer, v_strand, w_mmer, w_strand,
+              v_name, v_strand, rid2len[v_rid],
+              v_pos_end, w_pos_end,
+              mmer_count[v_mmer], mmer_count[w_mmer], n)
+        if n > 2 and n < 50:
+            G.add_edge(v_mmer, w_mmer)
+
+nx.write_gexf(G, "test.gexf")
+C.free(p_out2.a)
+C.free(p_out.a)
+C.free(p.a)
+
 L0dump.close()
 L1dump.close()
 L2dump.close()

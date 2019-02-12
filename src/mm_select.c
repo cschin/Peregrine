@@ -52,6 +52,9 @@ void find_minimizer(small_m_buffer_t * smb, mm128_t * mmer) {
 /* rs: reduction size */
 void mm_select(mm128_v *p, mm128_v *p_out,  uint8_t rs) {
     uint32_t idx;
+    uint32_t rid;
+    uint32_t rid_ = UINT32_MAX;
+    uint32_t r_offset = 0;
     mm128_t mmer, mmer_;
     small_m_buffer_t smb;
     
@@ -64,9 +67,15 @@ void mm_select(mm128_v *p, mm128_v *p_out,  uint8_t rs) {
 
     mmer_.y = UINT64_MAX;
 
-    for (idx = 0; idx < p->n; idx++) {
+    for (idx = 0; idx < p->n; idx++, r_offset++) {
+	rid = p->a[idx].y >> 32;
+	if (rid != rid_) {
+	    r_offset = 0;
+	    memset(smb.mers, UINT8_MAX, rs * 16);
+	    rid_ = rid;
+	}
 	pop_push(&smb, p->a[idx]);
-        if (idx < rs-1) {
+        if (r_offset < rs-1) {
 	    continue;
         }	
         find_minimizer(&smb, &mmer);
