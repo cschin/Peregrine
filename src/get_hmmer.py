@@ -1,5 +1,5 @@
 from cffi import FFI
-import redis
+# import redis
 import FastaReader
 
 ffi = FFI()
@@ -16,12 +16,11 @@ void free(void *ptr);
 C = ffi.dlopen(None)
 sketch = ffi.dlopen("./sketch.so")
 mm_select = ffi.dlopen("./mm_select.so")
-r_conn = redis.Redis(host='127.0.0.1', port=6379, db=0)
+# r_conn = redis.Redis(host='127.0.0.1', port=6379, db=0)
 
 rmap = dict(zip(b"ACGT", b"TGCA"))
 
 f = FastaReader.FastaReader("./test.fa")
-#f = FastaReader.FastaReader("./test.fa")
 rid = 0
 km = ffi.NULL
 L0dump = open("L0.txt", "w")
@@ -84,7 +83,7 @@ for i in range(p_out.n):
     # print(rid, pos_end, len(bseq)-pos_end+span, strand, kmer, kmer_r, mmer)
 
 mm_select.mm_select(p_out, p_out2, 8)
-L2list = []
+L2list = {}
 for i in range(p_out2.n):
     span = p_out2.a[i].x & 0xFF
     mmer = p_out2.a[i].x >> 8
@@ -98,43 +97,43 @@ for i in range(p_out2.n):
     name = rid2name[rid]
     print(name, pos_end, r_pos_end, strand,
           "{:014X}".format(mmer), file=L2dump)
-    L2list.append((pos_end, r_pos_end, strand,
-                   "{:014X}".format(mmer), name, rid))
+    L2list.setdefault(rid, [])
+    L2list[rid].append((pos_end, r_pos_end, strand,
+                      "{:014X}".format(mmer), name))
 
 L2map = {}
-if len(L2list) > 2:
-    v = L2list[0]
-    for w in L2list[1:]:
-        v_pos_end, v_r_pos_end, v_strand, v_mmer, v_name, v_rid = v
+rspan = {}
+for rid in L2list:
+    lst = L2list[rid]
+    if len(lst) < 2:
+        continue
+    rspan[rid] = lst[0][-2], lst[-1][-2]
+    v = lst[0]
+    for w in lst[1:]:
+        v_pos_end, v_r_pos_end, v_strand, v_mmer, v_name = v
         if mmer_count[v_mmer] < 2:
             v = w
             continue
-        w_pos_end, w_r_pos_end, w_strand, w_mmer, w_name, w_rid = w
+        w_pos_end, w_r_pos_end, w_strand, w_mmer, w_name = w
         if mmer_count[w_mmer] < 2:
-            continue
-        if v_rid != w_rid:
-            v = w
             continue
         key = v_mmer, v_strand, w_mmer, w_strand
         L2map.setdefault(key, [])
-        L2map[key].append((v_name, v_rid, 0, v_pos_end, w_pos_end))
+        L2map[key].append((v_name, rid, 0, v_pos_end, w_pos_end))
         v = w
 
-    v = L2list[-1]
-    for w in L2list[-2::-1]:
-        v_pos_end, v_r_pos_end, v_strand, v_mmer, v_name, v_rid = v
+    v = lst[-1]
+    for w in lst[-2::-1]:
+        v_pos_end, v_r_pos_end, v_strand, v_mmer, v_name = v
         if mmer_count[v_mmer] < 2:
             v = w
             continue
-        w_pos_end, w_r_pos_end, w_strand, w_mmer, w_name, v_rid = w
+        w_pos_end, w_r_pos_end, w_strand, w_mmer, w_name = w
         if mmer_count[w_mmer] < 2:
-            continue
-        if v_rid != w_rid:
-            v = w
             continue
         key = v_mmer, 1-v_strand, w_mmer, 1-w_strand
         L2map.setdefault(key, [])
-        L2map[key].append((v_name, v_rid, 1, v_r_pos_end, w_r_pos_end))
+        L2map[key].append((v_name, rid, 1, v_r_pos_end, w_r_pos_end))
         v = w
 
 import networkx as nx
@@ -148,8 +147,17 @@ for key in L2map.keys():
               v_name, v_strand, rid2len[v_rid],
               v_pos_end, w_pos_end,
               mmer_count[v_mmer], mmer_count[w_mmer], n)
-        if n > 2 and n < 50:
+        if n > 2 and n < 30:
             G.add_edge(v_mmer, w_mmer)
+
+for rid in rspan:
+    v, w = rspan[rid]
+    if mmer_count[v] >= 30 or mmer_count[v] <= 2:
+        continue
+    if mmer_count[w] >= 30 or mmer_count[w] <= 2:
+        continue
+    G.add_edge(v, w)
+    G.add_edge(w, v)
 
 nx.write_gexf(G, "test.gexf")
 C.free(p_out2.a)
