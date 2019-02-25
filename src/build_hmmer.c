@@ -66,6 +66,8 @@ int main(int argc, char *argv[])
 	int l, c, written;
 	int total_chunk = 1;
 	int mychunk = 1;
+	int reduction_factor = 8;
+	int number_layers = 2;
 	int seq_file_counter;
 	mm128_v hmmerL0 = {0,0,0};
 	mm128_v hmmerL1 = {0,0,0};
@@ -75,7 +77,7 @@ int main(int argc, char *argv[])
     khash_t(RIDX) *hmap;
 	opterr = 0;
 
-	while ((c = getopt (argc, argv, "i:o:t:c:")) != -1) {
+	while ((c = getopt(argc, argv, "i:o:t:c:l:r:")) != -1) {
 		switch (c) {
 			case 'd':
 				seq_dataset_path = optarg;
@@ -91,6 +93,12 @@ int main(int argc, char *argv[])
 				break;
 			case 'c':
 				mychunk = atoi(optarg);
+				break;
+			case 'r':
+				reduction_factor = atoi(optarg);
+				break;
+			case 'l':
+				number_layers = atoi(optarg);
 				break;
 			case '?':
 				if (optopt == 'd') {
@@ -110,6 +118,7 @@ int main(int argc, char *argv[])
 
 	assert(total_chunk > 0);
 	assert(mychunk > 0 && mychunk <= total_chunk);
+	fprintf(stderr, "reduction factor= %d\n", reduction_factor);
 
 	if (seq_dataset_path == NULL) {
 		seq_dataset_path = (char *) calloc(8192, 1);
@@ -170,21 +179,23 @@ int main(int argc, char *argv[])
 	fprintf(stderr, "output data file: %s\n", hmmer_output_path);
 	write_mmlist(hmmer_output_path, &hmmerL0);
 
-    mm_select(&hmmerL0, &hmmerL1, 8);
-    /*
-	written = snprintf(hmmer_output_path, sizeof hmmer_output_path, "%s-L1-%02d-of-$02d.dat", out_prefix, mychunk, total_chunk);
-	assert(written < sizeof(hmmer_output_path));
-	printf("output data file: %s\n", hmmer_output_path);
-	write_mmlist(hmmer_output_path, &hmmerL1);*/
+    mm_select(&hmmerL0, &hmmerL1, reduction_factor);
 	kv_destroy(hmmerL0);
-
-    mm_select(&hmmerL1, &hmmerL2, 8);
-	written = snprintf(hmmer_output_path, sizeof hmmer_output_path, "%s-L2-%02d-of-%02d.dat", out_prefix, mychunk, total_chunk);
-	assert(written < sizeof(hmmer_output_path));
-	fprintf(stderr, "output data file: %s\n", hmmer_output_path);
-	write_mmlist(hmmer_output_path, &hmmerL2);
-	kv_destroy(hmmerL1);
-	kv_destroy(hmmerL2);
+	if (number_layers == 1) {
+		written = snprintf(hmmer_output_path, sizeof hmmer_output_path, "%s-L1-%02d-of-%02d.dat", out_prefix, mychunk, total_chunk);
+		assert(written < sizeof(hmmer_output_path));
+		printf("output data file: %s\n", hmmer_output_path);
+		write_mmlist(hmmer_output_path, &hmmerL1);
+	}
+	else if (number_layers > 1) {
+		mm_select(&hmmerL1, &hmmerL2, reduction_factor);
+	    kv_destroy(hmmerL1);
+		written = snprintf(hmmer_output_path, sizeof hmmer_output_path, "%s-L2-%02d-of-%02d.dat", out_prefix, mychunk, total_chunk);
+		assert(written < sizeof(hmmer_output_path));
+		fprintf(stderr, "output data file: %s\n", hmmer_output_path);
+		write_mmlist(hmmer_output_path, &hmmerL2);
+	    kv_destroy(hmmerL2);
+	}
 
 	kh_destroy(RIDX, hmap);
 	for (size_t _i=0; _i < name_id.n; _i++) {
