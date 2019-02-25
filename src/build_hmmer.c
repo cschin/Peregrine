@@ -139,7 +139,9 @@ int main(int argc, char *argv[])
 	
 	seq_file_counter = 0;
 	while( fscanf(seq_dataset_file, "%s", seq_file_path) != EOF ) {
-		if (seq_file_counter % total_chunk != (mychunk-1)) continue;
+		seq_file_counter++;
+		if ( (seq_file_counter % total_chunk) != (mychunk % total_chunk)) continue;
+		fprintf(stderr, "prcess file %s (%d) in chunk %d of %d\n", seq_file_path, seq_file_counter, mychunk, total_chunk);
 		fp = gzopen(seq_file_path, "r");
 		if (!fp) {
 			fprintf(stderr, "file '%s' open error: %s\n", seq_file_path, strerror(errno));
