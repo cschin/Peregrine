@@ -51,7 +51,7 @@ void find_minimizer(small_m_buffer_t * smb, mm128_t * mmer) {
 }
 
 /* rs: reduction size */
-void mm_select(mm128_v *p, mm128_v *p_out,  uint8_t rs) {
+void mm_reduce(mm128_v *p, mm128_v *p_out,  uint8_t rs) {
 	uint32_t idx;
 	uint32_t rid;
 	uint32_t rid_ = UINT32_MAX;
