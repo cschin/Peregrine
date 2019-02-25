@@ -198,6 +198,14 @@ int main(int argc, char *argv[])
 	write_mmlist(hmmer_output_path, &hmmerE3);
 	kv_destroy(hmmerE3);
 
+	mm_count_v mmc = {0,0,0};
+	mm_count(&hmmerL0, &mmc);
+	written = snprintf(hmmer_output_path, sizeof hmmer_output_path, "%s-MC-%02d-of-%02d.dat", out_prefix, mychunk, total_chunk);
+	assert(written < sizeof(hmmer_output_path));
+	printf("output data file: %s\n", hmmer_output_path);
+	write_mm_count(hmmer_output_path, &mmc);
+	kv_destroy(mmc);
+
     mm_reduce(&hmmerL0, &hmmerL1, reduction_factor);
 	kv_destroy(hmmerL0);
 	if (number_layers == 1) {
