@@ -118,6 +118,8 @@ int main(int argc, char *argv[])
 
 	assert(total_chunk > 0);
 	assert(mychunk > 0 && mychunk <= total_chunk);
+	assert(reduction_factor < 256);
+	
 	fprintf(stderr, "reduction factor= %d\n", reduction_factor);
 
 	if (seq_dataset_path == NULL) {
