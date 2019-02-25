@@ -36,16 +36,12 @@ mm128_v read_mmlist(char *fn) {
 	return p;
 };
 
-KHASH_MAP_INIT_INT64(MMC, uint32_t);
-void mm_count(mm128_v * p, mm_count_v * cp) {
+void mm_count(mm128_v * p, khash_t(MMC) *mcmap, mm_count_v * cp) {
 	uint32_t idx;
 	khiter_t k;
 	mm128_t mmer;
 	uint64_t mhash;
-	uint32_t count;
 	int32_t absent;
-	mm_count_t val;
-    khash_t(MMC) *mcmap=kh_init(MMC);
 
 	for (idx = 0; idx < p->n; idx++) {
 		mmer = p->a[idx];
@@ -57,19 +53,35 @@ void mm_count(mm128_v * p, mm_count_v * cp) {
 			kh_value(mcmap, k) += 1;
 		}
 	}
+	mm_count_to_vec(mcmap, cp);
+}
 
-	{
-		khint_t __i;
-		for (__i = kh_begin(mcmap); __i != kh_end(mcmap); ++__i) {
-			if (!kh_exist(mcmap,__i)) continue;
-			mhash = kh_key(mcmap, __i);
-			count = kh_val(mcmap, __i);
-			val.mer = mhash;
-			val.count = count;
-			kv_push(mm_count_t, NULL, *cp, val);
+void mm_count_to_vec(khash_t(MMC) *mcmap, mm_count_v * cp) {
+	mm_count_t val;
+	khint_t __i;
+	for (__i = kh_begin(mcmap); __i != kh_end(mcmap); ++__i) {
+		if (!kh_exist(mcmap,__i)) continue;
+		val.mer = kh_key(mcmap, __i);
+		val.count = kh_val(mcmap, __i);
+		kv_push(mm_count_t, NULL, *cp, val);
+	}
+}
+
+void aggregate_mm_count(khash_t(MMC) *mcmap,  mm_count_v * p) {
+	uint32_t idx;
+	khiter_t k;
+	uint64_t mhash;
+	int32_t absent;
+
+	for (idx = 0; idx < p->n; idx++) {
+		mhash = p->a[idx].mer;
+		k = kh_put(MMC, mcmap, mhash, &absent);
+		if (absent) {
+			kh_value(mcmap, k) = 1;
+		} else {
+			kh_value(mcmap, k) += p->a[idx].count;
 		}
 	}
-	kh_destroy(MMC, mcmap);
 }
 
 void write_mm_count(char *fn, mm_count_v *p) {

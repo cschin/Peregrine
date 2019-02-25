@@ -24,11 +24,15 @@ typedef struct { size_t n, m; seq_data_t * a; } seq_data_v;
 KHASH_MAP_INIT_INT(RLEN, uint32_t);
 void mm_end_filter(mm128_v *, mm128_v *, mm128_v *, khash_t(RLEN) *, uint32_t); 
 
+KHASH_MAP_INIT_INT64(MMC, uint32_t);
 typedef struct { uint64_t mer; uint32_t count; } mm_count_t;
 typedef struct { size_t n, m; mm_count_t *a; } mm_count_v;
-void mm_count(mm128_v *, mm_count_v *); 
+void mm_count(mm128_v *, khash_t(MMC) *, mm_count_v *); 
 void write_mm_count(char *, mm_count_v *); 
+void mm_count_to_vec(khash_t(MMC) *, mm_count_v *);
 mm_count_v read_mm_count(char *fn);
+
+void aggregate_mm_count(khash_t(MMC) *,  mm_count_v *); 
 #ifdef __cplusplus
 }
 #endif
