@@ -77,7 +77,7 @@ int main(int argc, char *argv[])
     khash_t(RLEN) *rlmap=kh_init(RLEN);
 	opterr = 0;
 
-	while ((c = getopt(argc, argv, "i:o:t:c:l:r:")) != -1) {
+	while ((c = getopt(argc, argv, "d:i:o:t:c:l:r:")) != -1) {
 		switch (c) {
 			case 'd':
 				seq_dataset_path = optarg;
