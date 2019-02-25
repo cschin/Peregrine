@@ -128,13 +128,13 @@ int main(int argc, char *argv[])
 
 
 	seq_dataset_file = fopen(seq_dataset_path, "r");
-	printf("input sequqnece dataset file: '%s'\n", seq_dataset_path);
+	fprintf(stderr, "input sequqnece dataset file: '%s'\n", seq_dataset_path);
 	if (!seq_dataset_file) {
 		fprintf(stderr, "file '%s' open error: %s\n", seq_dataset_path, strerror(errno));
 		exit(1);
 	}
 
-	printf("using sequqnece index file: '%s'\n", index_path);
+	fprintf(stderr, "using sequqnece index file: '%s'\n", index_path);
     hmap = build_read_index(index_path, &name_id);
 	
 	seq_file_counter = 0;
@@ -167,7 +167,7 @@ int main(int argc, char *argv[])
 
 	written = snprintf(hmmer_output_path, sizeof hmmer_output_path, "%s-L0-%02d-of-%02d.dat", out_prefix, mychunk, total_chunk);
 	assert(written < sizeof(hmmer_output_path));
-	printf("output data file: %s\n", hmmer_output_path);
+	fprintf(stderr, "output data file: %s\n", hmmer_output_path);
 	write_mmlist(hmmer_output_path, &hmmerL0);
 
     mm_select(&hmmerL0, &hmmerL1, 8);
@@ -181,7 +181,7 @@ int main(int argc, char *argv[])
     mm_select(&hmmerL1, &hmmerL2, 8);
 	written = snprintf(hmmer_output_path, sizeof hmmer_output_path, "%s-L2-%02d-of-%02d.dat", out_prefix, mychunk, total_chunk);
 	assert(written < sizeof(hmmer_output_path));
-	printf("output data file: %s\n", hmmer_output_path);
+	fprintf(stderr, "output data file: %s\n", hmmer_output_path);
 	write_mmlist(hmmer_output_path, &hmmerL2);
 	kv_destroy(hmmerL1);
 	kv_destroy(hmmerL2);
