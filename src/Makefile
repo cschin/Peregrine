@@ -12,9 +12,11 @@ mm_select.o: mm_select.c
 
 mm_sketch.o: mm_sketch.c
 
+mm_utils.o: mm_utils.c
+
 build_seq_db: build_seqdb.c kalloc.o 
 
-build_hmmer: build_hmmer.c kalloc.o mm_select.o mm_sketch.o
+build_hmmer: build_hmmer.c kalloc.o mm_select.o mm_sketch.o mm_utils.o
 
 clean:
 	rm -f build_read_index build_hmmer kalloc.o mm_select.o build_hmmer.o mm_sketch.o

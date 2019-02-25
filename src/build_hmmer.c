@@ -19,35 +19,6 @@ extern int optind, opterr, optopt;
 typedef struct { char * name; uint32_t rid; } name_id_pair_t; 
 typedef struct { size_t n, m; name_id_pair_t * a; } name_id_pair_v;
 
-void write_mmlist(char *fn, mm128_v *p) {
-	FILE *out_data;
-	out_data = fopen(fn, "wb");
-	if (!out_data) {
-		fprintf(stderr, "file '%s' open error: %s\n", fn, strerror(errno));
-		exit(1);
-	}
-    fwrite(&(kv_size(*p)) , sizeof(size_t), 1, out_data);
-    fwrite(p->a, sizeof(mm128_t), kv_size(*p), out_data);
-    fclose(out_data);
-}
-
-
-mm128_v read_mmlist(char *fn) {
-	mm128_v p = {0, 0, 0};
-	FILE *in_data;
-	in_data = fopen(fn, "rb");
-	if (!in_data) {
-		fprintf(stderr, "file '%s' open error: %s\n", fn, strerror(errno));
-		exit(1);
-	}
-    fread(&(kv_size(p)) , sizeof(size_t), 1, in_data);
-	kv_resize(mm128_t, NULL, p, kv_size(p));
-    fread(p.a, sizeof(mm128_t), kv_size(p), in_data);
-    fclose(in_data);
-	return p;
-}
-
-
 khash_t(RIDX) * build_read_index(char *fpath, name_id_pair_v *name_id) {
 	khash_t(RIDX) *hmap = kh_init(RIDX);
 	int absent;
@@ -197,7 +168,6 @@ int main(int argc, char *argv[])
 	printf("output data file: %s\n", hmmer_output_path);
 	write_mmlist(hmmer_output_path, &hmmerL0);
 
-
     mm_select(&hmmerL0, &hmmerL1, 8);
     /*
 	written = snprintf(hmmer_output_path, sizeof hmmer_output_path, "%s-L1-%02d-of-$02d.dat", out_prefix, mychunk, total_chunk);
@@ -213,7 +183,6 @@ int main(int argc, char *argv[])
 	write_mmlist(hmmer_output_path, &hmmerL2);
 	kv_destroy(hmmerL1);
 	kv_destroy(hmmerL2);
-
 
 	kh_destroy(RIDX, hmap);
 	for (size_t _i=0; _i < name_id.n; _i++) {
