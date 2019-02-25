@@ -17,9 +17,11 @@ mm_utils.o: mm_utils.c
 mm_utils.so: mm_utils.c
 	gcc -g -shared -fPIC -Wall kalloc.c mm_utils.c -o mm_utils.so
 
+mm_end_filter.o: mm_end_filter.c
+
 build_seq_db: build_seqdb.c kalloc.o 
 
-build_hmmer: build_hmmer.c kalloc.o mm_reduce.o mm_sketch.o mm_utils.o
+build_hmmer: build_hmmer.c kalloc.o mm_reduce.o mm_sketch.o mm_utils.o mm_end_filter.o
 
 
 

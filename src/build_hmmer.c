@@ -11,16 +11,13 @@
 
 
 KSEQ_INIT(gzFile, gzread);
-KHASH_MAP_INIT_STR(RIDX, uint32_t);
+KHASH_MAP_INIT_STR(RID, uint32_t);
 
 extern char *optarg;
 extern int optind, opterr, optopt;
 
-typedef struct { char * name; uint32_t rid; } name_id_pair_t; 
-typedef struct { size_t n, m; name_id_pair_t * a; } name_id_pair_v;
-
-khash_t(RIDX) * build_read_index(char *fpath, name_id_pair_v *name_id) {
-	khash_t(RIDX) *hmap = kh_init(RIDX);
+khash_t(RID) * build_read_index(char *fpath, seq_data_v *seq_data, khash_t(RLEN) *rlmap ) {
+	khash_t(RID) *hmap = kh_init(RID);
 	int absent;
 	khiter_t k;
 	FILE *index_file;
@@ -29,15 +26,17 @@ khash_t(RIDX) * build_read_index(char *fpath, name_id_pair_v *name_id) {
 	char name_buf[256];
 	char * name;
 	while (fscanf(index_file, "%u %255s %u", &rid, name_buf, &rlen) != EOF) {
-		kv_resize(name_id_pair_t, NULL, *name_id, name_id->n + 8192);
+		kv_resize(seq_data_t, NULL, *seq_data, seq_data->n + 8192);
 		name = kmalloc(NULL, 256 * sizeof(char));
 		strncpy(name, name_buf, 256);
-		i = name_id->n;
-		name_id->a[i].name = name;
-		name_id->a[i].rid = rid;
-		name_id->n ++;
-		k=kh_put(RIDX, hmap, name_id->a[i].name, &absent);
+		i = seq_data->n;
+		seq_data->a[i].name = name;
+		seq_data->a[i].rid = rid;
+		seq_data->n ++;
+		k=kh_put(RID, hmap, seq_data->a[i].name, &absent);
 		if (absent) kh_value(hmap, k) = rid;
+		k=kh_put(RLEN, rlmap, rid, &absent);
+		kh_value(rlmap, k) = rlen;
 		/* 
         { 
 			khint_t __i;		
@@ -72,9 +71,10 @@ int main(int argc, char *argv[])
 	mm128_v hmmerL0 = {0,0,0};
 	mm128_v hmmerL1 = {0,0,0};
 	mm128_v hmmerL2 = {0,0,0};
-	name_id_pair_v name_id = {0, 0, 0};
+	seq_data_v seq_data = {0, 0, 0};
 
-    khash_t(RIDX) *hmap;
+    khash_t(RID) *hmap;
+    khash_t(RLEN) *rlmap=kh_init(RLEN);
 	opterr = 0;
 
 	while ((c = getopt(argc, argv, "i:o:t:c:l:r:")) != -1) {
@@ -146,7 +146,7 @@ int main(int argc, char *argv[])
 	}
 
 	fprintf(stderr, "using sequqnece index file: '%s'\n", index_path);
-    hmap = build_read_index(index_path, &name_id);
+    hmap = build_read_index(index_path, &seq_data, rlmap);
 	
 	seq_file_counter = 0;
 	while( fscanf(seq_dataset_file, "%s", seq_file_path) != EOF ) {
@@ -164,7 +164,7 @@ int main(int argc, char *argv[])
 			int is_missing;
 			khiter_t k;
 			if (seq->seq.l < 2000) continue;
-			k = kh_get(RIDX, hmap, seq->name.s);
+			k = kh_get(RID, hmap, seq->name.s);
 			is_missing = (k == kh_end(hmap));
 			rid = kh_value(hmap, k);
 			if (is_missing) {
@@ -180,6 +180,23 @@ int main(int argc, char *argv[])
 	assert(written < sizeof(hmmer_output_path));
 	fprintf(stderr, "output data file: %s\n", hmmer_output_path);
 	write_mmlist(hmmer_output_path, &hmmerL0);
+
+	
+	mm128_v hmmerE5 = {0,0,0};
+	mm128_v hmmerE3 = {0,0,0};
+
+    mm_end_filter(&hmmerL0, &hmmerE5, &hmmerE3, rlmap, 250);
+	written = snprintf(hmmer_output_path, sizeof hmmer_output_path, "%s-E5-%02d-of-%02d.dat", out_prefix, mychunk, total_chunk);
+	assert(written < sizeof(hmmer_output_path));
+	printf("output data file: %s\n", hmmer_output_path);
+	write_mmlist(hmmer_output_path, &hmmerE5);
+	kv_destroy(hmmerE5);
+
+	written = snprintf(hmmer_output_path, sizeof hmmer_output_path, "%s-E3-%02d-of-%02d.dat", out_prefix, mychunk, total_chunk);
+	assert(written < sizeof(hmmer_output_path));
+	printf("output data file: %s\n", hmmer_output_path);
+	write_mmlist(hmmer_output_path, &hmmerE3);
+	kv_destroy(hmmerE3);
 
     mm_reduce(&hmmerL0, &hmmerL1, reduction_factor);
 	kv_destroy(hmmerL0);
@@ -199,11 +216,12 @@ int main(int argc, char *argv[])
 	    kv_destroy(hmmerL2);
 	}
 
-	kh_destroy(RIDX, hmap);
-	for (size_t _i=0; _i < name_id.n; _i++) {
-		kfree(NULL, name_id.a[_i].name);
+	kh_destroy(RID, hmap);
+	kh_destroy(RLEN, rlmap);
+	for (size_t _i=0; _i < seq_data.n; _i++) {
+		kfree(NULL, seq_data.a[_i].name);
 	}
-	kv_destroy(name_id);
+	kv_destroy(seq_data);
 
 	fclose(seq_dataset_file);
 	if (!seq_dataset_path) free(seq_dataset_path);
