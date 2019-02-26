@@ -85,6 +85,7 @@ void main() {
 			}
 			rp.y0 = mmer0.y;
 			rp.y1 = mmer1.y;
+			rp.direction = 0;
 			kv_push(rp128_t, NULL, *rpv, rp);
 			
 			// reverse direction
@@ -119,7 +120,7 @@ void main() {
 			assert(k != kh_end(rlmap));
 			rpos = kh_val(rlmap, k) - pos + span - 1;
 			rp.y1 = ((rp.y1 & 0xFFFFFFFF00000001) | (rpos << 1 )) ^ 0x1; // ^0x1 -> switch strand
-
+            rp.direction = 1;
 			kv_push(rp128_t, NULL, *rpv, rp);
 		}	
 		mmer0 = mmer1;
@@ -174,7 +175,7 @@ void main() {
 				assert(k != kh_end(mcmap));
 				mcount1 = kh_val(mcmap, k);
 
-				printf("%lu %u %lu %u %u %u %u %u %u %u %u %u\n", mhash0, strand0, mhash1, strand1,
+				printf("%014lX %u %014lX %u %u %u %u %u %u %u %u %u %u\n", mhash0, strand0, mhash1, strand1, rpv->a[__k].direction,
 						rid0, pos0, rpos0, rid1, pos1, rpos1, mcount0, mcount1);
 			}
 		}

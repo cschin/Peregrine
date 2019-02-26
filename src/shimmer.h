@@ -40,7 +40,7 @@ void aggregate_mm_count(khash_t(MMC) *,  mm_count_v *);
 typedef struct { uint64_t x0, x1, y0, y1; } mm256_t;
 typedef struct { size_t n, m; mm256_t *a; } mm256_v;
 
-typedef struct { uint64_t y0, y1; } rp128_t;
+typedef struct { uint64_t y0, y1; uint8_t direction;} rp128_t;
 typedef struct { size_t n, m; rp128_t *a; } rp128_v;
 KHASH_MAP_INIT_INT64(MMER1, rp128_v *);
 typedef khash_t(MMER1) * mmert1_p_t;
