@@ -3,8 +3,6 @@
 
 #include <assert.h>
 #include "khash.h"
-#include "ksort.h"
-
 
 #ifdef __cplusplus
 extern "C" {
@@ -42,14 +40,12 @@ void aggregate_mm_count(khash_t(MMC) *,  mm_count_v *);
 typedef struct { uint64_t x0, x1, y0, y1; } mm256_t;
 typedef struct { size_t n, m; mm256_t *a; } mm256_v;
 
-#define sort_key_128x(a) ((a).x)
-KRADIX_SORT_INIT(128x, mm128_t, sort_key_128x, 8);
+typedef struct { uint64_t y0, y1; } rp128_t;
+typedef struct { size_t n, m; rp128_t *a; } rp128_v;
+KHASH_MAP_INIT_INT64(MMER1, rp128_v *);
+typedef khash_t(MMER1) * mmert1_p_t;
+KHASH_MAP_INIT_INT64(MMER0, mmert1_p_t);
 
-#define sort_key_256x(a) ( ( (((uint64_t) (a).x0) << 16) & 0xFFFFFFFF00000000) |  ( (uint64_t) ((a).x1 >> 24 )))
-KRADIX_SORT_INIT(256x, mm256_t, sort_key_256x, 8);
-
-#define mm256x_lt(a, b) ( 1 ? ((a).x0 < (b).x0) :  ((a).x1 < (b).x1)   )
-KSORT_INIT(256x, mm256_t, mm256x_lt);
 #ifdef __cplusplus
 }
 #endif
