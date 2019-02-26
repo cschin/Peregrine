@@ -8,6 +8,7 @@
 #include "kseq.h"
 #include "kvec.h"
 #include "khash.h"
+#include "kseq.h"
 
 
 KSEQ_INIT(gzFile, gzread);
