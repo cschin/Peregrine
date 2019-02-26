@@ -30,4 +30,4 @@ accumulate_mc: accumulate_mc.o kalloc.o mm_utils.o
 
 
 clean:
-	rm -f build_read_index build_hmmer *.o *.so
+	rm -f build_read_index build_hmmer accumulate_mc *.o *.so
