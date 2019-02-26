@@ -11,44 +11,17 @@
 
 
 KSEQ_INIT(gzFile, gzread);
-KHASH_MAP_INIT_STR(RID, uint32_t);
 
 extern char *optarg;
 extern int optind, opterr, optopt;
 
-khash_t(RID) * build_read_index(char *fpath, seq_data_v *seq_data, khash_t(RLEN) *rlmap ) {
-	khash_t(RID) *hmap = kh_init(RID);
-	int absent;
-	khiter_t k;
-	FILE *index_file;
-	index_file = fopen(fpath, "r");
-	uint32_t i, rid, rlen;
-	char name_buf[256];
-	char * name;
-	while (fscanf(index_file, "%u %255s %u", &rid, name_buf, &rlen) != EOF) {
-		kv_resize(seq_data_t, NULL, *seq_data, seq_data->n + 8192);
-		name = kmalloc(NULL, 256 * sizeof(char));
-		strncpy(name, name_buf, 256);
-		i = seq_data->n;
-		seq_data->a[i].name = name;
-		seq_data->a[i].rid = rid;
-		seq_data->n ++;
-		k=kh_put(RID, hmap, seq_data->a[i].name, &absent);
-		if (absent) kh_value(hmap, k) = rid;
-		k=kh_put(RLEN, rlmap, rid, &absent);
-		kh_value(rlmap, k) = rlen;
-		/* 
-        { 
-			khint_t __i;		
-			for (__i = kh_begin(hmap); __i != kh_end(hmap); ++__i) {		
-				if (!kh_exist(hmap,__i)) continue;						
-				printf("testx:%s %u\n", kh_key(hmap,__i), kh_val(hmap,__i));
-			} 
-		}
-	    */	
-	}
-	fclose(index_file);
-	return hmap;
+void write_mc_count_mm128(char *fn, mm128_v * hmmer) {
+	mm_count_v mmc = {0,0,0};
+	khash_t(MMC) *mcmap = kh_init(MMC);
+	mm_count(hmmer, mcmap, &mmc);
+	write_mm_count(fn, &mmc);
+	kv_destroy(mmc);
+	kh_destroy(MMC, mcmap);
 }
 
 int main(int argc, char *argv[])
@@ -68,6 +41,7 @@ int main(int argc, char *argv[])
 	int reduction_factor = 8;
 	int number_layers = 2;
 	int seq_file_counter;
+    int output_L0_mc = 1;
 	mm128_v hmmerL0 = {0,0,0};
 	mm128_v hmmerL1 = {0,0,0};
 	mm128_v hmmerL2 = {0,0,0};
@@ -77,7 +51,7 @@ int main(int argc, char *argv[])
     khash_t(RLEN) *rlmap=kh_init(RLEN);
 	opterr = 0;
 
-	while ((c = getopt(argc, argv, "d:i:o:t:c:l:r:")) != -1) {
+	while ((c = getopt(argc, argv, "d:i:o:t:c:l:r:m:")) != -1) {
 		switch (c) {
 			case 'd':
 				seq_dataset_path = optarg;
@@ -99,6 +73,9 @@ int main(int argc, char *argv[])
 				break;
 			case 'l':
 				number_layers = atoi(optarg);
+				break;
+			case 'm':
+				output_L0_mc = atoi(optarg);
 				break;
 			case '?':
 				if (optopt == 'd') {
@@ -168,7 +145,7 @@ int main(int argc, char *argv[])
 			is_missing = (k == kh_end(hmap));
 			rid = kh_value(hmap, k);
 			if (is_missing) {
-			    fprintf(stderr, "WARNNING: cannot map read:%s to an internal unique identifier. The read will be ignore. The read will be ignored. \n", seq->name.s);
+			    fprintf(stderr, "WARNNING: cannot map read:%s to an internal unique identifier. The read will be ignored. \n", seq->name.s);
 				continue;
 			};
 			mm_sketch(NULL, seq->seq.s, seq->seq.l, 80, 16, rid, 0, &hmmerL0);
@@ -197,16 +174,13 @@ int main(int argc, char *argv[])
 	printf("output data file: %s\n", hmmer_output_path);
 	write_mmlist(hmmer_output_path, &hmmerE3);
 	kv_destroy(hmmerE3);
-
-	mm_count_v mmc = {0,0,0};
-	khash_t(MMC) *mcmap = kh_init(MMC);
-	mm_count(&hmmerL0, mcmap, &mmc);
-	written = snprintf(hmmer_output_path, sizeof hmmer_output_path, "%s-MC-%02d-of-%02d.dat", out_prefix, mychunk, total_chunk);
-	assert(written < sizeof(hmmer_output_path));
-	printf("output data file: %s\n", hmmer_output_path);
-	write_mm_count(hmmer_output_path, &mmc);
-	kv_destroy(mmc);
-	kh_destroy(MMC, mcmap);
+    
+	if (output_L0_mc == 1) {
+		written = snprintf(hmmer_output_path, sizeof hmmer_output_path, "%s-L0-MC-%02d-of-%02d.dat", out_prefix, mychunk, total_chunk);
+		assert(written < sizeof(hmmer_output_path));
+		printf("output data file: %s\n", hmmer_output_path);
+		write_mc_count_mm128(hmmer_output_path, &hmmerL0);
+	}
 
     mm_reduce(&hmmerL0, &hmmerL1, reduction_factor);
 	kv_destroy(hmmerL0);
@@ -215,6 +189,11 @@ int main(int argc, char *argv[])
 		assert(written < sizeof(hmmer_output_path));
 		printf("output data file: %s\n", hmmer_output_path);
 		write_mmlist(hmmer_output_path, &hmmerL1);
+		
+		written = snprintf(hmmer_output_path, sizeof hmmer_output_path, "%s-L1-MC-%02d-of-%02d.dat", out_prefix, mychunk, total_chunk);
+		assert(written < sizeof(hmmer_output_path));
+		printf("output data file: %s\n", hmmer_output_path);
+		write_mc_count_mm128(hmmer_output_path, &hmmerL1);
 	}
 	else if (number_layers > 1) {
 		mm_reduce(&hmmerL1, &hmmerL2, reduction_factor);
@@ -223,6 +202,12 @@ int main(int argc, char *argv[])
 		assert(written < sizeof(hmmer_output_path));
 		fprintf(stderr, "output data file: %s\n", hmmer_output_path);
 		write_mmlist(hmmer_output_path, &hmmerL2);
+		
+		written = snprintf(hmmer_output_path, sizeof hmmer_output_path, "%s-L2-MC-%02d-of-%02d.dat", out_prefix, mychunk, total_chunk);
+		assert(written < sizeof(hmmer_output_path));
+		printf("output data file: %s\n", hmmer_output_path);
+		write_mc_count_mm128(hmmer_output_path, &hmmerL2);
+
 	    kv_destroy(hmmerL2);
 	}
 
