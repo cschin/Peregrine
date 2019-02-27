@@ -8,22 +8,59 @@
 #include "khash.h"
 #include "kvec.h"
 #include "kalloc.h"
-#include "ksort.h"
 
 #define LOWERBOUND 2
 #define UPPERBOUND 30
+#define REVERSED 1
 
-#define sort_key_128x(a) ((a).x)
-KRADIX_SORT_INIT(128x, mm128_t, sort_key_128x, 8);
+uint8_t rmap[] = {
+	0,   1,   2,   3,   4,   5,   6,   7,   8,   9,  10,  11,  12,  13,  14,  15,
+	16,  17,  18,  19,  20,  21,  22,  23,  24,  25,  26,  27,  28,  29,  30,  31,
+	32,  33,  34,  35,  36,  37,  38,  39,  40,  41,  42,  43,  44,  45,  46,  47,
+	48,  49,  50,  51,  52,  53,  54,  55,  56,  57,  58,  59,  60,  61,  62,  63,
+	64,  84,  66,  71,  68,  69,  70,  67,  72,  73,  74,  75,  76,  77,  78,  79,
+	80,  81,  82,  83,  65,  85,  86,  87,  88,  89,  90,  91,  92,  93,  94,  95,
+	96, 116,  98, 103, 100, 101, 102,  99, 104, 105, 106, 107, 108, 109, 110, 111,
+	112, 113, 114, 115,  97, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127,
+	128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143,
+	144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159,
+	160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175,
+	176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191,
+	192, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207,
+	208, 209, 210, 211, 212, 213, 214, 215, 216, 217, 218, 219, 220, 221, 222, 223,
+	224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239,
+	240, 241, 242, 243, 244, 245, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255
+};
 
-#define sort_key_256x(a) ( ( (((uint64_t) (a).x0) << 16) & 0xFFFFFFFF00000000) |  ( (uint64_t) ((a).x1 >> 24 )))
-KRADIX_SORT_INIT(256x, mm256_t, sort_key_256x, 8);
+
+
+void reverse_complement(char * seq, size_t len) {
+	size_t p, rp;
+	char tmp;
+	p = 0;
+	for (;;) {
+		rp = len - p - 1;
+		if ((rp - p)  <= 1) break;
+		tmp = seq[rp];
+		seq[rp] = rmap[seq[p]];
+		seq[p] = rmap[tmp];
+		p ++;
+	}
+}
+
+int rp128_comp(const void * a, const void * b) {
+	rp128_t * a0 = (rp128_t *) a;
+	rp128_t * b0 = (rp128_t *) b;
+	return ((a0->y0 & 0xFFFFFFFF) >> 1) < ((b0->y0 & 0xFFFFFFFF) >> 1);
+}
 
 void main() {
 	char mmc_file_path[] = "../test/test/hmmer-L2-MC-01-of-01.dat";
 	char mmer_file_path[] = "../test/test/hmmer-L2-01-of-01.dat";
-	char seq_idx_file_path[] = "../test/seq_dataset.idx";
+	char seq_idx_file_path[] = "../test/test/seq_dataset.idx";
+	char seq_db_file_path[] = "../test/test/seq_dataset.seqdb";
 
+	FILE * seqdb;
 	mm128_v mmers;
 	mm_count_v mmc;
 	mm256_v mmpairs = {0, 0, 0};
@@ -50,6 +87,7 @@ void main() {
 	mmc = read_mm_count(mmc_file_path);
 	aggregate_mm_count(mcmap, &mmc);
 	rlmap = get_read_length_map(seq_idx_file_path);
+	seqdb = fopen(seq_db_file_path, "rb");
 
 	size_t s=0;
 	while (1) {
@@ -109,7 +147,7 @@ void main() {
             pos = ((rp.y0 & 0xFFFFFFFF) >> 1) + 1;
 			k = kh_get(RLEN, rlmap, rid);
 			assert(k != kh_end(rlmap));
-			rpos = kh_val(rlmap, k) - pos + span -1;
+			rpos = kh_val(rlmap, k).len - pos + span -1;
 			rp.y0 = ((rp.y0 & 0xFFFFFFFF00000001) | (rpos << 1 )) ^ 0x1; // ^0x1 -> switch strand
 
 			rp.y1 = mmer0.y;
@@ -118,9 +156,9 @@ void main() {
             pos = ((rp.y1 & 0xFFFFFFFF) >> 1) + 1;
 			k = kh_get(RLEN, rlmap, rid);
 			assert(k != kh_end(rlmap));
-			rpos = kh_val(rlmap, k) - pos + span - 1;
+			rpos = kh_val(rlmap, k).len - pos + span - 1;
 			rp.y1 = ((rp.y1 & 0xFFFFFFFF00000001) | (rpos << 1 )) ^ 0x1; // ^0x1 -> switch strand
-            rp.direction = 1;
+            rp.direction = REVERSED;
 			kv_push(rp128_t, NULL, *rpv, rp);
 		}	
 		mmer0 = mmer1;
@@ -135,6 +173,7 @@ void main() {
 	uint32_t pos0, pos1;
 	uint32_t rpos0, rpos1;
 	uint32_t span0, span1;
+	uint32_t rlen; 
 	uint32_t mcount0, mcount1;
 	uint64_t y0, y1;
 	for (__i = kh_begin(mmer0_map); __i != kh_end(mmer0_map); ++__i) {
@@ -149,23 +188,31 @@ void main() {
 			span1 = mhash1 & 0xFF;
 			mhash1 >>= 8;
 			rpv = kh_val(mmer1_map, __j);
+			if (rpv->n <= 1) continue;
+			qsort(rpv->a, rpv->n, sizeof(rp128_t), rp128_comp);
+
+			char *seq;
+			char *pseq = NULL;
+			uint32_t ppos = 0;
+			uint32_t prid = 0;
+			uint32_t pstrand = 0;
+			uint32_t plen = 0;
 			for (size_t __k=0; __k < rpv->n; __k++) {
 				y0 = rpv->a[__k].y0;
 				y1 = rpv->a[__k].y1;
 				rid0 = (uint32_t) (y0 >> 32);
 				rid1 = (uint32_t) (y1 >> 32);
+				assert( rid0 == rid1 );
 			    strand0 = (uint32_t) (y0 & 0x1);
 			    strand1 = (uint32_t) (y1 & 0x1);
 				pos0 = (uint32_t) ((y0 & 0xFFFFFFFF) >> 1) + 1;
 				pos1 = (uint32_t) ((y1 & 0xFFFFFFFF) >> 1) + 1;
-				
+			    
 				k = kh_get(RLEN, rlmap, rid0);
+			    rlen = kh_val(rlmap, k).len;	
 				assert(k != kh_end(rlmap));
-				rpos0 = kh_val(rlmap, k) - pos0 + span0;
-
-				k = kh_get(RLEN, rlmap, rid1);
-				assert(k != kh_end(rlmap));
-				rpos1 = kh_val(rlmap, k) - pos1 + span1;
+				rpos0 = rlen - pos0 + span0;
+				rpos1 = rlen - pos1 + span1;
 
 				k = kh_get(MMC, mcmap, mhash0);
 				assert(k != kh_end(mcmap));
@@ -175,9 +222,38 @@ void main() {
 				assert(k != kh_end(mcmap));
 				mcount1 = kh_val(mcmap, k);
 
-				printf("%014lX %u %014lX %u %u %u %u %u %u %u %u %u %u\n", mhash0, strand0, mhash1, strand1, rpv->a[__k].direction,
+	   		    alignment * aln;
+				seq = get_read_seq(seqdb, rid0, rlmap);
+				if (rpv->a[__k].direction == REVERSED) {
+					reverse_complement(seq, rlen);
+				}
+				printf("%014lX %u %014lX %u %u %09u %u %u %09u %u %u %u %u\n", 
+						mhash0, strand0, mhash1, strand1, rpv->a[__k].direction,
 						rid0, pos0, rpos0, rid1, pos1, rpos1, mcount0, mcount1);
+				if (pseq == NULL) {
+					pseq = seq;
+					ppos = pos0;
+					prid = rid0;
+					pstrand = rpv->a[__k].direction;
+					plen = rlen;
+				} else {
+					printf("seq1:%s\nseq2:%s\n\n", pseq+ppos-pos0, seq);
+					aln = align(pseq+ppos-pos0, strlen(pseq+ppos-pos0), seq, strlen(seq), 100);
+					printf("%d %d %d %d %d %d\n", 
+							aln->aln_str_size, aln->dist,
+							aln->aln_q_s, aln->aln_q_e, 
+							aln->aln_t_s, aln->aln_t_e);
+				    kfree(NULL, pseq);
+					pseq = seq;
+					ppos = pos0;
+					prid = rid0;
+					pstrand = rpv->a[__k].direction;
+					plen = rlen;
+				    free_alignment(aln);
+				}
 			}
+			kfree(NULL, pseq);
+			printf("\n");
 		}
 	}
 	// TODO: clean up memory

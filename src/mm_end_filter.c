@@ -22,7 +22,7 @@ void mm_end_filter(mm128_v *p, mm128_v *p_out_5, mm128_v *p_out_3, khash_t(RLEN)
 		span = mmer.x & 0xFF;
 		k = kh_get(RLEN, rlmap, rid);
 		//is_missing = (k == kh_end(hmap));
-		rlen = kh_value(rlmap, k);
+		rlen = kh_value(rlmap, k).len;
 		pos = ((mmer.y & 0xFFFFFFFF) >> 1) + 1;
 		r_pos = rlen - pos + span;
 		if (pos < end_length) {

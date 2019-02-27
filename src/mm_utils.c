@@ -117,12 +117,13 @@ khash_t(RID) * build_read_index(char *fpath, seq_data_v *seq_data, khash_t(RLEN)
 	int absent;
 	khiter_t k;
 	FILE *index_file;
-	uint32_t i, rid, rlen;
+	uint32_t i, rid, rlen, offset;
 	char name_buf[256];
 	char * name;
+	rl_t rl;
 
 	index_file = fopen(fpath, "r");
-	while (fscanf(index_file, "%u %255s %u", &rid, name_buf, &rlen) != EOF) {
+	while (fscanf(index_file, "%u %255s %u %u", &rid, name_buf, &rlen, &offset) != EOF) {
 		kv_resize(seq_data_t, NULL, *seq_data, seq_data->n + 8192);
 		name = kmalloc(NULL, 256 * sizeof(char));
 		strncpy(name, name_buf, 256);
@@ -133,7 +134,9 @@ khash_t(RID) * build_read_index(char *fpath, seq_data_v *seq_data, khash_t(RLEN)
 		k=kh_put(RID, hmap, seq_data->a[i].name, &absent);
 		if (absent) kh_value(hmap, k) = rid;
 		k=kh_put(RLEN, rlmap, rid, &absent);
-		kh_value(rlmap, k) = rlen;
+		rl.len = rlen;
+		rl.offset = offset;
+		kh_value(rlmap, k) = rl;
 		/* 
         { 
 			khint_t __i;		
@@ -155,12 +158,30 @@ khash_t(RLEN) * get_read_length_map(char *fpath ) {
 	FILE *index_file;
 	char name_buf[256];
 	uint32_t  rid, rlen;
+	size_t offset;
+	rl_t rl;
 
 	index_file = fopen(fpath, "r");
-	while (fscanf(index_file, "%u %255s %u", &rid, name_buf, &rlen) != EOF) {
+	while (fscanf(index_file, "%u %255s %u %lu", &rid, name_buf, &rlen, &offset) != EOF) {
 		k=kh_put(RLEN, rlmap, rid, &absent);
-		kh_value(rlmap, k) = rlen;
+		rl.len = rlen;
+		rl.offset = offset;
+		kh_value(rlmap, k) = rl;
 	}
 	fclose(index_file);
 	return rlmap;
 }
+
+char * get_read_seq(FILE * seqdb, uint32_t rid, khash_t(RLEN) *rlmap) {
+	char * seq;
+	rl_t rl;
+	khiter_t k;
+	k = kh_get(RLEN, rlmap, rid);
+    assert( k != kh_end(rlmap));
+	rl = kh_val(rlmap, k);
+	seq = kmalloc(NULL, sizeof(char) * rl.len+1);
+	fseek(seqdb, rl.offset, SEEK_SET);
+	fread(seq, sizeof(char), rl.len, seqdb);
+	seq[rl.len] = 0; // terminate the string
+    return seq;	
+}	
