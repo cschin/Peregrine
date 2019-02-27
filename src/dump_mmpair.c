@@ -224,25 +224,48 @@ void main() {
 
 	   		    alignment * aln;
 				seq = get_read_seq(seqdb, rid0, rlmap);
-				if (rpv->a[__k].direction == REVERSED) {
+				strand = rpv->a[__k].direction;
+				if (strand == REVERSED) {
 					reverse_complement(seq, rlen);
 				}
-				printf("%014lX %u %014lX %u %u %09u %u %u %09u %u %u %u %u\n", 
-						mhash0, strand0, mhash1, strand1, rpv->a[__k].direction,
-						rid0, pos0, rpos0, rid1, pos1, rpos1, mcount0, mcount1);
+				//printf("%014lX %u %014lX %u %u %09u %u %u %09u %u %u %u %u\n", 
+				//		mhash0, strand0, mhash1, strand1, rpv->a[__k].direction,
+				//		rid0, pos0, rpos0, rid1, pos1, rpos1, mcount0, mcount1);
 				if (pseq == NULL) {
 					pseq = seq;
 					ppos = pos0;
 					prid = rid0;
-					pstrand = rpv->a[__k].direction;
+					pstrand = strand;
 					plen = rlen;
 				} else {
-					printf("seq1:%s\nseq2:%s\n\n", pseq+ppos-pos0, seq);
+					//printf("seq1:%s\nseq2:%s\n\n", pseq+ppos-pos0, seq);
 					aln = align(pseq+ppos-pos0, strlen(pseq+ppos-pos0), seq, strlen(seq), 100);
 					printf("%d %d %d %d %d %d\n", 
 							aln->aln_str_size, aln->dist,
 							aln->aln_q_s, aln->aln_q_e, 
 							aln->aln_t_s, aln->aln_t_e);
+
+					uint32_t a_bgn, a_end, b_bgn, b_end;
+					if (pstrand == 0) {
+						a_bgn = ppos-pos0;
+						a_end = ppos-pos0 + aln->aln_q_e - aln->aln_q_s;
+					} else {
+						a_bgn = plen - (ppos - pos0) - (aln->aln_q_e - aln->aln_q_s);
+						a_end = plen - (ppos - pos0);
+					}
+					if (strand == 0) {
+						b_bgn = aln->aln_t_s;
+						b_end = aln->aln_t_e;
+					} else {
+						b_bgn = rlen - aln->aln_t_e;
+						b_end = rlen - aln->aln_t_s;;
+					}
+					if ( aln->aln_t_e > 500 && aln->aln_q_e > 500) {
+						printf("%09d %09d %d %f %u %u %u %u %u %u %u %u %s\n", 
+								prid, rid0, 0, 99.0,
+								pstrand, a_bgn, a_end, plen,
+								strand, b_bgn, b_end, rlen, "overlap");	   
+					}
 				    kfree(NULL, pseq);
 					pseq = seq;
 					ppos = pos0;
@@ -253,7 +276,6 @@ void main() {
 				}
 			}
 			kfree(NULL, pseq);
-			printf("\n");
 		}
 	}
 	// TODO: clean up memory
