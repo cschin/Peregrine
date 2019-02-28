@@ -279,7 +279,7 @@ void pring_overlaps(
 	kfree(NULL, pseq);
 }
 
-void get_overlaps(
+void process_overlaps(
 		khash_t(MMER0) * mmer0_map, 
 		khash_t(RLEN) *rlmap, 
 		khash_t(MMC) *mcmap) {
@@ -341,7 +341,7 @@ int main() {
 	rlmap = get_read_length_map(seq_idx_file_path);
 
     build_map( &mmers, mmer0_map, rlmap, mcmap);
-	get_overlaps(mmer0_map, rlmap, mcmap);
+	process_overlaps(mmer0_map, rlmap, mcmap);
 	// TODO: clean up memory
 }
 
