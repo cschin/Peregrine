@@ -10,6 +10,7 @@
 #include "khash.h"
 #include "kseq.h"
 
+#define REDUCTION_FACTOR 6
 
 KSEQ_INIT(gzFile, gzread);
 
@@ -39,7 +40,7 @@ int main(int argc, char *argv[])
 	int l, c, written;
 	int total_chunk = 1;
 	int mychunk = 1;
-	int reduction_factor = 8;
+	int reduction_factor = REDUCTION_FACTOR;
 	int number_layers = 2;
 	int seq_file_counter;
     int output_L0_mc = 1;
