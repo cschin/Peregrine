@@ -178,6 +178,7 @@ void pring_overlaps(
 	uint32_t pstrand = 0;
 	uint32_t plen = 0;
 	int32_t absent;
+	bool contains;
 	for (size_t __k=0; __k < rpv->n; __k++) {
 		y0 = rpv->a[__k].y0;
 		rid0 = (uint32_t) (y0 >> 32);
@@ -202,7 +203,7 @@ void pring_overlaps(
 		} else {
 			assert(ppos-pos0 >= 0 );
 
-			ridp = prid < rid0 ? ((uint64_t) prid) << 32 | ((uint64_t) rid0) : ((uint64_t) prid) << 32 | ((uint64_t) rid0);
+			ridp = prid < rid0 ? ((uint64_t) prid) << 32 | ((uint64_t) rid0) : ((uint64_t) rid0) << 32 | ((uint64_t) prid);
 			k = kh_put(RPAIR, rid_pairs, ridp, &absent);
 
 			if (absent) {
@@ -213,11 +214,14 @@ void pring_overlaps(
 				seq_coor_t q_bgn, q_end, t_bgn, t_end;
 				q_bgn = aln->aln_q_s; q_end = aln->aln_q_e; t_bgn = aln->aln_t_s; t_end = aln->aln_t_e;
 
+
 				if ((q_bgn < READENDFUZZINESS &&
 							t_bgn < READENDFUZZINESS &&
 							(abs(pslen - q_end) < READENDFUZZINESS ||
 							 abs(slen - t_end) < READENDFUZZINESS)) &&  
 						q_end > 500 && t_end > 500) {
+				    //printf("%d %d %d %d\n", q_bgn, q_end, t_bgn, t_end);
+					//printf("%s\n%s\n", pseq+ppos-pos0, seq); 
 					seq_coor_t a_bgn, a_end, b_bgn, b_end;
 
 					double err_est;
@@ -231,10 +235,12 @@ void pring_overlaps(
 						t_end = slen; 
 						q_end = slen + (q_end - t_end);
 						strcpy(type ,"contains");
+						contains = true;
 					} else {
 						t_end = pslen  - (q_end - t_end); 
 						q_end = pslen;
 						strcpy(type ,"overlap");
+						contains = false;
 					}
 					if (pstrand == 0) {
 						a_bgn = (seq_coor_t) (ppos-pos0) + q_bgn;
@@ -254,18 +260,20 @@ void pring_overlaps(
 					}
 					printf("%09d %09d %d %0.1f %u %d %d %u %u %d %d %u %s\n", 
 							prid, rid0, -aln->aln_str_size, err_est,
-							pstrand, a_bgn, a_end, plen,
-							strand, b_bgn, b_end, rlen, type);	   
+							0, a_bgn, a_end, plen,
+							pstrand == 0 ? strand : 1-strand, b_bgn, b_end, rlen, type);
 
 				}
 				free_alignment(aln);
 			}
-			kfree(NULL, pseq);
-			pseq = seq;
-			ppos = pos0;
-			prid = rid0;
-			pstrand = rpv->a[__k].direction;
-			plen = rlen;
+			if (contains == false) {
+				kfree(NULL, pseq);
+				pseq = seq;
+				ppos = pos0;
+				prid = rid0;
+				pstrand = strand;
+				plen = rlen;
+			}
 		}
 	}
 	kfree(NULL, pseq);
@@ -291,6 +299,7 @@ void get_overlaps(
 	
 	if (fstat(fd, &sb) == -1)           /* To obtain file size */
 		handle_error("fstat");
+
 	seq_p = mmap((caddr_t)0, sb.st_size, PROT_READ, MAP_SHARED, fd, 0);
 
 	khash_t(RPAIR) * rid_pairs = kh_init(RPAIR);
