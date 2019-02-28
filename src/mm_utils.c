@@ -185,3 +185,15 @@ char * get_read_seq(FILE * seqdb, uint32_t rid, khash_t(RLEN) *rlmap) {
 	seq[rl.len] = 0; // terminate the string
     return seq;	
 }	
+
+char * get_read_seq_mmap(char * seq_p, uint32_t rid, khash_t(RLEN) *rlmap) {
+	char * seq;
+	rl_t rl;
+	khiter_t k;
+	k = kh_get(RLEN, rlmap, rid);
+    assert( k != kh_end(rlmap));
+	rl = kh_val(rlmap, k);
+	seq = kmalloc(NULL, sizeof(char) * rl.len+1);
+	strcpy(seq, seq_p + rl.offset);
+    return seq;	
+}	

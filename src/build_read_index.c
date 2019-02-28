@@ -101,8 +101,9 @@ int main(int argc, char *argv[])
 		while ((l = kseq_read(seq)) >= 0) {
 			fprintf(index_file, "%09d %s %u %lu\n", rid, seq->name.s, seq->seq.l, offset);
 			fwrite(seq->seq.s, sizeof(char), seq->seq.l, seqdb_file);
+			fwrite("\0", sizeof(char), 1, seqdb_file); //terminate the strings
 			rid += 1;
-			offset += seq->seq.l;
+			offset += seq->seq.l + 1;
 		}
 		kseq_destroy(seq);
 		gzclose(fp);

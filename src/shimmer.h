@@ -50,6 +50,7 @@ typedef khash_t(MMER1) * mmert1_p_t;
 KHASH_MAP_INIT_INT64(MMER0, mmert1_p_t);
 
 char * get_read_seq(FILE *, uint32_t, khash_t(RLEN) *);
+char * get_read_seq_mmap(char *, uint32_t, khash_t(RLEN) *);
 
 // For DWalign
 typedef int32_t seq_coor_t;
