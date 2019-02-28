@@ -16,10 +16,12 @@
 #define handle_error(msg) \
 	do { perror(msg); exit(EXIT_FAILURE); } while (0)
 
-#define LOWERBOUND 2
-#define UPPERBOUND 30
+#define MMER_COUNT_LOWER_BOUND 2
+#define MMER_COUNT_UPPER_BOUND 30
+#define ORIGINAL 0
 #define REVERSED 1
-#define READENDFUZZINESS 48
+#define READ_END_FUZZINESS 48
+#define LOCAL_OVERLAP_UPPERBOUND 72
 
 KHASH_SET_INIT_INT64(RPAIR);
 
@@ -89,7 +91,7 @@ void build_map(
 		k = kh_get(MMC, mcmap, mhash);
 		assert(k != kh_end(mcmap));
         mcount = kh_val(mcmap, k); 
-		if (mcount >= LOWERBOUND && mcount < UPPERBOUND) break; 
+		if (mcount >= MMER_COUNT_LOWER_BOUND && mcount < MMER_COUNT_UPPER_BOUND) break;
 		s++;
 	}
 	for( size_t i=s+1; i < mmers->n; i++ ){
@@ -98,7 +100,7 @@ void build_map(
 		k = kh_get(MMC, mcmap, mhash);
 		assert(k != kh_end(mcmap));
         mcount = kh_val(mcmap, k); 
-		if (mcount < LOWERBOUND ||  mcount > UPPERBOUND) continue; 
+		if (mcount < MMER_COUNT_LOWER_BOUND ||  mcount > MMER_COUNT_UPPER_BOUND) continue;
 
 	    if ( (mmer0.y >> 32) == (mmer1.y >> 32) ) {  // the pairs are in the same read
 			k = kh_put(MMER0, mmer0_map, mmer0.x, &absent);
@@ -116,7 +118,7 @@ void build_map(
 			rp.y0 = mmer0.y;
 			rp.y1 = mmer1.y;
 
-			rp.direction = 0;
+			rp.direction = ORIGINAL;
 			kv_push(rp128_t, NULL, *rpv, rp);
 			
 			// reverse direction
@@ -215,10 +217,10 @@ void pring_overlaps(
 				q_bgn = aln->aln_q_s; q_end = aln->aln_q_e; t_bgn = aln->aln_t_s; t_end = aln->aln_t_e;
 
 
-				if ((q_bgn < READENDFUZZINESS &&
-							t_bgn < READENDFUZZINESS &&
-							(abs(pslen - q_end) < READENDFUZZINESS ||
-							 abs(slen - t_end) < READENDFUZZINESS)) &&  
+				if ((q_bgn < READ_END_FUZZINESS &&
+							t_bgn < READ_END_FUZZINESS &&
+							(abs(pslen - q_end) < READ_END_FUZZINESS ||
+							 abs(slen - t_end) < READ_END_FUZZINESS)) &&
 						q_end > 500 && t_end > 500) {
 				    //printf("%d %d %d %d\n", q_bgn, q_end, t_bgn, t_end);
 					//printf("%s\n%s\n", pseq+ppos-pos0, seq); 
@@ -260,8 +262,8 @@ void pring_overlaps(
 					}
 					printf("%09d %09d %d %0.1f %u %d %d %u %u %d %d %u %s\n", 
 							prid, rid0, -aln->aln_str_size, err_est,
-							0, a_bgn, a_end, plen,
-							pstrand == 0 ? strand : 1-strand, b_bgn, b_end, rlen, type);
+							ORIGINAL, a_bgn, a_end, plen,
+							pstrand == ORIGINAL ? strand : 1-strand, b_bgn, b_end, rlen, type);
 
 				}
 				free_alignment(aln);
@@ -313,7 +315,7 @@ void process_overlaps(
 			mhash1 = kh_key(mmer1_map, __j);
 			mhash1 >>= 8;
 			rpv = kh_val(mmer1_map, __j);
-			if (rpv->n <= 1) continue;
+			if (rpv->n <= 1 || rpv->n > LOCAL_OVERLAP_UPPERBOUND) continue;
 			qsort(rpv->a, rpv->n, sizeof(rp128_t), rp128_comp);
 			pring_overlaps(rpv, rlmap, rid_pairs, seq_p);	   
 		}
