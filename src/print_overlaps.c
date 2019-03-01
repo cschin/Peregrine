@@ -14,6 +14,9 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
+extern char *optarg;
+extern int optind, opterr, optopt;
+
 #define handle_error(msg) \
 	do { perror(msg); exit(EXIT_FAILURE); } while (0)
 
@@ -343,13 +346,19 @@ void process_overlaps(char * seq_db_file_path,
 	munmap(seq_p, sb.st_size);
 }
 
-int main() {
-	char mmc_file_path[] = "../test/test2/hmmer-L2-MC-01-of-01.dat";
-	char mmer_file_path[] = "../test/test2/hmmer-L2-01-of-01.dat";
-	char seq_idx_file_path[] = "../test/test2/seq_dataset.idx";
-	char seq_db_file_path[] = "../test/test2/seq_dataset.seqdb";
+int main(int argc, char *argv[]) {
+	char * seqdb_prefix = NULL;
+	char * shimmer_prefix = NULL;
 
-	mm128_v mmers;
+	char mmc_file_path[8192];
+	char mmer_file_path[8192]; 
+	char seq_idx_file_path[8192];
+	char seqdb_file_path[8291];
+        int c;	
+	uint32_t total_chunk, mychunk;
+
+	mm128_v mmers = {0, 0, 0};
+	mm128_v mmers_;
 	mm_count_v mmc;
 
 	khash_t(RLEN) *rlmap; 
@@ -360,34 +369,96 @@ int main() {
 
 	rp128_v * rpv;
 	
-	mmers = read_mmlist(mmer_file_path);
-	mmc = read_mm_count(mmc_file_path);
-	aggregate_mm_count(mcmap, &mmc);
-	rlmap = get_read_length_map(seq_idx_file_path);
+	opterr = 0;
 
-	uint64_t chunk = 1;
-	uint64_t total_chunk = 1;
-	for (chunk = 1; chunk <= total_chunk; chunk++) { 
-		mmer0_map = kh_init(MMER0);
-		build_map(&mmers, mmer0_map, rlmap, mcmap, chunk, total_chunk);
-		process_overlaps(seq_db_file_path, mmer0_map, rlmap, mcmap);
-		
-		for (khiter_t __i = kh_begin(mmer0_map); __i != kh_end(mmer0_map); ++__i) {
-			if (!kh_exist(mmer0_map,__i)) continue;
-			mmer1_map = kh_val(mmer0_map, __i);
-			for (khiter_t __j = kh_begin(mmer1_map); __j != kh_end(mmer1_map); ++__j) {
-				if (!kh_exist(mmer1_map,__j)) continue;
-				rpv = kh_val(mmer1_map, __j);
-				kv_destroy(*rpv);
-			}
-			kh_destroy(MMER1, mmer1_map);
+	while ((c = getopt(argc, argv, "p:l:t:c:")) != -1) {
+		switch (c) {
+			case 'p':
+				seqdb_prefix = optarg;
+				break;
+			case 'l':
+				shimmer_prefix = optarg;
+				break;
+			case 't':
+				total_chunk = atoi(optarg);
+				break;
+			case 'c':
+				mychunk = atoi(optarg);
+				break;
+			case '?':
+				if (optopt == 'p') {
+					fprintf (stderr, "Option -%c not specified, using 'seq_dataset' as the sequence db prefix\n", optopt);
+				}
+				if (optopt == 'l') {
+					fprintf(stderr, "Option -%c not specified, using 'shimmer-L2' as the L2 index prefix\n", optopt);
+				}
+				return 1;
+			default:
+				abort();
 		}
-		kh_destroy(MMER0, mmer0_map);
 	}
+
+	assert(total_chunk > 0);
+	assert(mychunk > 0 && mychunk <= total_chunk);
+	
+	if (seqdb_prefix == NULL) {
+		seqdb_prefix = (char *) calloc(8192, 1);
+		snprintf( seqdb_prefix, 8191, "seq_dataset" );
+	}
+
+	if (shimmer_prefix == NULL) {
+		seqdb_prefix = (char *) calloc(8192, 1);
+		snprintf( shimmer_prefix, 8191, "shimmer-L2" );
+	}
+
+
+	int written;
+	written = snprintf(seq_idx_file_path, sizeof(seq_idx_file_path), "%s.idx", seqdb_prefix);
+	assert(written < sizeof(seq_idx_file_path));
+	fprintf(stderr, "using index file: %s\n", seq_idx_file_path);
+
+	rlmap = get_read_length_map(seq_idx_file_path);
+	
+	written = snprintf(seqdb_file_path, sizeof(seqdb_file_path), "%s.seqdb", seqdb_prefix);
+	assert(written < sizeof(seqdb_file_path));
+	fprintf(stderr, "using seqdb file: %s\n", seqdb_file_path);
+	
+        for (int c=1; c<=total_chunk; c++) {	
+		int written;
+		written = snprintf(mmer_file_path, sizeof(mmer_file_path), "%s-%02d-of-%02d.dat", shimmer_prefix, c, total_chunk);
+		assert(written < sizeof(mmer_file_path));
+		fprintf(stderr, "useing data file: %s\n", mmer_file_path);
+		
+		written = snprintf(mmc_file_path, sizeof(mmc_file_path), "%s-MC-%02d-of-%02d.dat", shimmer_prefix, c, total_chunk);
+		assert(written < sizeof(mmc_file_path));
+		printf("output data file: %s\n", mmc_file_path);
+
+		mmers_ = read_mmlist(mmer_file_path);
+		append_mmlist(&mmers, &mmers_);
+		mmc = read_mm_count(mmc_file_path);
+		aggregate_mm_count(mcmap, &mmc);
+		kv_destroy(mmc);
+		kv_destroy(mmers_);
+	}
+
+	mmer0_map = kh_init(MMER0);
+	build_map(&mmers, mmer0_map, rlmap, mcmap, mychunk, total_chunk);
+	process_overlaps(seqdb_file_path, mmer0_map, rlmap, mcmap);
+	
+	for (khiter_t __i = kh_begin(mmer0_map); __i != kh_end(mmer0_map); ++__i) {
+		if (!kh_exist(mmer0_map,__i)) continue;
+		mmer1_map = kh_val(mmer0_map, __i);
+		for (khiter_t __j = kh_begin(mmer1_map); __j != kh_end(mmer1_map); ++__j) {
+			if (!kh_exist(mmer1_map,__j)) continue;
+			rpv = kh_val(mmer1_map, __j);
+			kv_destroy(*rpv);
+		}
+		kh_destroy(MMER1, mmer1_map);
+	}
+	
+	kh_destroy(MMER0, mmer0_map);
 	kh_destroy(MMC, mcmap);
 	kh_destroy(RLEN, rlmap);
-	kv_destroy(mmc);
-	kv_destroy(mmers);
 	// TODO: clean up memory
 }
 

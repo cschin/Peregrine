@@ -37,6 +37,12 @@ mm128_v read_mmlist(char *fn) {
 	return p;
 };
 
+void append_mmlist(mm128_v * target, mm128_v * source) {
+	kv_resize(mm128_t, NULL, *target, kv_size(*target) + kv_size(*source) );
+	memcpy(target->a + target->n, source->a, sizeof(mm128_v) * source->n);
+	target->n += source->n;
+}
+
 void mm_count(mm128_v * p, khash_t(MMC) *mcmap, mm_count_v * cp) {
 	uint32_t idx;
 	khiter_t k;
