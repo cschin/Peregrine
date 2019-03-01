@@ -21,7 +21,7 @@ extern int optind, opterr, optopt;
 	do { perror(msg); exit(EXIT_FAILURE); } while (0)
 
 #define MMER_COUNT_LOWER_BOUND 2
-#define MMER_COUNT_UPPER_BOUND 30
+#define MMER_COUNT_UPPER_BOUND 72
 #define ORIGINAL 0
 #define REVERSED 1
 #define READ_END_FUZZINESS 48
@@ -431,10 +431,11 @@ int main(int argc, char *argv[]) {
 		
 		written = snprintf(mmc_file_path, sizeof(mmc_file_path), "%s-MC-%02d-of-%02d.dat", shimmer_prefix, c, total_chunk);
 		assert(written < sizeof(mmc_file_path));
-		printf("output data file: %s\n", mmc_file_path);
+		fprintf(stderr, "output data file: %s\n", mmc_file_path);
 
 		mmers_ = read_mmlist(mmer_file_path);
 		append_mmlist(&mmers, &mmers_);
+		
 		mmc = read_mm_count(mmc_file_path);
 		aggregate_mm_count(mcmap, &mmc);
 		kv_destroy(mmc);
