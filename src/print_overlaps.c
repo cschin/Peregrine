@@ -5,6 +5,7 @@
 #include <string.h>
 #include <assert.h>
 #include <stdbool.h>
+#include <wordexp.h>
 #include "shimmer.h"
 #include "khash.h"
 #include "kvec.h"
@@ -364,6 +365,10 @@ int main(int argc, char *argv[]) {
         int c;	
 	uint32_t total_chunk, mychunk;
 
+	wordexp_t p; 
+	char **mmc_fns; 
+	char **shimmer_fns;
+
 	mm128_v mmers = {0, 0, 0};
 	mm128_v mmers_;
 	mm_count_v mmc;
@@ -430,24 +435,34 @@ int main(int argc, char *argv[]) {
 	assert(written < sizeof(seqdb_file_path));
 	fprintf(stderr, "using seqdb file: %s\n", seqdb_file_path);
 	
-        for (int c=1; c<=total_chunk; c++) {	
-		int written;
-		written = snprintf(mmer_file_path, sizeof(mmer_file_path), "%s-%02d-of-%02d.dat", shimmer_prefix, c, total_chunk);
-		assert(written < sizeof(mmer_file_path));
-		fprintf(stderr, "useing data file: %s\n", mmer_file_path);
-		
-		written = snprintf(mmc_file_path, sizeof(mmc_file_path), "%s-MC-%02d-of-%02d.dat", shimmer_prefix, c, total_chunk);
-		assert(written < sizeof(mmc_file_path));
-		fprintf(stderr, "output data file: %s\n", mmc_file_path);
 
-		mmers_ = read_mmlist(mmer_file_path);
+	written = snprintf(mmer_file_path, sizeof(mmer_file_path), "%s-[0-9]*-of-[0-9]*.dat", shimmer_prefix);
+	assert(written < sizeof(mmer_file_path));
+	wordexp(mmer_file_path, &p, 0);
+	shimmer_fns = p.we_wordv;
+	for (int i; i < p.we_wordc; i++) {
+		fprintf(stderr, "useing shimmer data file: %s\n", shimmer_fns[i]);
+		mmers_ = read_mmlist(shimmer_fns[i]);
 		append_mmlist(&mmers, &mmers_);
-		
-		mmc = read_mm_count(mmc_file_path);
-		aggregate_mm_count(mcmap, &mmc);
-		kv_destroy(mmc);
 		kv_destroy(mmers_);
 	}
+        wordfree(&p);	
+
+
+	written = snprintf(mmc_file_path, sizeof(mmc_file_path), "%s-MC-[0-9]*-of-[0-9]*.dat", shimmer_prefix);
+	assert(written < sizeof(mmc_file_path));
+	wordexp(mmc_file_path, &p, 0);
+	mmc_fns = p.we_wordv;
+	for (int i; i < p.we_wordc; i++) {
+		fprintf(stderr, "using shimmer count file: %s\n", mmc_fns[i]);
+		mmc = read_mm_count(mmc_fns[i]);
+		aggregate_mm_count(mcmap, &mmc);
+		kv_destroy(mmc);
+	}
+
+        wordfree(&p);	
+	
+
 
 	mmer0_map = kh_init(MMER0);
 	build_map(&mmers, mmer0_map, rlmap, mcmap, mychunk, total_chunk);
