@@ -4,7 +4,7 @@ CFLAGS+=-Wall -Wno-unused-result -Wno-unused-function -Werror
 #CFLAGS+=-Wall -Wno-unused-result -Wno-unused-function
 LDLIBS=-lz
 
-all: build_read_index build_hmmer accumulate_mc mm_utils.so
+all: build_read_index build_hmmer accumulate_mc mm_utils.so print_overlaps dedup_ovlp
 
 kalloc.o: kalloc.c
 
@@ -27,7 +27,11 @@ build_hmmer: build_hmmer.c kalloc.o mm_reduce.o mm_sketch.o mm_utils.o mm_end_fi
 
 accumulate_mc: accumulate_mc.o kalloc.o mm_utils.o
 
+DW_banded.o: DW_banded.c
 
+print_overlaps: print_overlaps.c mm_utils.o kalloc.o  DW_banded.o
+
+dedup_ovlp: dedup_ovlp.c kalloc.o
 
 clean:
-	rm -f build_read_index build_hmmer accumulate_mc *.o *.so
+	rm -f dedup_ovlp accumulate_mc print_overlaps build_read_index build_hmmer accumulate_mc *.o *.so
