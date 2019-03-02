@@ -195,28 +195,38 @@ void print_overlaps(
 	uint64_t y0;
 	uint32_t rid0, pos0, rlen0, strand0;
 	uint32_t rid1, pos1, rlen1, strand1;
+	uint32_t right_ext = 0;
 	khiter_t k;
 	char *seq0 = NULL;
 	char *seq1 = NULL;
 	int32_t absent;
-	for (size_t __k0=0; __k0 < rpv->n; __k0++) {
-		y0 = rpv->a[__k0].y0;
+	uint8_t * contained;
+
+	contained = (uint8_t *) calloc(rpv->n, sizeof(uint8_t)); // use calloc to set element to zero
+
+	for (size_t __k0 = (rpv->n)-1; __k0 > 0; __k0--) {  // note: k0 is an unsigned type
+		y0 = rpv->a[__k0-1].y0;
 		rid0 = (uint32_t) (y0 >> 32);
 		pos0 = (uint32_t) ((y0 & 0xFFFFFFFF) >> 1) + 1;
-
 		k = kh_get(RLEN, rlmap, rid0);
-		rlen0 = kh_val(rlmap, k).len;	
 		assert(k != kh_end(rlmap));
+		rlen0 = kh_val(rlmap, k).len;	
 		seq0 = get_read_seq_mmap(seq_p, rid0, rlmap);
-		strand0 = rpv->a[__k0].direction;
+		strand0 = rpv->a[__k0-1].direction;
 
 		if (strand0 == REVERSED) {
 			reverse_complement(seq0, rlen0);
 		}
+		if (right_ext == 0) {
+			right_ext = rlen0;
+		}
 
 		size_t overlap_count = 0;
-		for (size_t __k1=1; (__k0+__k1 < rpv->n) && (overlap_count < BESTN); __k1++ ) {
-			y0 = rpv->a[__k0+__k1].y0;
+		for (size_t __k1=1; (__k0+__k1-1 < rpv->n) && (overlap_count < BESTN); __k1++ ) {
+
+			if ( contained[__k0+__k1-1] == 1 ) continue;
+
+			y0 = rpv->a[__k0+__k1-1].y0;
 			rid1 = (uint32_t) (y0 >> 32);
 			
 			if (rid0 == rid1) continue;
@@ -274,6 +284,7 @@ void print_overlaps(
 					strcpy(ovlp_type ,"contains");
 					k = kh_put(RPAIR, rid_pairs, ridp, &absent);
 					kh_val(rid_pairs, k) = CONTAINMENT;
+					contained[__k0+__k1-1] = 1;
 				} else {
 					t_end = slen0  - (q_end - t_end); 
 					q_end = slen0;
@@ -309,6 +320,7 @@ void print_overlaps(
 		}
 		kfree(NULL, seq0);
 	}
+	free(contained);
 }
 
 void process_overlaps(char * seq_db_file_path,
@@ -344,7 +356,7 @@ void process_overlaps(char * seq_db_file_path,
 			mhash1 = kh_key(mmer1_map, __j);
 			mhash1 >>= 8;
 			rpv = kh_val(mmer1_map, __j);
-			if (rpv->n <= 1 || rpv->n > LOCAL_OVERLAP_UPPERBOUND) continue;
+			if (rpv->n <= 2 || rpv->n > LOCAL_OVERLAP_UPPERBOUND) continue;
 			qsort(rpv->a, rpv->n, sizeof(rp128_t), rp128_comp);
 		    //printf("X %lu %lu %lu\n", mhash0, mhash1, rpv->n);
 			print_overlaps(rpv, rlmap, rid_pairs, seq_p);	   
@@ -446,7 +458,7 @@ int main(int argc, char *argv[]) {
 		append_mmlist(&mmers, &mmers_);
 		kv_destroy(mmers_);
 	}
-        wordfree(&p);	
+	wordfree(&p);	
 
 
 	written = snprintf(mmc_file_path, sizeof(mmc_file_path), "%s-MC-[0-9]*-of-[0-9]*.dat", shimmer_prefix);
