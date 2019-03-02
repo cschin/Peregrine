@@ -192,7 +192,7 @@ void print_overlaps(
 		char * seq_p){
 
 	uint64_t ridp;
-	uint64_t y0, y1;
+	uint64_t y0;
 	uint32_t rid0, pos0, rlen0, strand0;
 	uint32_t rid1, pos1, rlen1, strand1;
 	khiter_t k;
@@ -363,7 +363,7 @@ int main(int argc, char *argv[]) {
 	char seq_idx_file_path[8192];
 	char seqdb_file_path[8291];
         int c;	
-	uint32_t total_chunk, mychunk;
+	uint32_t total_chunk = 1, mychunk = 1;
 
 	wordexp_t p; 
 	char **mmc_fns; 
@@ -440,7 +440,7 @@ int main(int argc, char *argv[]) {
 	assert(written < sizeof(mmer_file_path));
 	wordexp(mmer_file_path, &p, 0);
 	shimmer_fns = p.we_wordv;
-	for (int i; i < p.we_wordc; i++) {
+	for (int i = 0; i < p.we_wordc; i++) {
 		fprintf(stderr, "useing shimmer data file: %s\n", shimmer_fns[i]);
 		mmers_ = read_mmlist(shimmer_fns[i]);
 		append_mmlist(&mmers, &mmers_);
@@ -453,7 +453,7 @@ int main(int argc, char *argv[]) {
 	assert(written < sizeof(mmc_file_path));
 	wordexp(mmc_file_path, &p, 0);
 	mmc_fns = p.we_wordv;
-	for (int i; i < p.we_wordc; i++) {
+	for (int i = 0; i < p.we_wordc; i++) {
 		fprintf(stderr, "using shimmer count file: %s\n", mmc_fns[i]);
 		mmc = read_mm_count(mmc_fns[i]);
 		aggregate_mm_count(mcmap, &mmc);
