@@ -43,7 +43,7 @@ int main(int argc, char *argv[])
 	int reduction_factor = REDUCTION_FACTOR;
 	int number_layers = 2;
 	int seq_file_counter;
-    int output_L0_mc = 1;
+	int output_L0_mc = 1;
 	mm128_v hmmerL0 = {0,0,0};
 	mm128_v hmmerL1 = {0,0,0};
 	mm128_v hmmerL2 = {0,0,0};
