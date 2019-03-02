@@ -38,12 +38,9 @@ mm128_v read_mmlist(char *fn) {
 };
 
 void append_mmlist(mm128_v * target, mm128_v * source) {
-	fprintf(stderr, "X1: %lu %lu\n", target->m, source->m);
 	kv_resize(mm128_t, NULL, *target, kv_size(*target) + kv_size(*source) );
 	memcpy(target->a + target->n, source->a, sizeof(mm128_t) * source->n);
-	fprintf(stderr, "X2: %lu %lu\n", target->m, source->m);
 	target->n += source->n;
-	fprintf(stderr, "X3: %lu %lu\n", target->m, source->m);
 }
 
 void mm_count(mm128_v * p, khash_t(MMC) *mcmap, mm_count_v * cp) {
