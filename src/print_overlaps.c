@@ -26,9 +26,12 @@ extern int optind, opterr, optopt;
 #define REVERSED 1
 #define READ_END_FUZZINESS 48
 #define LOCAL_OVERLAP_UPPERBOUND 72
-#define BESTN 1
+#define BESTN 2
+#define OVERLAP 0
+#define CONTAINMENT 1
 
-KHASH_SET_INIT_INT64(RPAIR);
+
+KHASH_MAP_INIT_INT64(RPAIR, uint8_t);
 
 uint8_t rmap[] = {
 	0,   1,   2,   3,   4,   5,   6,   7,   8,   9,  10,  11,  12,  13,  14,  15,
@@ -211,23 +214,24 @@ void print_overlaps(
 		}
 
 		size_t overlap_count = 0;
-		for (size_t __k1=1; (__k0+__k1 < rpv->n) && (overlap_count <= BESTN); __k1++ ) {
+		for (size_t __k1=1; (__k0+__k1 < rpv->n) && (overlap_count < BESTN); __k1++ ) {
 			y0 = rpv->a[__k0+__k1].y0;
 			rid1 = (uint32_t) (y0 >> 32);
 			
+			if (rid0 == rid1) continue;
+
 			ridp = rid0 < rid1 ? ( ((uint64_t) rid0) << 32) | ((uint64_t) rid1) : (((uint64_t) rid1) << 32) | ((uint64_t) rid0);
 			k = kh_get(RPAIR, rid_pairs, ridp);
-			if (rid0 == rid1) continue;
-			if (k != kh_end(rid_pairs) || rid0 == rid1) {
-				overlap_count += 1;
+			if (k != kh_end(rid_pairs)) {
+				if ( kh_val(rid_pairs, k) == OVERLAP ) overlap_count += 1;
 				continue;
 			}
 
 			pos1 = (uint32_t) ((y0 & 0xFFFFFFFF) >> 1) + 1;
 			assert(pos0-pos1 >= 0 );
 			k = kh_get(RLEN, rlmap, rid1);
-			rlen1 = kh_val(rlmap, k).len;	
 			assert(k != kh_end(rlmap));
+			rlen1 = kh_val(rlmap, k).len;	
 			seq1 = get_read_seq_mmap(seq_p, rid1, rlmap);
 			strand1 = rpv->a[__k0+__k1].direction;
 
@@ -237,9 +241,9 @@ void print_overlaps(
 			}
 
 			//printf("%09d %s\n%09d %s\n",rid0, seq0+pos0-pos1,rid1, seq1); 
-			alignment * aln;
 			uint32_t slen0 = rlen0 - pos0 + pos1;
 			uint32_t slen1 = rlen1;
+			alignment * aln;
 			aln = align(seq0 + pos0 - pos1, slen0, seq1, slen1, 100);
 			seq_coor_t q_bgn, q_end, t_bgn, t_end;
 			q_bgn = aln->aln_q_s; q_end = aln->aln_q_e; 
@@ -267,11 +271,15 @@ void print_overlaps(
 					t_end = slen1; 
 					q_end = slen1 + (q_end - t_end);
 					strcpy(ovlp_type ,"contains");
+					k = kh_put(RPAIR, rid_pairs, ridp, &absent);
+					kh_val(rid_pairs, k) = CONTAINMENT;
 				} else {
 					t_end = slen0  - (q_end - t_end); 
 					q_end = slen0;
 					strcpy(ovlp_type ,"overlap");
 					overlap_count ++;
+					k = kh_put(RPAIR, rid_pairs, ridp, &absent);
+					kh_val(rid_pairs, k) = OVERLAP;
 				}
 				if (strand0 == ORIGINAL) {
 					a_bgn = (seq_coor_t) (pos0-pos1) + q_bgn;
@@ -289,7 +297,6 @@ void print_overlaps(
 					b_bgn = (seq_coor_t) rlen1 - t_end;
 					b_end = (seq_coor_t) rlen1 - t_bgn;
 				}
-				kh_put(RPAIR, rid_pairs, ridp, &absent);
 				//assert(absent == 1);
 				printf("%09d %09d %d %0.1f %u %d %d %u %u %d %d %u %s\n", 
 						rid0, rid1, -aln->aln_str_size, err_est,
