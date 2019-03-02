@@ -160,7 +160,7 @@ int main(int argc, char *argv[])
 	fprintf(stderr, "output data file: %s\n", shimmer_output_path);
 	write_mmlist(shimmer_output_path, &shimmerL0);
 
-	
+    /* temporary disable this as it is not used for now	
 	mm128_v shimmerE5 = {0,0,0};
 	mm128_v shimmerE3 = {0,0,0};
 
@@ -176,7 +176,8 @@ int main(int argc, char *argv[])
 	printf("output data file: %s\n", shimmer_output_path);
 	write_mmlist(shimmer_output_path, &shimmerE3);
 	kv_destroy(shimmerE3);
-    
+    */
+
 	if (output_L0_mc == 1) {
 		written = snprintf(shimmer_output_path, sizeof shimmer_output_path, "%s-L0-MC-%02d-of-%02d.dat", out_prefix, mychunk, total_chunk);
 		assert(written < sizeof(shimmer_output_path));
