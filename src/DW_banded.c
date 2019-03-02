@@ -115,22 +115,14 @@ alignment * align(char * query_seq, seq_coor_t q_len,
     seq_coor_t max_k, new_max_k;
     seq_coor_t pre_k;
     seq_coor_t x, y;
-    seq_coor_t cd;
-    seq_coor_t ck;
-    seq_coor_t cx, cy, nx, ny;
     seq_coor_t max_d;
     seq_coor_t band_size;
 	bool start = false;
     unsigned long d_path_idx = 0;
-    unsigned long max_idx = 0;
 
     d_path_data2 * d_path;
-    d_path_data2 * d_path_aux;
     path_point * aln_path;
-    seq_coor_t aln_path_idx;
     alignment * align_rtn;
-    seq_coor_t aln_pos;
-    seq_coor_t i;
     bool aligned = false;
 
     //printf("debug: %ld %ld\n", q_len, t_len);
@@ -165,7 +157,6 @@ alignment * align(char * query_seq, seq_coor_t q_len,
     min_k = 0;
     max_k = 0;
     d_path_idx = 0;
-    max_idx = 0;
     for (d = 0; d < max_d; d ++ ) {
         if (max_k - min_k > band_size) {
             break;
@@ -210,7 +201,6 @@ alignment * align(char * query_seq, seq_coor_t q_len,
 
             if ( x >= q_len || y >= t_len) {
                 aligned = true;
-                max_idx = d_path_idx;
                 break;
             }
         }
