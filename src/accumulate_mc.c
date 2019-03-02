@@ -48,7 +48,7 @@ int main(int argc, char *argv[])
 
 	if (data_path_prefix == NULL) {
 		data_path_prefix = (char *) calloc(8192, 1);
-		snprintf( data_path_prefix, 8191, "hmmer" );
+		snprintf( data_path_prefix, 8191, "shimmer" );
 	}
 
 	khash_t(MMC) *mcmap = kh_init(MMC);

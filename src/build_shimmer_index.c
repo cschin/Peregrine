@@ -17,10 +17,10 @@ KSEQ_INIT(gzFile, gzread);
 extern char *optarg;
 extern int optind, opterr, optopt;
 
-void write_mc_count_mm128(char *fn, mm128_v * hmmer) {
+void write_mc_count_mm128(char *fn, mm128_v * shimmer) {
 	mm_count_v mmc = {0,0,0};
 	khash_t(MMC) *mcmap = kh_init(MMC);
-	mm_count(hmmer, mcmap, &mmc);
+	mm_count(shimmer, mcmap, &mmc);
 	write_mm_count(fn, &mmc);
 	kv_destroy(mmc);
 	kh_destroy(MMC, mcmap);
@@ -35,7 +35,7 @@ int main(int argc, char *argv[])
 	char *seq_dataset_path = NULL;
 	char *out_prefix = NULL;
 	char *index_path = NULL;
-	char hmmer_output_path[8192];
+	char shimmer_output_path[8192];
 	char seq_file_path[8192];
 	int l, c, written;
 	int total_chunk = 1;
@@ -44,9 +44,9 @@ int main(int argc, char *argv[])
 	int number_layers = 2;
 	int seq_file_counter;
 	int output_L0_mc = 1;
-	mm128_v hmmerL0 = {0,0,0};
-	mm128_v hmmerL1 = {0,0,0};
-	mm128_v hmmerL2 = {0,0,0};
+	mm128_v shimmerL0 = {0,0,0};
+	mm128_v shimmerL1 = {0,0,0};
+	mm128_v shimmerL2 = {0,0,0};
 	seq_data_v seq_data = {0, 0, 0};
 
     khash_t(RID) *hmap;
@@ -87,7 +87,7 @@ int main(int argc, char *argv[])
 					fprintf(stderr, "Option -%c not specified, using 'seq_dataset.idx' as the input index path\n", optopt);
                 }
 				else if (optopt == 'o') {
-					fprintf (stderr, "Option -%c not specified, using 'hmmer' as the output prefix\n", optopt);
+					fprintf (stderr, "Option -%c not specified, using 'shimmer' as the output prefix\n", optopt);
 				}
 				return 1;
 			default:
@@ -113,7 +113,7 @@ int main(int argc, char *argv[])
 
 	if (out_prefix == NULL) {
 		out_prefix = (char *) calloc(8192, 1);
-		snprintf( out_prefix, 8191, "hmmer" );
+		snprintf( out_prefix, 8191, "shimmer" );
 	}
 
 
@@ -150,67 +150,67 @@ int main(int argc, char *argv[])
 			    fprintf(stderr, "WARNNING: cannot map read:%s to an internal unique identifier. The read will be ignored. \n", seq->name.s);
 				continue;
 			};
-			mm_sketch(NULL, seq->seq.s, seq->seq.l, 80, 16, rid, 0, &hmmerL0);
+			mm_sketch(NULL, seq->seq.s, seq->seq.l, 80, 16, rid, 0, &shimmerL0);
 		}
 		gzclose(fp);
 	}
 
-	written = snprintf(hmmer_output_path, sizeof hmmer_output_path, "%s-L0-%02d-of-%02d.dat", out_prefix, mychunk, total_chunk);
-	assert(written < sizeof(hmmer_output_path));
-	fprintf(stderr, "output data file: %s\n", hmmer_output_path);
-	write_mmlist(hmmer_output_path, &hmmerL0);
+	written = snprintf(shimmer_output_path, sizeof shimmer_output_path, "%s-L0-%02d-of-%02d.dat", out_prefix, mychunk, total_chunk);
+	assert(written < sizeof(shimmer_output_path));
+	fprintf(stderr, "output data file: %s\n", shimmer_output_path);
+	write_mmlist(shimmer_output_path, &shimmerL0);
 
 	
-	mm128_v hmmerE5 = {0,0,0};
-	mm128_v hmmerE3 = {0,0,0};
+	mm128_v shimmerE5 = {0,0,0};
+	mm128_v shimmerE3 = {0,0,0};
 
-    mm_end_filter(&hmmerL0, &hmmerE5, &hmmerE3, rlmap, 250);
-	written = snprintf(hmmer_output_path, sizeof hmmer_output_path, "%s-E5-%02d-of-%02d.dat", out_prefix, mychunk, total_chunk);
-	assert(written < sizeof(hmmer_output_path));
-	printf("output data file: %s\n", hmmer_output_path);
-	write_mmlist(hmmer_output_path, &hmmerE5);
-	kv_destroy(hmmerE5);
+    mm_end_filter(&shimmerL0, &shimmerE5, &shimmerE3, rlmap, 250);
+	written = snprintf(shimmer_output_path, sizeof shimmer_output_path, "%s-E5-%02d-of-%02d.dat", out_prefix, mychunk, total_chunk);
+	assert(written < sizeof(shimmer_output_path));
+	printf("output data file: %s\n", shimmer_output_path);
+	write_mmlist(shimmer_output_path, &shimmerE5);
+	kv_destroy(shimmerE5);
 
-	written = snprintf(hmmer_output_path, sizeof hmmer_output_path, "%s-E3-%02d-of-%02d.dat", out_prefix, mychunk, total_chunk);
-	assert(written < sizeof(hmmer_output_path));
-	printf("output data file: %s\n", hmmer_output_path);
-	write_mmlist(hmmer_output_path, &hmmerE3);
-	kv_destroy(hmmerE3);
+	written = snprintf(shimmer_output_path, sizeof shimmer_output_path, "%s-E3-%02d-of-%02d.dat", out_prefix, mychunk, total_chunk);
+	assert(written < sizeof(shimmer_output_path));
+	printf("output data file: %s\n", shimmer_output_path);
+	write_mmlist(shimmer_output_path, &shimmerE3);
+	kv_destroy(shimmerE3);
     
 	if (output_L0_mc == 1) {
-		written = snprintf(hmmer_output_path, sizeof hmmer_output_path, "%s-L0-MC-%02d-of-%02d.dat", out_prefix, mychunk, total_chunk);
-		assert(written < sizeof(hmmer_output_path));
-		printf("output data file: %s\n", hmmer_output_path);
-		write_mc_count_mm128(hmmer_output_path, &hmmerL0);
+		written = snprintf(shimmer_output_path, sizeof shimmer_output_path, "%s-L0-MC-%02d-of-%02d.dat", out_prefix, mychunk, total_chunk);
+		assert(written < sizeof(shimmer_output_path));
+		printf("output data file: %s\n", shimmer_output_path);
+		write_mc_count_mm128(shimmer_output_path, &shimmerL0);
 	}
 
-    mm_reduce(&hmmerL0, &hmmerL1, reduction_factor);
-	kv_destroy(hmmerL0);
+    mm_reduce(&shimmerL0, &shimmerL1, reduction_factor);
+	kv_destroy(shimmerL0);
 	if (number_layers == 1) {
-		written = snprintf(hmmer_output_path, sizeof hmmer_output_path, "%s-L1-%02d-of-%02d.dat", out_prefix, mychunk, total_chunk);
-		assert(written < sizeof(hmmer_output_path));
-		printf("output data file: %s\n", hmmer_output_path);
-		write_mmlist(hmmer_output_path, &hmmerL1);
+		written = snprintf(shimmer_output_path, sizeof shimmer_output_path, "%s-L1-%02d-of-%02d.dat", out_prefix, mychunk, total_chunk);
+		assert(written < sizeof(shimmer_output_path));
+		printf("output data file: %s\n", shimmer_output_path);
+		write_mmlist(shimmer_output_path, &shimmerL1);
 		
-		written = snprintf(hmmer_output_path, sizeof hmmer_output_path, "%s-L1-MC-%02d-of-%02d.dat", out_prefix, mychunk, total_chunk);
-		assert(written < sizeof(hmmer_output_path));
-		printf("output data file: %s\n", hmmer_output_path);
-		write_mc_count_mm128(hmmer_output_path, &hmmerL1);
+		written = snprintf(shimmer_output_path, sizeof shimmer_output_path, "%s-L1-MC-%02d-of-%02d.dat", out_prefix, mychunk, total_chunk);
+		assert(written < sizeof(shimmer_output_path));
+		printf("output data file: %s\n", shimmer_output_path);
+		write_mc_count_mm128(shimmer_output_path, &shimmerL1);
 	}
 	else if (number_layers > 1) {
-		mm_reduce(&hmmerL1, &hmmerL2, reduction_factor);
-	    kv_destroy(hmmerL1);
-		written = snprintf(hmmer_output_path, sizeof hmmer_output_path, "%s-L2-%02d-of-%02d.dat", out_prefix, mychunk, total_chunk);
-		assert(written < sizeof(hmmer_output_path));
-		fprintf(stderr, "output data file: %s\n", hmmer_output_path);
-		write_mmlist(hmmer_output_path, &hmmerL2);
+		mm_reduce(&shimmerL1, &shimmerL2, reduction_factor);
+	    kv_destroy(shimmerL1);
+		written = snprintf(shimmer_output_path, sizeof shimmer_output_path, "%s-L2-%02d-of-%02d.dat", out_prefix, mychunk, total_chunk);
+		assert(written < sizeof(shimmer_output_path));
+		fprintf(stderr, "output data file: %s\n", shimmer_output_path);
+		write_mmlist(shimmer_output_path, &shimmerL2);
 		
-		written = snprintf(hmmer_output_path, sizeof hmmer_output_path, "%s-L2-MC-%02d-of-%02d.dat", out_prefix, mychunk, total_chunk);
-		assert(written < sizeof(hmmer_output_path));
-		printf("output data file: %s\n", hmmer_output_path);
-		write_mc_count_mm128(hmmer_output_path, &hmmerL2);
+		written = snprintf(shimmer_output_path, sizeof shimmer_output_path, "%s-L2-MC-%02d-of-%02d.dat", out_prefix, mychunk, total_chunk);
+		assert(written < sizeof(shimmer_output_path));
+		printf("output data file: %s\n", shimmer_output_path);
+		write_mc_count_mm128(shimmer_output_path, &shimmerL2);
 
-	    kv_destroy(hmmerL2);
+	    kv_destroy(shimmerL2);
 	}
 
 	kh_destroy(RID, hmap);
