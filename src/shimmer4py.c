@@ -178,6 +178,38 @@ void build_shimmer_map4py(py_mmer_t * py_mmer,
 	py_mmer->mcmap = (void *) mcmap_;
 }
 
+
+uint32_t get_mmer_count( py_mmer_t * py_mmer, uint64_t mhash ) {
+	khash_t(MMC) *mcmap_ = (khash_t(MMC) *) py_mmer->mcmap;
+	khiter_t k = kh_get(MMC, mcmap_, mhash);
+	if (k != kh_end(mcmap_)) {
+		return kh_val(mcmap_, k);
+	} else {
+		return 0;
+	}
+
+}
+
+void print_overlaps(
+		rp128_v * rpv,
+		khash_t(RLEN) * rlmap){
+
+	uint64_t ridp;
+	uint64_t y0;
+	uint32_t rid0, pos0, rlen0, strand0;
+	khiter_t k;
+
+	for (size_t __k0 = (rpv->n)-1; __k0 > 0; __k0--) {  // note: k0 is an unsigned type
+		y0 = rpv->a[__k0-1].y0;
+		rid0 = (uint32_t) (y0 >> 32);
+		pos0 = (uint32_t) ((y0 & 0xFFFFFFFF) >> 1) + 1;
+		k = kh_get(RLEN, rlmap, rid0);
+		assert(k != kh_end(rlmap));
+		rlen0 = kh_val(rlmap, k).len;	
+		strand0 = rpv->a[__k0-1].direction;
+	}
+}
+
 void process_overlaps(py_mmer_t * py_mmer) {
 
 	khash_t(MMER0) * mmer0_map_ = (khash_t(MMER0) *) py_mmer->mmer0_map; 
@@ -188,24 +220,20 @@ void process_overlaps(py_mmer_t * py_mmer) {
 	uint64_t mhash0, mhash1;
 
 	khash_t(MMER1) * mmer1_map;
-    uint32_t count = 0;
 
 	for (khiter_t __i = kh_begin(mmer0_map_); __i != kh_end(mmer0_map_); ++__i) {
 		if (!kh_exist(mmer0_map_,__i)) continue;
 		mhash0 = kh_key(mmer0_map_, __i);
-	    mhash0 >>= 8;	
+		mhash0 >>= 8;	
 		printf("%09ld\n", mhash0);
 		mmer1_map = kh_val(mmer0_map_, __i);
 		for (khiter_t __j = kh_begin(mmer1_map); __j != kh_end(mmer1_map); ++__j) {
-		    if (!kh_exist(mmer1_map,__j)) continue;
+			if (!kh_exist(mmer1_map,__j)) continue;
 			mhash1 = kh_key(mmer1_map, __j);
 			mhash1 >>= 8;
 			rpv = kh_val(mmer1_map, __j);
-			//if (rpv->n <= 2 || rpv->n > LOCAL_OVERLAP_UPPERBOUND) continue;
-			//qsort(rpv->a, rpv->n, sizeof(rp128_t), rp128_comp);
-		    printf("X %lu %lu %lu\n", mhash0, mhash1, rpv->n);
-			count++;
+			qsort(rpv->a, rpv->n, sizeof(rp128_t), rp128_comp);
+			//print_overlaps(rpv, rlmap);
 		}
 	}
-	printf("X2: %u\n", count);
 }
