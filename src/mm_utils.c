@@ -219,13 +219,13 @@ void build_map(
 
     uint64_t mhash;
     mm128_t mmer0, mmer1;
-	rp128_v * rpv;
+	mp128_v * mpv;
 	uint32_t rid;
     uint32_t pos, rpos;
 	uint32_t span;
 	uint32_t mcount = 0;
 	int32_t absent;
-	rp128_t rp;
+	mp128_t rp;
 	khiter_t k;
 	khash_t(MMER1) * mmer1_map;
 	size_t s=0;
@@ -262,17 +262,17 @@ void build_map(
 				mmer1_map = kh_value(mmer0_map, k);
 				k = kh_put(MMER1, mmer1_map, mmer1.x, &absent);
 				if (absent) {
-					rpv = kmalloc(NULL, sizeof(rp128_v));
-					rpv->n = 0; rpv->m = 0; rpv->a = NULL;
-					kh_value(mmer1_map, k) = rpv;
+					mpv = kmalloc(NULL, sizeof(mp128_v));
+					mpv->n = 0; mpv->m = 0; mpv->a = NULL;
+					kh_value(mmer1_map, k) = mpv;
 				} else {
-					rpv = kh_value(mmer1_map, k);
+					mpv = kh_value(mmer1_map, k);
 				}
 				rp.y0 = mmer0.y;
 				rp.y1 = mmer1.y;
 
 				rp.direction = ORIGINAL;
-				kv_push(rp128_t, NULL, *rpv, rp);
+				kv_push(mp128_t, NULL, *mpv, rp);
 				// printf("Y %lu %lu %09u\n", mmer0.x >> 8, mmer1.x >> 8, (uint32_t) (rp.y0 >> 32));
 			}
 			
@@ -284,11 +284,11 @@ void build_map(
 				mmer1_map = kh_value(mmer0_map, k);
 				k = kh_put(MMER1, mmer1_map, mmer0.x, &absent);
 				if (absent) {
-					rpv = kmalloc(NULL, sizeof(rp128_v));
-					rpv->n = 0; rpv->m = 0; rpv->a = NULL;
-					kh_value(mmer1_map, k) = rpv;
+					mpv = kmalloc(NULL, sizeof(mp128_v));
+					mpv->n = 0; mpv->m = 0; mpv->a = NULL;
+					kh_value(mmer1_map, k) = mpv;
 				} else {
-					rpv = kh_value(mmer1_map, k);
+					mpv = kh_value(mmer1_map, k);
 				}
 				rp.y0 = mmer1.y;
 				span = mmer1.x & 0xFF;
@@ -309,7 +309,7 @@ void build_map(
 				rp.y1 = ((rp.y1 & 0xFFFFFFFF00000001) | (rpos << 1 )) ^ 0x1; // ^0x1 -> switch strand
 				rp.direction = REVERSED;
 
-				kv_push(rp128_t, NULL, *rpv, rp);
+				kv_push(mp128_t, NULL, *mpv, rp);
 				// printf("Y %lu %lu %09u\n", mmer1.x >> 8, mmer0.x >> 8, rid);
 			}
 		}	

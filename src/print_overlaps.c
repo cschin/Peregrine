@@ -22,11 +22,11 @@ extern int optind, opterr, optopt;
 	do { perror(msg); exit(EXIT_FAILURE); } while (0)
 
 #define MMER_COUNT_LOWER_BOUND 2
-#define MMER_COUNT_UPPER_BOUND 72
+#define MMER_COUNT_UPPER_BOUND 240
 #define ORIGINAL 0
 #define REVERSED 1
 #define READ_END_FUZZINESS 48
-#define LOCAL_OVERLAP_UPPERBOUND 72
+#define LOCAL_OVERLAP_UPPERBOUND 120
 #define BESTN 4
 #define OVERLAP 0
 #define CONTAINMENT 1
@@ -69,15 +69,15 @@ void reverse_complement(char * seq, size_t len) {
 	}
 }
 
-int rp128_comp(const void * a, const void * b) {
-	rp128_t * a0 = (rp128_t *) a;
-	rp128_t * b0 = (rp128_t *) b;
+int mp128_comp(const void * a, const void * b) {
+	mp128_t * a0 = (mp128_t *) a;
+	mp128_t * b0 = (mp128_t *) b;
 	return ((a0->y0 & 0xFFFFFFFF) >> 1) < ((b0->y0 & 0xFFFFFFFF) >> 1);
 }
 
 
 void print_overlaps(
-		rp128_v * rpv,
+		mp128_v * mpv,
 		khash_t(RLEN) * rlmap,
 		khash_t(RPAIR) * rid_pairs,
 		char * seq_p){
@@ -93,17 +93,17 @@ void print_overlaps(
 	int32_t absent;
 	uint8_t * contained;
 
-	contained = (uint8_t *) calloc(rpv->n, sizeof(uint8_t)); // use calloc to set element to zero
+	contained = (uint8_t *) calloc(mpv->n, sizeof(uint8_t)); // use calloc to set element to zero
 
-	for (size_t __k0 = (rpv->n)-1; __k0 > 0; __k0--) {  // note: k0 is an unsigned type
-		y0 = rpv->a[__k0-1].y0;
+	for (size_t __k0 = (mpv->n)-1; __k0 > 0; __k0--) {  // note: k0 is an unsigned type
+		y0 = mpv->a[__k0-1].y0;
 		rid0 = (uint32_t) (y0 >> 32);
 		pos0 = (uint32_t) ((y0 & 0xFFFFFFFF) >> 1) + 1;
 		k = kh_get(RLEN, rlmap, rid0);
 		assert(k != kh_end(rlmap));
 		rlen0 = kh_val(rlmap, k).len;	
 		seq0 = get_read_seq_mmap(seq_p, rid0, rlmap);
-		strand0 = rpv->a[__k0-1].direction;
+		strand0 = mpv->a[__k0-1].direction;
 
 		if (strand0 == REVERSED) {
 			reverse_complement(seq0, rlen0);
@@ -113,11 +113,11 @@ void print_overlaps(
 		}
 
 		size_t overlap_count = 0;
-		for (size_t __k1=1; (__k0+__k1-1 < rpv->n) && (overlap_count < BESTN); __k1++ ) {
+		for (size_t __k1=1; (__k0+__k1-1 < mpv->n) && (overlap_count < BESTN); __k1++ ) {
 
 			if ( contained[__k0+__k1-1] == 1 ) continue;
 
-			y0 = rpv->a[__k0+__k1-1].y0;
+			y0 = mpv->a[__k0+__k1-1].y0;
 			rid1 = (uint32_t) (y0 >> 32);
 			
 			if (rid0 == rid1) continue;
@@ -135,9 +135,9 @@ void print_overlaps(
 			assert(k != kh_end(rlmap));
 			rlen1 = kh_val(rlmap, k).len;	
 			seq1 = get_read_seq_mmap(seq_p, rid1, rlmap);
-			strand1 = rpv->a[__k0+__k1-1].direction;
+			strand1 = mpv->a[__k0+__k1-1].direction;
 
-			//printf("X1: %lu %lu %lu %lu %09u %09u\n", rpv->n, __k0, __k1, overlap_count, rid0, rid1);
+			//printf("X1: %lu %lu %lu %lu %09u %09u\n", mpv->n, __k0, __k1, overlap_count, rid0, rid1);
 			if (strand1 == REVERSED) {
 				reverse_complement(seq1, rlen1);
 			}
@@ -222,7 +222,7 @@ void process_overlaps(char * seq_db_file_path,
 	int fd;
 	struct stat sb;
 	char * seq_p;
-	rp128_v * rpv;
+	mp128_v * mpv;
 	uint64_t mhash0, mhash1;
 
 	khash_t(MMER1) * mmer1_map;
@@ -246,11 +246,11 @@ void process_overlaps(char * seq_db_file_path,
 		    if (!kh_exist(mmer1_map,__j)) continue;
 			mhash1 = kh_key(mmer1_map, __j);
 			mhash1 >>= 8;
-			rpv = kh_val(mmer1_map, __j);
-			if (rpv->n <= 2 || rpv->n > LOCAL_OVERLAP_UPPERBOUND) continue;
-			qsort(rpv->a, rpv->n, sizeof(rp128_t), rp128_comp);
-		    //printf("X %lu %lu %lu\n", mhash0, mhash1, rpv->n);
-			print_overlaps(rpv, rlmap, rid_pairs, seq_p);	   
+			mpv = kh_val(mmer1_map, __j);
+			if (mpv->n <= 2 || mpv->n > LOCAL_OVERLAP_UPPERBOUND) continue;
+			qsort(mpv->a, mpv->n, sizeof(mp128_t), mp128_comp);
+		    //printf("X %lu %lu %lu\n", mhash0, mhash1, mpv->n);
+			print_overlaps(mpv, rlmap, rid_pairs, seq_p);	   
 		}
 	}
 	kh_destroy(RPAIR, rid_pairs);
@@ -282,7 +282,7 @@ int main(int argc, char *argv[]) {
 	khash_t(MMER0) * mmer0_map;
 	khash_t(MMER1) * mmer1_map;
 
-	rp128_v * rpv;
+	mp128_v * mpv;
 	
 	opterr = 0;
 
@@ -376,8 +376,8 @@ int main(int argc, char *argv[]) {
 		mmer1_map = kh_val(mmer0_map, __i);
 		for (khiter_t __j = kh_begin(mmer1_map); __j != kh_end(mmer1_map); ++__j) {
 			if (!kh_exist(mmer1_map,__j)) continue;
-			rpv = kh_val(mmer1_map, __j);
-			kv_destroy(*rpv);
+			mpv = kh_val(mmer1_map, __j);
+			kv_destroy(*mpv);
 		}
 		kh_destroy(MMER1, mmer1_map);
 	}
