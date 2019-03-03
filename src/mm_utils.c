@@ -8,6 +8,8 @@
 #include "kvec.h"
 #include "kalloc.h"
 
+#define ORIGINAL 0
+#define REVERSED 1
 
 void write_mmlist(char *fn, mm128_v *p) {
 	FILE *out_data;
@@ -203,3 +205,134 @@ char * get_read_seq_mmap(char * seq_p, uint32_t rid, khash_t(RLEN) *rlmap) {
 	strcpy(seq, seq_p + rl.offset);
     return seq;	
 }	
+
+
+void build_map(
+		mm128_v * mmers,
+		khash_t(MMER0) * mmer0_map, 
+		khash_t(RLEN) *rlmap, 
+		khash_t(MMC) *mcmap,
+		uint32_t chunk,
+		uint32_t total_chunk,
+		uint32_t lowerbound,
+		uint32_t upperbound) {
+
+    uint64_t mhash;
+    mm128_t mmer0, mmer1;
+	rp128_v * rpv;
+	uint32_t rid;
+    uint32_t pos, rpos;
+	uint32_t span;
+	uint32_t mcount = 0;
+	int32_t absent;
+	rp128_t rp;
+	khiter_t k;
+	khash_t(MMER1) * mmer1_map;
+	size_t s=0;
+
+	for(;;) {
+		mmer0 = mmers->a[s];
+		mhash = mmer0.x >> 8;
+		k = kh_get(MMC, mcmap, mhash);
+		assert(k != kh_end(mcmap));
+        mcount = kh_val(mcmap, k); 
+		if (mcount >= lowerbound && mcount < upperbound) break;
+		s++;
+	}
+	for( size_t i=s+1; i < mmers->n; i++ ){
+		mmer1 = mmers->a[i];
+		mhash = mmer1.x >> 8;
+		k = kh_get(MMC, mcmap, mhash);
+		assert(k != kh_end(mcmap));
+        mcount = kh_val(mcmap, k); 
+		if (mcount < lowerbound || mcount > upperbound) continue;
+
+	    if ((mmer0.y >> 32) == (mmer1.y >> 32)) {  // the pairs are in the same read
+
+			// don't use two minimers that are too close to each other
+			if (((mmer1.y >> 1) & 0xFFFFFFF) - ((mmer0.y >> 1) & 0xFFFFFFF) < 100) {
+				mmer0 = mmer1;
+				continue;
+			}
+
+			if ((mmer0.x >> 8) % total_chunk == chunk % total_chunk) {
+				k = kh_put(MMER0, mmer0_map, mmer0.x, &absent);
+				if (absent) kh_value(mmer0_map, k) = kh_init(MMER1);
+
+				mmer1_map = kh_value(mmer0_map, k);
+				k = kh_put(MMER1, mmer1_map, mmer1.x, &absent);
+				if (absent) {
+					rpv = kmalloc(NULL, sizeof(rp128_v));
+					rpv->n = 0; rpv->m = 0; rpv->a = NULL;
+					kh_value(mmer1_map, k) = rpv;
+				} else {
+					rpv = kh_value(mmer1_map, k);
+				}
+				rp.y0 = mmer0.y;
+				rp.y1 = mmer1.y;
+
+				rp.direction = ORIGINAL;
+				kv_push(rp128_t, NULL, *rpv, rp);
+				// printf("Y %lu %lu %09u\n", mmer0.x >> 8, mmer1.x >> 8, (uint32_t) (rp.y0 >> 32));
+			}
+			
+			// reverse direction
+			if ((mmer1.x >> 8) % total_chunk == chunk % total_chunk) {
+				k = kh_put(MMER0, mmer0_map, mmer1.x, &absent);
+				if (absent) kh_value(mmer0_map, k) = kh_init(MMER1);
+
+				mmer1_map = kh_value(mmer0_map, k);
+				k = kh_put(MMER1, mmer1_map, mmer0.x, &absent);
+				if (absent) {
+					rpv = kmalloc(NULL, sizeof(rp128_v));
+					rpv->n = 0; rpv->m = 0; rpv->a = NULL;
+					kh_value(mmer1_map, k) = rpv;
+				} else {
+					rpv = kh_value(mmer1_map, k);
+				}
+				rp.y0 = mmer1.y;
+				span = mmer1.x & 0xFF;
+				rid = rp.y0 >> 32;
+				pos = ((rp.y0 & 0xFFFFFFFF) >> 1) + 1;
+				k = kh_get(RLEN, rlmap, rid);
+				assert(k != kh_end(rlmap));
+				rpos = kh_val(rlmap, k).len - pos + span -1;
+				rp.y0 = ((rp.y0 & 0xFFFFFFFF00000001) | (rpos << 1 )) ^ 0x1; // ^0x1 -> switch strand
+
+				rp.y1 = mmer0.y;
+				span = mmer0.x & 0xFF;
+				rid = rp.y1 >> 32;
+				pos = ((rp.y1 & 0xFFFFFFFF) >> 1) + 1;
+				k = kh_get(RLEN, rlmap, rid);
+				assert(k != kh_end(rlmap));
+				rpos = kh_val(rlmap, k).len - pos + span - 1;
+				rp.y1 = ((rp.y1 & 0xFFFFFFFF00000001) | (rpos << 1 )) ^ 0x1; // ^0x1 -> switch strand
+				rp.direction = REVERSED;
+
+				kv_push(rp128_t, NULL, *rpv, rp);
+				// printf("Y %lu %lu %09u\n", mmer1.x >> 8, mmer0.x >> 8, rid);
+			}
+		}	
+		mmer0 = mmer1;
+	}
+
+}
+
+void build_map4py(
+		mm128_v * mmers,
+		void * mmer0_map,
+		void * rlmap,
+		void * mcmap,
+		uint32_t chunk,
+		uint32_t total_chunk,
+		uint32_t lowerbound,
+		uint32_t upperbound) {
+	build_map(mmers, 
+			(khash_t(MMER0) *) mmer0_map,
+			(khash_t(RLEN) *) rlmap,
+			(khash_t(MMC) *) mcmap,
+			chunk, 
+			total_chunk,
+			lowerbound,
+			upperbound);
+}
