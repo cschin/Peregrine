@@ -27,7 +27,7 @@ extern int optind, opterr, optopt;
 #define REVERSED 1
 #define READ_END_FUZZINESS 48
 #define LOCAL_OVERLAP_UPPERBOUND 72
-#define BESTN 2
+#define BESTN 4
 #define OVERLAP 0
 #define CONTAINMENT 1
 
