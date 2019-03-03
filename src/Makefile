@@ -4,7 +4,7 @@ CFLAGS+=-Wall -Wno-unused-result -Wno-unused-function -Werror
 #CFLAGS+=-Wall -Wno-unused-result -Wno-unused-function
 LDLIBS=-lz
 
-all: build_read_index build_shimmer_index accumulate_mc shimmer_utils.so shimmer_to_overlap dedup_overlaps
+all: build_read_index build_shimmer_index accumulate_mc shimmer_to_overlap dedup_overlap shimmer4py.so himmer_utils.so
 
 kalloc.o: kalloc.c
 
