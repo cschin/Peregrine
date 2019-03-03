@@ -74,9 +74,9 @@ void reverse_complement(char * seq, size_t len) {
 	}
 }
 
-int rp128_comp(const void * a, const void * b) {
-	rp128_t * a0 = (rp128_t *) a;
-	rp128_t * b0 = (rp128_t *) b;
+int mp128_comp(const void * a, const void * b) {
+	mp128_t * a0 = (mp128_t *) a;
+	mp128_t * b0 = (mp128_t *) b;
 	return ((a0->y0 & 0xFFFFFFFF) >> 1) < ((b0->y0 & 0xFFFFFFFF) >> 1);
 }
 
@@ -190,50 +190,49 @@ uint32_t get_mmer_count( py_mmer_t * py_mmer, uint64_t mhash ) {
 
 }
 
-void print_overlaps(
-		rp128_v * rpv,
-		khash_t(RLEN) * rlmap){
 
-	uint64_t ridp;
-	uint64_t y0;
-	uint32_t rid0, pos0, rlen0, strand0;
-	khiter_t k;
+typedef struct { uint64_t x0, x1, y0, y1; uint8_t direction;} mp256_t;
+typedef struct { size_t n, m; mp256_t *a; } mp256_v;
 
-	for (size_t __k0 = (rpv->n)-1; __k0 > 0; __k0--) {  // note: k0 is an unsigned type
-		y0 = rpv->a[__k0-1].y0;
-		rid0 = (uint32_t) (y0 >> 32);
-		pos0 = (uint32_t) ((y0 & 0xFFFFFFFF) >> 1) + 1;
-		k = kh_get(RLEN, rlmap, rid0);
-		assert(k != kh_end(rlmap));
-		rlen0 = kh_val(rlmap, k).len;	
-		strand0 = rpv->a[__k0-1].direction;
-	}
-}
-
-void process_overlaps(py_mmer_t * py_mmer) {
+mp256_v *get_shimmer_hits(py_mmer_t * py_mmer, uint64_t mhash0, uint32_t span) {
 
 	khash_t(MMER0) * mmer0_map_ = (khash_t(MMER0) *) py_mmer->mmer0_map; 
 	//khash_t(RLEN) * rlmap_ = (khash_t(RLEN) *) rlmap_;
 	//khash_t(MMC) * mcmap_ = (khash_t(MMC) *) mcmap_; 
 
-	rp128_v * rpv;
-	uint64_t mhash0, mhash1;
+	mp128_v * mpv;
+	mp256_t mp256;
+	mp256_v * mpv_out;
+	uint64_t mhash1;
+	khiter_t k;
+
+	mpv_out = calloc(sizeof(mp256_v), 1);
 
 	khash_t(MMER1) * mmer1_map;
+    mhash0 <<= 8;
+	mhash0 |= span;
+	mp256.x0 = mhash0;
 
-	for (khiter_t __i = kh_begin(mmer0_map_); __i != kh_end(mmer0_map_); ++__i) {
-		if (!kh_exist(mmer0_map_,__i)) continue;
-		mhash0 = kh_key(mmer0_map_, __i);
-		mhash0 >>= 8;	
-		printf("%09ld\n", mhash0);
-		mmer1_map = kh_val(mmer0_map_, __i);
-		for (khiter_t __j = kh_begin(mmer1_map); __j != kh_end(mmer1_map); ++__j) {
-			if (!kh_exist(mmer1_map,__j)) continue;
-			mhash1 = kh_key(mmer1_map, __j);
-			mhash1 >>= 8;
-			rpv = kh_val(mmer1_map, __j);
-			qsort(rpv->a, rpv->n, sizeof(rp128_t), rp128_comp);
-			//print_overlaps(rpv, rlmap);
+	k = kh_get(MMER0, mmer0_map_, mhash0);
+	if ( k == kh_end(mmer0_map_) ) {
+		return mpv_out;
+	}
+	mmer1_map = kh_val(mmer0_map_, k);
+	for (khiter_t __j = kh_begin(mmer1_map); __j != kh_end(mmer1_map); ++__j) {
+
+		if (!kh_exist(mmer1_map,__j)) continue;
+		mhash1 = kh_key(mmer1_map, __j);
+		mp256.x1 = mhash1;
+		mhash1 >>= 8;
+		mpv = kh_val(mmer1_map, __j);
+		qsort(mpv->a, mpv->n, sizeof(mp128_t), mp128_comp);
+		for (size_t __k0 = 0; __k0 < (mpv->n); __k0++) {  
+			mp256.y0 = mpv->a[__k0].y0;
+			mp256.y1 = mpv->a[__k0].y1;
+			mp256.direction = mpv->a[__k0].direction;
+
+			kv_push(mp256_t, NULL, *mpv_out, mp256); 
 		}
 	}
+	return mpv_out;
 }
