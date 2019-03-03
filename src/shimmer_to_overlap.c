@@ -76,7 +76,7 @@ int mp128_comp(const void * a, const void * b) {
 }
 
 
-void print_overlaps(
+void shimmer_to_overlap(
 		mp128_v * mpv,
 		khash_t(RLEN) * rlmap,
 		khash_t(RPAIR) * rid_pairs,
@@ -249,8 +249,7 @@ void process_overlaps(char * seq_db_file_path,
 			mpv = kh_val(mmer1_map, __j);
 			if (mpv->n <= 2 || mpv->n > LOCAL_OVERLAP_UPPERBOUND) continue;
 			qsort(mpv->a, mpv->n, sizeof(mp128_t), mp128_comp);
-		    //printf("X %lu %lu %lu\n", mhash0, mhash1, mpv->n);
-			print_overlaps(mpv, rlmap, rid_pairs, seq_p);	   
+			shimmer_to_overlap(mpv, rlmap, rid_pairs, seq_p);
 		}
 	}
 	kh_destroy(RPAIR, rid_pairs);
