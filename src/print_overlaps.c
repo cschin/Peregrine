@@ -135,7 +135,7 @@ void print_overlaps(
 			assert(k != kh_end(rlmap));
 			rlen1 = kh_val(rlmap, k).len;	
 			seq1 = get_read_seq_mmap(seq_p, rid1, rlmap);
-			strand1 = rpv->a[__k0+__k1].direction;
+			strand1 = rpv->a[__k0+__k1-1].direction;
 
 			//printf("X1: %lu %lu %lu %lu %09u %09u\n", rpv->n, __k0, __k1, overlap_count, rid0, rid1);
 			if (strand1 == REVERSED) {
