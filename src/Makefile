@@ -15,10 +15,10 @@ mm_sketch.o: mm_sketch.c
 mm_utils.o: mm_utils.c
 
 mm_utils.so: mm_utils.c
-	gcc -g -shared -fPIC -Wall kalloc.c mm_utils.c -o mm_utils.so
+	gcc -O3 -shared -fPIC -Wall kalloc.c mm_utils.c -o mm_utils.so
 
 shimmer4py.so: mm_utils.c shimmer4py.c
-	gcc -g -shared -fPIC -Wall kalloc.c mm_utils.c shimmer4py.c -o shimmer4py.so
+	gcc -O3 -shared -fPIC -Wall kalloc.c mm_utils.c shimmer4py.c -o shimmer4py.so
 
 mm_end_filter.o: mm_end_filter.c
 
