@@ -53,9 +53,6 @@ KHASH_MAP_INIT_INT64(MMER0, mmert1_p_t);
 void build_map( mm128_v *, khash_t(MMER0) *, khash_t(RLEN) *, khash_t(MMC) *, 
 		uint32_t, uint32_t, uint32_t, uint32_t); 
 
-void build_map4py( mm128_v *, void *, void *, void *,
-		uint32_t, uint32_t, uint32_t, uint32_t); 
-
 char * get_read_seq(FILE *, uint32_t, khash_t(RLEN) *);
 char * get_read_seq_mmap(char *, uint32_t, khash_t(RLEN) *);
 
