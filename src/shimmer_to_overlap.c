@@ -169,7 +169,7 @@ void shimmer_to_overlap(
 				t_bgn = 0;
 
 				char ovlp_type[128];
-				if ( slen1 < slen0 ) {
+				if ( slen1 < slen0 + READ_END_FUZZINESS) {
 					t_end = slen1; 
 					q_end = slen1 + (q_end - t_end);
 					strcpy(ovlp_type ,"contains");
@@ -187,18 +187,26 @@ void shimmer_to_overlap(
 				if (strand0 == ORIGINAL) {
 					a_bgn = (seq_coor_t) (pos0-pos1) + q_bgn;
 					a_end = (seq_coor_t) (pos0-pos1) + q_end;
+					a_bgn = a_bgn < 0 ? 0 : a_bgn;              //this ad-hoc fix, read shoule be stiched by alignment
+					a_end = a_end >= rlen0 ? rlen0 : a_end;
 				} else {
 					q_bgn -= t_bgn;
 					t_bgn = 0;
 					a_bgn = (seq_coor_t) rlen0 - (seq_coor_t) (pos0 - pos1) - q_end;
 					a_end = (seq_coor_t) rlen0 - (seq_coor_t) (pos0 - pos1) - q_bgn;
+					a_bgn = a_bgn < 0 ? 0 : a_bgn;              //this ad-hoc fix
+					a_end = a_end >= rlen0 ? rlen0 : a_end;
 				}
 				if (strand1 == ORIGINAL) {
 					b_bgn = t_bgn;
 					b_end = t_end;
+					b_bgn = b_bgn < 0 ? 0 : b_bgn;              //this ad-hoc fix
+					b_end = b_end >= rlen1 ? rlen1 : b_end;
 				} else {
 					b_bgn = (seq_coor_t) rlen1 - t_end;
 					b_end = (seq_coor_t) rlen1 - t_bgn;
+					b_bgn = b_bgn < 0 ? 0 : b_bgn;              //this ad-hoc fix
+					b_end = b_end >= rlen1 ? rlen1 : b_end;
 				}
 				//assert(absent == 1);
 				printf("%09d %09d %d %0.1f %u %d %d %u %u %d %d %u %s\n", 
