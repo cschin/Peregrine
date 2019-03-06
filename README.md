@@ -1,6 +1,6 @@
 # SHIMMER Genome Assembly Toolkit
 
-This code base includes code that use SHIMMER (Sparse / HIerarchical MinimiMER) 
+This code base includes code that uses SHIMMER (Sparse / HIerarchical MinimiMER) 
 for genome assembly and other related applications.
 
 # LICENSE
