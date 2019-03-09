@@ -7,6 +7,7 @@
 #include <stdbool.h>
 #include <wordexp.h>
 #include "shimmer.h"
+#include <time.h>
 #include "khash.h"
 #include "kvec.h"
 #include "kalloc.h"
@@ -30,6 +31,7 @@ extern int optind, opterr, optopt;
 #define BESTN 4
 #define OVERLAP 0
 #define CONTAINMENT 1
+#define ALNBANDSIZE 100
 
 
 KHASH_MAP_INIT_INT64(RPAIR, uint8_t);
@@ -95,6 +97,8 @@ void shimmer_to_overlap(
 
 	contained = (uint8_t *) calloc(mpv->n, sizeof(uint8_t)); // use calloc to set element to zero
 
+	// clock_t time_begin = clock();
+	// clock_t time_end;
 	for (size_t __k0 = (mpv->n)-1; __k0 > 0; __k0--) {  // note: k0 is an unsigned type
 		y0 = mpv->a[__k0-1].y0;
 		rid0 = (uint32_t) (y0 >> 32);
@@ -121,7 +125,9 @@ void shimmer_to_overlap(
 			rid1 = (uint32_t) (y0 >> 32);
 			
 			if (rid0 == rid1) continue;
-
+			// time_end = clock();
+			// printf("X0: %lu %lu %lu %lu %09u %09u %lu\n", mpv->n, __k0, __k1, overlap_count, rid0, rid1, time_end-time_begin);
+			// time_begin = time_end;
 			ridp = rid0 < rid1 ? ( ((uint64_t) rid0) << 32) | ((uint64_t) rid1) : (((uint64_t) rid1) << 32) | ((uint64_t) rid0);
 			k = kh_get(RPAIR, rid_pairs, ridp);
 			if (k != kh_end(rid_pairs)) {
@@ -146,7 +152,7 @@ void shimmer_to_overlap(
 			uint32_t slen0 = rlen0 - pos0 + pos1;
 			uint32_t slen1 = rlen1;
 			alignment * aln;
-			aln = align(seq0 + pos0 - pos1, slen0, seq1, slen1, 100);
+			aln = align(seq0 + pos0 - pos1, slen0, seq1, slen1, ALNBANDSIZE);
 			seq_coor_t q_bgn, q_end, t_bgn, t_end;
 			q_bgn = aln->aln_q_s; q_end = aln->aln_q_e; 
 			t_bgn = aln->aln_t_s; t_end = aln->aln_t_e;
@@ -157,7 +163,7 @@ void shimmer_to_overlap(
 						(abs(slen0 - q_end) < READ_END_FUZZINESS ||
 						 abs(slen1 - t_end) < READ_END_FUZZINESS)) &&
 					q_end > 500 && t_end > 500) {
-				//printf("X2: %u %u %d %d %d %d\n", pos0, pos1, q_bgn, q_end, t_bgn, t_end);
+				// printf("X3: %u %u %d %d %d %d\n", pos0, pos1, q_bgn, q_end, t_bgn, t_end);
 				// printf("%s\n%s\n", seq0+pos0-pos1, seq1); 
 
 
@@ -208,11 +214,12 @@ void shimmer_to_overlap(
 					b_bgn = b_bgn < 0 ? 0 : b_bgn;              //this ad-hoc fix
 					b_end = b_end >= rlen1 ? rlen1 : b_end;
 				}
-				//assert(absent == 1);
-				printf("%09d %09d %d %0.1f %u %d %d %u %u %d %d %u %s\n", 
-						rid0, rid1, -aln->aln_str_size, err_est,
+				assert(absent == 1);
+				fprintf(stdout,"%09d %09d %d %0.1f %u %d %d %u %u %d %d %u %s\n",
+						rid0, rid1, -(aln->aln_str_size), err_est,
 						ORIGINAL, a_bgn, a_end, rlen0,
-						strand0 == ORIGINAL ? strand1 : 1-strand1, b_bgn, b_end, rlen1, ovlp_type);
+						(strand0 == ORIGINAL ? strand1 : 1-strand1), b_bgn, b_end, rlen1,
+						ovlp_type);
 			}
 			free_alignment(aln);
 			kfree(NULL, seq1);
@@ -245,6 +252,9 @@ void process_overlaps(char * seq_db_file_path,
 	seq_p = mmap((caddr_t)0, sb.st_size, PROT_READ, MAP_SHARED, fd, 0);
 
 	khash_t(RPAIR) * rid_pairs = kh_init(RPAIR);
+	uint32_t iter_count = 0;
+	clock_t begin = clock();
+	clock_t end;
 	for (khiter_t __i = kh_begin(mmer0_map); __i != kh_end(mmer0_map); ++__i) {
 		if (!kh_exist(mmer0_map,__i)) continue;
 		mhash0 = kh_key(mmer0_map, __i);
@@ -258,6 +268,12 @@ void process_overlaps(char * seq_db_file_path,
 			if (mpv->n <= 2 || mpv->n > LOCAL_OVERLAP_UPPERBOUND) continue;
 			qsort(mpv->a, mpv->n, sizeof(mp128_t), mp128_comp);
 			shimmer_to_overlap(mpv, rlmap, rid_pairs, seq_p);
+			iter_count++;
+			if (iter_count % 10000 == 0) {
+				end = clock();
+				fprintf(stderr, "iter_count: %d, %f s for 10000 candidates\n", iter_count, (double)(end - begin) / CLOCKS_PER_SEC);
+				begin = end;
+			}
 		}
 	}
 	kh_destroy(RPAIR, rid_pairs);
@@ -357,6 +373,10 @@ int main(int argc, char *argv[]) {
 		kv_destroy(mmers_);
 	}
 	wordfree(&p);	
+
+	char buffer[32768];
+
+	setvbuf(stdout, buffer, _IOFBF, sizeof(buffer));
 
 
 	written = snprintf(mmc_file_path, sizeof(mmc_file_path), "%s-MC-[0-9]*-of-[0-9]*.dat", shimmer_prefix);
