@@ -93,11 +93,11 @@ alignment_t * align(char * query_seq, seq_coor_t q_len,
     k_offset = max_d;
 
     align_rtn = calloc( 1, sizeof(alignment_t));
-    align_rtn->aln_str_size = 0;
-    align_rtn->aln_q_s = 0;
-    align_rtn->aln_q_e = 0;
-    align_rtn->aln_t_s = 0;
-    align_rtn->aln_t_e = 0;
+    align_rtn->astr_size = 0;
+    align_rtn->q_bgn = 0;
+    align_rtn->q_end = 0;
+    align_rtn->t_bgn = 0;
+    align_rtn->t_end = 0;
 
     //printf("max_d: %lu, band_size: %lu\n", max_d, band_size);
     best_m = -1;
@@ -125,8 +125,8 @@ alignment_t * align(char * query_seq, seq_coor_t q_len,
             }
 
 			if ( (x - x1 > 16) && (start == false) ) {
-				align_rtn->aln_q_s = x1;
-				align_rtn->aln_t_s = y1;
+				align_rtn->q_bgn = x1;
+				align_rtn->t_bgn = y1;
 				start = true;
 			}
 
@@ -162,16 +162,16 @@ alignment_t * align(char * query_seq, seq_coor_t q_len,
         min_k = new_min_k - 1;
 
         if (aligned == true) {
-            align_rtn->aln_q_e = x;
-            align_rtn->aln_t_e = y;
+            align_rtn->q_end = x;
+            align_rtn->t_end = y;
             align_rtn->dist = d;
-            align_rtn->aln_str_size = (x + y + d) / 2;
+            align_rtn->astr_size = (align_rtn->q_end - align_rtn->q_bgn + align_rtn->t_end - align_rtn->t_bgn + 2*d) / 2;
             break;
         } 
     }
 	if (aligned == false) {
-		align_rtn->aln_q_s = 0;
-		align_rtn->aln_t_s = 0;
+		align_rtn->q_bgn = 0;
+		align_rtn->t_bgn = 0;
 	}
 
     free(V);

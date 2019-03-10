@@ -69,20 +69,17 @@ char * get_read_seq_mmap(char *, uint32_t, khash_t(RLEN) *, uint8_t);
 // For DWalign
 typedef int32_t seq_coor_t;
 
+typedef struct {
+	seq_coor_t astr_size, dist ;
+	seq_coor_t q_bgn, q_end;
+	seq_coor_t t_bgn, t_end;
+} alignment_t;
 
 typedef struct {
 	uint64_t y0, y1;
 	uint32_t rl0, rl1;
-	seq_coor_t aln_str_size, dist;
-	seq_coor_t aln_q_s, aln_q_e;
-	seq_coor_t aln_t_s, aln_t_e;
+	alignment_t *aln;
 } ovlp_t;
-
-typedef struct {
-	seq_coor_t aln_str_size, dist ;
-	seq_coor_t aln_q_s, aln_q_e;
-	seq_coor_t aln_t_s, aln_t_e;
-} alignment_t;
 
 typedef struct {
     seq_coor_t s1, e1;

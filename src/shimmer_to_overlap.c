@@ -118,8 +118,8 @@ void shimmer_to_overlap(
 			alignment_t * aln;
 			aln = align(seq0 + pos0 - pos1, slen0, seq1, slen1, ALNBANDSIZE);
 			seq_coor_t q_bgn, q_end, t_bgn, t_end;
-			q_bgn = aln->aln_q_s; q_end = aln->aln_q_e; 
-			t_bgn = aln->aln_t_s; t_end = aln->aln_t_e;
+			q_bgn = aln->q_bgn; q_end = aln->q_end; 
+			t_bgn = aln->t_bgn; t_end = aln->t_end;
 			//printf("X2: %u %u %d %d %d %d\n", pos0, pos1, q_bgn, q_end, t_bgn, t_end);
 
 			if ((q_bgn < READ_END_FUZZINESS &&
@@ -133,7 +133,7 @@ void shimmer_to_overlap(
 
 				seq_coor_t a_bgn, a_end, b_bgn, b_end;
 				double err_est;
-				err_est	= 100.0 - 100.0 * (double) (aln->dist) / (double) (aln->aln_str_size);
+				err_est	= 100.0 - 100.0 * (double) (aln->dist) / (double) (aln->astr_size);
 
 				q_bgn -= t_bgn;
 				t_bgn = 0;
@@ -180,7 +180,7 @@ void shimmer_to_overlap(
 				}
 				assert(absent == 1);
 				fprintf(stdout,"%09d %09d %d %0.1f %u %d %d %u %u %d %d %u %s\n",
-						rid0, rid1, -(aln->aln_str_size), err_est,
+						rid0, rid1, -(aln->astr_size), err_est,
 						ORIGINAL, a_bgn, a_end, rlen0,
 						(strand0 == ORIGINAL ? strand1 : 1-strand1), b_bgn, b_end, rlen1,
 						ovlp_type);
