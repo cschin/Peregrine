@@ -60,9 +60,9 @@
 #include <stdbool.h>
 #include "shimmer.h"
 
-alignment * align(char * query_seq, seq_coor_t q_len,
-                  char * target_seq, seq_coor_t t_len,
-                  seq_coor_t band_tolerance) {
+alignment_t * align(char * query_seq, seq_coor_t q_len,
+		char * target_seq, seq_coor_t t_len,
+		seq_coor_t band_tolerance) {
     seq_coor_t * V;
     seq_coor_t * U;  // array of matched bases for each "k"
     seq_coor_t k_offset;
@@ -77,7 +77,7 @@ alignment * align(char * query_seq, seq_coor_t q_len,
     seq_coor_t band_size;
 	bool start = false;
 
-    alignment * align_rtn;
+    alignment_t * align_rtn;
     bool aligned = false;
 
     //printf("debug: %ld %ld\n", q_len, t_len);
@@ -92,9 +92,7 @@ alignment * align(char * query_seq, seq_coor_t q_len,
 
     k_offset = max_d;
 
-    align_rtn = calloc( 1, sizeof(alignment));
-    align_rtn->t_aln_str = NULL;
-    align_rtn->q_aln_str = NULL;
+    align_rtn = calloc( 1, sizeof(alignment_t));
     align_rtn->aln_str_size = 0;
     align_rtn->aln_q_s = 0;
     align_rtn->aln_q_e = 0;
@@ -181,8 +179,6 @@ alignment * align(char * query_seq, seq_coor_t q_len,
     return align_rtn;
 }
 
-void free_alignment(alignment * aln) {
-    if (aln->q_aln_str) free(aln->q_aln_str);
-    if (aln->t_aln_str) free(aln->t_aln_str);
+void free_alignment(alignment_t * aln) {
     free(aln);
 }

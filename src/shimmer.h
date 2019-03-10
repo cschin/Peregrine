@@ -69,31 +69,20 @@ char * get_read_seq_mmap(char *, uint32_t, khash_t(RLEN) *, uint8_t);
 // For DWalign
 typedef int32_t seq_coor_t;
 
+
+typedef struct {
+	uint64_t y0, y1;
+	uint32_t rl0, rl1;
+	seq_coor_t aln_str_size, dist;
+	seq_coor_t aln_q_s, aln_q_e;
+	seq_coor_t aln_t_s, aln_t_e;
+} ovlp_t;
+
 typedef struct {
 	seq_coor_t aln_str_size, dist ;
 	seq_coor_t aln_q_s, aln_q_e;
 	seq_coor_t aln_t_s, aln_t_e;
-	char * q_aln_str; char * t_aln_str;
-
-} alignment;
-
-typedef struct {
-	seq_coor_t pre_k;
-	seq_coor_t x1, y1;
-	seq_coor_t x2, y2;
-} d_path_data;
-
-typedef struct {
-	seq_coor_t d, k;
-	seq_coor_t pre_k;
-	seq_coor_t x1, y1;
-	seq_coor_t x2, y2;
-} d_path_data2;
-
-typedef struct {
-	seq_coor_t x;
-	seq_coor_t y;
-} path_point;
+} alignment_t;
 
 typedef struct {
     seq_coor_t s1, e1;
@@ -101,11 +90,11 @@ typedef struct {
     long int score;
 } aln_range;
 
-alignment * align(char *, seq_coor_t,
+alignment_t * align(char *, seq_coor_t,
                   char *, seq_coor_t,
                   seq_coor_t); 
 
-void free_alignment(alignment *);
+void free_alignment(alignment_t *);
 
 #ifdef __cplusplus
 }

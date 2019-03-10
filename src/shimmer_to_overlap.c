@@ -115,7 +115,7 @@ void shimmer_to_overlap(
 			//printf("%09d %s\n%09d %s\n",rid0, seq0+pos0-pos1,rid1, seq1); 
 			uint32_t slen0 = rlen0 - pos0 + pos1;
 			uint32_t slen1 = rlen1;
-			alignment * aln;
+			alignment_t * aln;
 			aln = align(seq0 + pos0 - pos1, slen0, seq1, slen1, ALNBANDSIZE);
 			seq_coor_t q_bgn, q_end, t_bgn, t_end;
 			q_bgn = aln->aln_q_s; q_end = aln->aln_q_e; 
@@ -157,7 +157,7 @@ void shimmer_to_overlap(
 				if (strand0 == ORIGINAL) {
 					a_bgn = (seq_coor_t) (pos0-pos1) + q_bgn;
 					a_end = (seq_coor_t) (pos0-pos1) + q_end;
-					a_bgn = a_bgn < 0 ? 0 : a_bgn;              //this ad-hoc fix, read shoule be stiched by alignment
+					a_bgn = a_bgn < 0 ? 0 : a_bgn;              //this ad-hoc fix, read should be stiched by alignment
 					a_end = a_end >= rlen0 ? rlen0 : a_end;
 				} else {
 					q_bgn -= t_bgn;
