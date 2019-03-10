@@ -77,7 +77,7 @@ alignment_t * align(char * query_seq, seq_coor_t q_len,
     seq_coor_t band_size;
 	bool start = false;
 
-    alignment_t * align_rtn;
+    alignment_t * rtn;
     bool aligned = false;
 
     //printf("debug: %ld %ld\n", q_len, t_len);
@@ -92,12 +92,12 @@ alignment_t * align(char * query_seq, seq_coor_t q_len,
 
     k_offset = max_d;
 
-    align_rtn = calloc( 1, sizeof(alignment_t));
-    align_rtn->astr_size = 0;
-    align_rtn->q_bgn = 0;
-    align_rtn->q_end = 0;
-    align_rtn->t_bgn = 0;
-    align_rtn->t_end = 0;
+    rtn = calloc( 1, sizeof(alignment_t));
+    rtn->astr_size = 0;
+    rtn->q_bgn = 0;
+    rtn->q_end = 0;
+    rtn->t_bgn = 0;
+    rtn->t_end = 0;
 
     //printf("max_d: %lu, band_size: %lu\n", max_d, band_size);
     best_m = -1;
@@ -125,8 +125,8 @@ alignment_t * align(char * query_seq, seq_coor_t q_len,
             }
 
 			if ( (x - x1 > 16) && (start == false) ) {
-				align_rtn->q_bgn = x1;
-				align_rtn->t_bgn = y1;
+				rtn->q_bgn = x1;
+				rtn->t_bgn = y1;
 				start = true;
 			}
 
@@ -162,21 +162,22 @@ alignment_t * align(char * query_seq, seq_coor_t q_len,
         min_k = new_min_k - 1;
 
         if (aligned == true) {
-            align_rtn->q_end = x;
-            align_rtn->t_end = y;
-            align_rtn->dist = d;
-            align_rtn->astr_size = (align_rtn->q_end - align_rtn->q_bgn + align_rtn->t_end - align_rtn->t_bgn + 2*d) / 2;
+            rtn->q_end = x;
+            rtn->t_end = y;
+            rtn->dist = d;
+			// we don't really generate the alingment path here, so we can only estimate the alignment string size
+            rtn->astr_size = (rtn->q_end - rtn->q_bgn + rtn->t_end - rtn->t_bgn + 2*d) / 2;
             break;
         } 
     }
 	if (aligned == false) {
-		align_rtn->q_bgn = 0;
-		align_rtn->t_bgn = 0;
+		rtn->q_bgn = 0;
+		rtn->t_bgn = 0;
 	}
 
     free(V);
     free(U);
-    return align_rtn;
+    return rtn;
 }
 
 void free_alignment(alignment_t * aln) {
