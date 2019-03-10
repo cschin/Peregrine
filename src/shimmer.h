@@ -10,6 +10,12 @@
 extern "C" {
 #endif
 
+void encode_4bit_bidirection(uint8_t *, char *, size_t ); 
+
+void decode_4bit_bidirection(uint8_t *, char *, size_t, uint8_t);
+
+void reverse_complement(char *, size_t);
+
 typedef struct { uint64_t x, y; } mm128_t;
 typedef struct { size_t n, m; mm128_t *a; } mm128_v;
 void mm_sketch(void *km, const char *str, int len, int w, int k, uint32_t rid, int is_hpc, mm128_v *p);
@@ -54,7 +60,7 @@ void build_map( mm128_v *, khash_t(MMER0) *, khash_t(RLEN) *, khash_t(MMC) *,
 		uint32_t, uint32_t, uint32_t, uint32_t); 
 
 char * get_read_seq(FILE *, uint32_t, khash_t(RLEN) *);
-char * get_read_seq_mmap(char *, uint32_t, khash_t(RLEN) *);
+char * get_read_seq_mmap(char *, uint32_t, khash_t(RLEN) *, uint8_t);
 
 // For DWalign
 typedef int32_t seq_coor_t;

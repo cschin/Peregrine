@@ -36,40 +36,6 @@ extern int optind, opterr, optopt;
 
 KHASH_MAP_INIT_INT64(RPAIR, uint8_t);
 
-uint8_t rmap[] = {
-	0,   1,   2,   3,   4,   5,   6,   7,   8,   9,  10,  11,  12,  13,  14,  15,
-	16,  17,  18,  19,  20,  21,  22,  23,  24,  25,  26,  27,  28,  29,  30,  31,
-	32,  33,  34,  35,  36,  37,  38,  39,  40,  41,  42,  43,  44,  45,  46,  47,
-	48,  49,  50,  51,  52,  53,  54,  55,  56,  57,  58,  59,  60,  61,  62,  63,
-	64,  84,  66,  71,  68,  69,  70,  67,  72,  73,  74,  75,  76,  77,  78,  79,
-	80,  81,  82,  83,  65,  85,  86,  87,  88,  89,  90,  91,  92,  93,  94,  95,
-	96, 116,  98, 103, 100, 101, 102,  99, 104, 105, 106, 107, 108, 109, 110, 111,
-	112, 113, 114, 115,  97, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127,
-	128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143,
-	144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159,
-	160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175,
-	176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191,
-	192, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207,
-	208, 209, 210, 211, 212, 213, 214, 215, 216, 217, 218, 219, 220, 221, 222, 223,
-	224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239,
-	240, 241, 242, 243, 244, 245, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255
-};
-
-
-
-void reverse_complement(char * seq, size_t len) {
-	size_t p, rp;
-	char tmp;
-	p = 0;
-	for (;;) {
-		rp = len - p - 1;
-		if ((rp - p)  <= 1) break;
-		tmp = seq[rp];
-		seq[rp] = rmap[(uint8_t)seq[p]];
-		seq[p] = rmap[(uint8_t)tmp];
-		p ++;
-	}
-}
 
 int mp128_comp(const void * a, const void * b) {
 	mp128_t * a0 = (mp128_t *) a;
@@ -106,8 +72,8 @@ void shimmer_to_overlap(
 		k = kh_get(RLEN, rlmap, rid0);
 		assert(k != kh_end(rlmap));
 		rlen0 = kh_val(rlmap, k).len;	
-		seq0 = get_read_seq_mmap(seq_p, rid0, rlmap);
 		strand0 = mpv->a[__k0-1].direction;
+		seq0 = get_read_seq_mmap(seq_p, rid0, rlmap, strand0);
 
 		if (strand0 == REVERSED) {
 			reverse_complement(seq0, rlen0);
@@ -139,14 +105,11 @@ void shimmer_to_overlap(
 			assert(pos0-pos1 >= 0 );
 			k = kh_get(RLEN, rlmap, rid1);
 			assert(k != kh_end(rlmap));
-			rlen1 = kh_val(rlmap, k).len;	
-			seq1 = get_read_seq_mmap(seq_p, rid1, rlmap);
+			rlen1 = kh_val(rlmap, k).len;
 			strand1 = mpv->a[__k0+__k1-1].direction;
+			seq1 = get_read_seq_mmap(seq_p, rid1, rlmap, strand1);
 
 			//printf("X1: %lu %lu %lu %lu %09u %09u\n", mpv->n, __k0, __k1, overlap_count, rid0, rid1);
-			if (strand1 == REVERSED) {
-				reverse_complement(seq1, rlen1);
-			}
 
 			//printf("%09d %s\n%09d %s\n",rid0, seq0+pos0-pos1,rid1, seq1); 
 			uint32_t slen0 = rlen0 - pos0 + pos1;

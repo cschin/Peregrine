@@ -24,7 +24,7 @@ shimmer_end_filter.o: shimmer_end_filter.c
 
 accumulate_mc.o: accumulate_mc.c
 
-build_seq_db: build_seqdb.c kalloc.o 
+build_read_index: build_read_index.c kalloc.o shimmer_utils.o
 
 build_shimmer_index: build_shimmer_index.c kalloc.o shimmer_reduce.o mm_sketch.o shimmer_utils.o shimmer_end_filter.o
 

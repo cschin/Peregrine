@@ -5,6 +5,7 @@
 #include <stdint.h>
 #include <unistd.h>
 #include "kseq.h"
+#include "shimmer.h"
 
 KSEQ_INIT(gzFile, gzread);
 
@@ -99,11 +100,14 @@ int main(int argc, char *argv[])
 		}
 		seq = kseq_init(fp);
 		while ((l = kseq_read(seq)) >= 0) {
+			uint8_t * encoded;
+			encoded = malloc(seq->seq.l);
+			encode_4bit_bidirection(encoded, seq->seq.s, seq->seq.l);
 			fprintf(index_file, "%09d %s %u %lu\n", rid, seq->name.s, seq->seq.l, offset);
-			fwrite(seq->seq.s, sizeof(char), seq->seq.l, seqdb_file);
-			fwrite("\0", sizeof(char), 1, seqdb_file); //terminate the strings
+			fwrite(encoded, sizeof(uint8_t), seq->seq.l, seqdb_file);
 			rid += 1;
-			offset += seq->seq.l + 1;
+			offset += seq->seq.l;
+			free(encoded);
 		}
 		kseq_destroy(seq);
 		gzclose(fp);
