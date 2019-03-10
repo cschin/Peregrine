@@ -24,8 +24,12 @@ extern int optind, opterr, optopt;
 
 #define MMER_COUNT_LOWER_BOUND 2
 #define MMER_COUNT_UPPER_BOUND 240
+#ifndef ORIGINAL
 #define ORIGINAL 0
+#endif
+#ifndef REVERSED
 #define REVERSED 1
+#endif
 #define READ_END_FUZZINESS 48
 #define LOCAL_OVERLAP_UPPERBOUND 120
 #define BESTN 4
@@ -75,9 +79,6 @@ void shimmer_to_overlap(
 		strand0 = mpv->a[__k0-1].direction;
 		seq0 = get_read_seq_mmap(seq_p, rid0, rlmap, strand0);
 
-		if (strand0 == REVERSED) {
-			reverse_complement(seq0, rlen0);
-		}
 		if (right_ext == 0) {
 			right_ext = rlen0;
 		}
