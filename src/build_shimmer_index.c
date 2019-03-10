@@ -11,6 +11,8 @@
 #include "kseq.h"
 
 #define REDUCTION_FACTOR 6
+#define DEFAULT_WINDOW_SIZE 80
+#define DEFAULT_KMER_SIZE 16
 
 KSEQ_INIT(gzFile, gzread);
 
@@ -44,6 +46,8 @@ int main(int argc, char *argv[])
 	int number_layers = 2;
 	int seq_file_counter;
 	int output_L0_mc = 1;
+	int window_size = DEFAULT_WINDOW_SIZE;
+	int kmer_size = DEFAULT_KMER_SIZE;
 	mm128_v shimmerL0 = {0,0,0};
 	mm128_v shimmerL1 = {0,0,0};
 	mm128_v shimmerL2 = {0,0,0};
@@ -53,7 +57,7 @@ int main(int argc, char *argv[])
     khash_t(RLEN) *rlmap=kh_init(RLEN);
 	opterr = 0;
 
-	while ((c = getopt(argc, argv, "d:i:o:t:c:l:r:m:")) != -1) {
+	while ((c = getopt(argc, argv, "d:i:o:t:c:l:r:m:w:k:")) != -1) {
 		switch (c) {
 			case 'd':
 				seq_dataset_path = optarg;
@@ -79,11 +83,17 @@ int main(int argc, char *argv[])
 			case 'm':
 				output_L0_mc = atoi(optarg);
 				break;
+			case 'w':
+				window_size = atoi(optarg);
+				break;
+			case 'k':
+				kmer_size = atoi(optarg);
+				break;
 			case '?':
 				if (optopt == 'd') {
 					fprintf (stderr, "Option -%c not specified, using 'seq_dataset.lst' as the input sequence dataset file list\n", optopt);
 				}
-				if (optopt == 'i') {
+				else if (optopt == 'i') {
 					fprintf(stderr, "Option -%c not specified, using 'seq_dataset.idx' as the input index path\n", optopt);
                 }
 				else if (optopt == 'o') {
@@ -98,6 +108,7 @@ int main(int argc, char *argv[])
 	assert(total_chunk > 0);
 	assert(mychunk > 0 && mychunk <= total_chunk);
 	assert(reduction_factor < 256);
+	assert(window_size >= 24 && kmer_size >= 12 && window_size > kmer_size);
 	
 	fprintf(stderr, "reduction factor= %d\n", reduction_factor);
 
@@ -150,7 +161,7 @@ int main(int argc, char *argv[])
 			    fprintf(stderr, "WARNNING: cannot map read:%s to an internal unique identifier. The read will be ignored. \n", seq->name.s);
 				continue;
 			};
-			mm_sketch(NULL, seq->seq.s, seq->seq.l, 80, 16, rid, 0, &shimmerL0);
+			mm_sketch(NULL, seq->seq.s, seq->seq.l, window_size, kmer_size, rid, 0, &shimmerL0);
 		}
 		gzclose(fp);
 	}
