@@ -78,7 +78,9 @@ typedef struct {
 typedef struct {
 	uint64_t y0, y1;
 	uint32_t rl0, rl1;
-	alignment_t *aln;
+	uint8_t strand0, strand1;
+	uint8_t ovlp_type;
+	alignment_t aln;
 } ovlp_t;
 
 typedef struct {

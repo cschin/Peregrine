@@ -130,60 +130,32 @@ void shimmer_to_overlap(
 				// printf("X3: %u %u %d %d %d %d\n", pos0, pos1, q_bgn, q_end, t_bgn, t_end);
 				// printf("%s\n%s\n", seq0+pos0-pos1, seq1); 
 
-
-				seq_coor_t a_bgn, a_end, b_bgn, b_end;
-				double err_est;
-				err_est	= 100.0 - 100.0 * (double) (aln->dist) / (double) (aln->astr_size);
-
-				q_bgn -= t_bgn;
-				t_bgn = 0;
-
-				char ovlp_type[128];
+				uint8_t ovlp_type;
 				if ( slen1 < slen0 + READ_END_FUZZINESS) {
 					t_end = slen1; 
 					q_end = slen1 + (q_end - t_end);
-					strcpy(ovlp_type ,"contains");
 					k = kh_put(RPAIR, rid_pairs, ridp, &absent);
 					kh_val(rid_pairs, k) = CONTAINMENT;
+					ovlp_type = CONTAINMENT;
 					contained[__k0+__k1-1] = 1;
 				} else {
 					t_end = slen0  - (q_end - t_end); 
-					q_end = slen0;
-					strcpy(ovlp_type ,"overlap");
 					overlap_count ++;
 					k = kh_put(RPAIR, rid_pairs, ridp, &absent);
 					kh_val(rid_pairs, k) = OVERLAP;
-				}
-				if (strand0 == ORIGINAL) {
-					a_bgn = (seq_coor_t) (pos0-pos1) + q_bgn;
-					a_end = (seq_coor_t) (pos0-pos1) + q_end;
-					a_bgn = a_bgn < 0 ? 0 : a_bgn;              //this ad-hoc fix, read should be stiched by alignment
-					a_end = a_end >= rlen0 ? rlen0 : a_end;
-				} else {
-					q_bgn -= t_bgn;
-					t_bgn = 0;
-					a_bgn = (seq_coor_t) rlen0 - (seq_coor_t) (pos0 - pos1) - q_end;
-					a_end = (seq_coor_t) rlen0 - (seq_coor_t) (pos0 - pos1) - q_bgn;
-					a_bgn = a_bgn < 0 ? 0 : a_bgn;              //this ad-hoc fix
-					a_end = a_end >= rlen0 ? rlen0 : a_end;
-				}
-				if (strand1 == ORIGINAL) {
-					b_bgn = t_bgn;
-					b_end = t_end;
-					b_bgn = b_bgn < 0 ? 0 : b_bgn;              //this ad-hoc fix
-					b_end = b_end >= rlen1 ? rlen1 : b_end;
-				} else {
-					b_bgn = (seq_coor_t) rlen1 - t_end;
-					b_end = (seq_coor_t) rlen1 - t_bgn;
-					b_bgn = b_bgn < 0 ? 0 : b_bgn;              //this ad-hoc fix
-					b_end = b_end >= rlen1 ? rlen1 : b_end;
+					ovlp_type = OVERLAP;
 				}
 				assert(absent == 1);
-				fprintf(stdout,"%09d %09d %d %0.1f %u %d %d %u %u %d %d %u %s\n",
-						rid0, rid1, -(aln->astr_size), err_est,
-						ORIGINAL, a_bgn, a_end, rlen0,
-						(strand0 == ORIGINAL ? strand1 : 1-strand1), b_bgn, b_end, rlen1,
-						ovlp_type);
+				
+				ovlp_t ovlp;
+				ovlp.y0 = mpv->a[__k0-1].y0;
+				ovlp.y1 = mpv->a[__k0+__k1-1].y0;
+				ovlp.rl0 = rlen0; ovlp.rl1 = rlen1;
+				ovlp.strand0 = strand0; ovlp.strand1 = strand1;
+				ovlp.ovlp_type = ovlp_type;
+				ovlp.aln = *aln;
+
+				fwrite(&ovlp, sizeof(ovlp_t), 1, stdout);
 			}
 			free_alignment(aln);
 			kfree(NULL, seq1);
