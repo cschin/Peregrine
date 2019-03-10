@@ -3,8 +3,12 @@
 
 #include <assert.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <unistd.h>
 #include "khash.h"
+
+#define ORIGINAL 0
+#define REVERSED 1
 
 #ifdef __cplusplus
 extern "C" {
