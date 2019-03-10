@@ -376,6 +376,7 @@ int main(int argc, char *argv[]) {
 	kh_destroy(MMER0, mmer0_map);
 	kh_destroy(MMC, mcmap);
 	kh_destroy(RLEN, rlmap);
+	fflush(stdout);
 	// TODO: clean up memory
 }
 
