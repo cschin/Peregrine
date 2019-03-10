@@ -8,8 +8,12 @@
 #include "kvec.h"
 #include "kalloc.h"
 
+#ifndef ORIGINAL
 #define ORIGINAL 0
+#endif
+#ifndef REVERSED
 #define REVERSED 1
+#endif
 
 uint8_t fourbit_map_f[] = {
 	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
@@ -35,7 +39,7 @@ void encode_4bit_bidirection(uint8_t * target, char * seq, size_t len) {
 	size_t p, rp;
 
 	for (p=0, rp=len-1; p < len; p++, rp--){
-		*(target + p) =  ( fourbit_map_f[(uint8_t)*(seq+p)] | ( fourbit_map_r[(uint8_t)*(seq+rp)] << 4) );
+		*(target + p) =  ( ( fourbit_map_r[(uint8_t)*(seq+rp)] << 4) | fourbit_map_f[(uint8_t)*(seq+p)] );
 	}
 
 };
@@ -45,7 +49,7 @@ char bits_to_base[] = {'N', 'A', 'C', 'N', 'G', 'N', 'N', 'N', 'T'};
 void decode_4bit_bidirection(uint8_t * src, char * seq, size_t len, uint8_t strand) {
 	size_t p;
 	for (p=0; p < len; p++){
-		*(seq + p) = strand == 0 ? bits_to_base[(*(src+p)) & 0x0F] :  bits_to_base[(*(src+p)) >> 4] ;
+		*(seq + p) = strand == ORIGINAL ? bits_to_base[(*(src+p)) & 0x0F] :  bits_to_base[(*(src+p)) >> 4] ;
 	}
 };
 
