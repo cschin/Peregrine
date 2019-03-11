@@ -60,9 +60,9 @@
 #include <stdbool.h>
 #include "shimmer.h"
 
-alignment_t * align(char * query_seq, seq_coor_t q_len,
-		char * target_seq, seq_coor_t t_len,
-		seq_coor_t band_tolerance) {
+alignment_t * align(uint8_t * query_seq, seq_coor_t q_len, uint8_t q_strand,
+		            uint8_t * target_seq, seq_coor_t t_len, uint8_t t_strand,
+		            seq_coor_t band_tolerance) {
     seq_coor_t * V;
     seq_coor_t * U;  // array of matched bases for each "k"
     seq_coor_t k_offset;
@@ -75,10 +75,18 @@ alignment_t * align(char * query_seq, seq_coor_t q_len,
     seq_coor_t x1, y1;
     seq_coor_t max_d;
     seq_coor_t band_size;
+
+	uint8_t q_shift = 0;
+	uint8_t t_shift = 0;
+
 	bool start = false;
 
     alignment_t * rtn;
     bool aligned = false;
+
+
+	q_shift = q_strand == 0 ? 0 : 4;
+	t_shift = t_strand == 0 ? 0 : 4;
 
     //printf("debug: %ld %ld\n", q_len, t_len);
     //printf("%s\n", query_seq);
@@ -119,7 +127,7 @@ alignment_t * align(char * query_seq, seq_coor_t q_len,
             x1 = x;
 			y1 = y;
 
-            while ( x < q_len && y < t_len && query_seq[x] == target_seq[y] ){
+            while ( x < q_len && y < t_len && ((query_seq[x] >> q_shift) & 0x0F) == ((target_seq[y] >> t_shift) & 0x0F)){
                 x++;
                 y++;
             }

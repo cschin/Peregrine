@@ -269,17 +269,13 @@ char * get_read_seq(FILE * seqdb, uint32_t rid, khash_t(RLEN) *rlmap) {
     return seq;	
 }	
 
-char * get_read_seq_mmap(char * seq_p, uint32_t rid, khash_t(RLEN) *rlmap, uint8_t strand) {
-	char * seq;
+inline uint8_t * get_read_seq_mmap(uint8_t * seq_p, uint32_t rid, khash_t(RLEN) *rlmap) {
 	rl_t rl;
 	khiter_t k;
 	k = kh_get(RLEN, rlmap, rid);
     assert( k != kh_end(rlmap));
 	rl = kh_val(rlmap, k);
-	seq = kmalloc(NULL, sizeof(char) * rl.len+1);
-	decode_4bit_bidirection((uint8_t *) (seq_p + rl.offset), seq, rl.len, strand);
-	seq[rl.len] = '\0';
-    return seq;	
+    return seq_p + rl.offset;	
 }	
 
 

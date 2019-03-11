@@ -52,7 +52,7 @@ void shimmer_to_overlap(
 		mp128_v * mpv,
 		khash_t(RLEN) * rlmap,
 		khash_t(RPAIR) * rid_pairs,
-		char * seq_p){
+		uint8_t * seq_p){
 
 	uint64_t ridp;
 	uint64_t y0;
@@ -60,8 +60,8 @@ void shimmer_to_overlap(
 	uint32_t rid1, pos1, rlen1, strand1;
 	uint32_t right_ext = 0;
 	khiter_t k;
-	char *seq0 = NULL;
-	char *seq1 = NULL;
+	uint8_t *seq0 = NULL;
+	uint8_t *seq1 = NULL;
 	int32_t absent;
 	uint8_t * contained;
 
@@ -69,6 +69,7 @@ void shimmer_to_overlap(
 
 	// clock_t time_begin = clock();
 	// clock_t time_end;
+
 	for (size_t __k0 = (mpv->n)-1; __k0 > 0; __k0--) {  // note: k0 is an unsigned type
 		y0 = mpv->a[__k0-1].y0;
 		rid0 = (uint32_t) (y0 >> 32);
@@ -77,7 +78,7 @@ void shimmer_to_overlap(
 		assert(k != kh_end(rlmap));
 		rlen0 = kh_val(rlmap, k).len;	
 		strand0 = mpv->a[__k0-1].direction;
-		seq0 = get_read_seq_mmap(seq_p, rid0, rlmap, strand0);
+		seq0 = get_read_seq_mmap(seq_p, rid0, rlmap);
 
 		if (right_ext == 0) {
 			right_ext = rlen0;
@@ -108,7 +109,7 @@ void shimmer_to_overlap(
 			assert(k != kh_end(rlmap));
 			rlen1 = kh_val(rlmap, k).len;
 			strand1 = mpv->a[__k0+__k1-1].direction;
-			seq1 = get_read_seq_mmap(seq_p, rid1, rlmap, strand1);
+			seq1 = get_read_seq_mmap(seq_p, rid1, rlmap);
 
 			//printf("X1: %lu %lu %lu %lu %09u %09u\n", mpv->n, __k0, __k1, overlap_count, rid0, rid1);
 
@@ -116,7 +117,8 @@ void shimmer_to_overlap(
 			uint32_t slen0 = rlen0 - pos0 + pos1;
 			uint32_t slen1 = rlen1;
 			alignment_t * aln;
-			aln = align(seq0 + pos0 - pos1, slen0, seq1, slen1, ALNBANDSIZE);
+			aln = align(seq0 + pos0 - pos1, slen0, strand0, 
+					                  seq1, slen1, strand1, ALNBANDSIZE);
 			seq_coor_t q_bgn, q_end, t_bgn, t_end;
 			q_bgn = aln->q_bgn; q_end = aln->q_end; 
 			t_bgn = aln->t_bgn; t_end = aln->t_end;
@@ -158,9 +160,9 @@ void shimmer_to_overlap(
 				fwrite(&ovlp, sizeof(ovlp_t), 1, stdout);
 			}
 			free_alignment(aln);
-			kfree(NULL, seq1);
+			//kfree(NULL, seq1);
 		}
-		kfree(NULL, seq0);
+		//kfree(NULL, seq0);
 	}
 	free(contained);
 }
@@ -172,7 +174,7 @@ void process_overlaps(char * seq_db_file_path,
 
 	int fd;
 	struct stat sb;
-	char * seq_p;
+	uint8_t * seq_p;
 	mp128_v * mpv;
 	uint64_t mhash0, mhash1;
 
@@ -185,7 +187,7 @@ void process_overlaps(char * seq_db_file_path,
 	if (fstat(fd, &sb) == -1)           /* To obtain file size */
 		handle_error("fstat");
 
-	seq_p = mmap((caddr_t)0, sb.st_size, PROT_READ, MAP_SHARED, fd, 0);
+	seq_p = (uint8_t *)  mmap((caddr_t)0, sb.st_size, PROT_READ, MAP_SHARED, fd, 0);
 
 	khash_t(RPAIR) * rid_pairs = kh_init(RPAIR);
 	uint32_t iter_count = 0;
@@ -303,7 +305,7 @@ int main(int argc, char *argv[]) {
 	wordexp(mmer_file_path, &p, 0);
 	shimmer_fns = p.we_wordv;
 	for (int i = 0; i < p.we_wordc; i++) {
-		fprintf(stderr, "useing shimmer data file: %s\n", shimmer_fns[i]);
+		fprintf(stderr, "using shimmer data file: %s\n", shimmer_fns[i]);
 		mmers_ = read_mmlist(shimmer_fns[i]);
 		append_mmlist(&mmers, &mmers_);
 		kv_destroy(mmers_);
