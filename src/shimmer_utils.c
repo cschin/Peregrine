@@ -196,17 +196,19 @@ mm_count_v read_mm_count(char *fn) {
 };
 
 khash_t(RID) * build_read_index(char *fpath, seq_data_v *seq_data, khash_t(RLEN) *rlmap ) {
+	// map the original read ID to read length and offset
 	khash_t(RID) *hmap = kh_init(RID);
 	int absent;
 	khiter_t k;
 	FILE *index_file;
-	uint32_t i, rid, rlen, offset;
+	uint32_t i, rid, rlen;
+	size_t	offset;
 	char name_buf[256];
 	char * name;
 	rl_t rl;
 
 	index_file = fopen(fpath, "r");
-	while (fscanf(index_file, "%u %255s %u %u", &rid, name_buf, &rlen, &offset) != EOF) {
+	while (fscanf(index_file, "%u %255s %u %lu", &rid, name_buf, &rlen, &offset) != EOF) {
 		kv_resize(seq_data_t, NULL, *seq_data, seq_data->n + 8192);
 		name = kmalloc(NULL, 256 * sizeof(char));
 		strncpy(name, name_buf, 256);

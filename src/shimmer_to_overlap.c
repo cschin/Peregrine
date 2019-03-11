@@ -167,7 +167,7 @@ void shimmer_to_overlap(
 	free(contained);
 }
 
-void process_overlaps(char * seq_db_file_path,
+void process_overlaps(char * seqdb_file_path,
 		khash_t(MMER0) * mmer0_map, 
 		khash_t(RLEN) *rlmap, 
 		khash_t(MMC) *mcmap) {
@@ -180,7 +180,7 @@ void process_overlaps(char * seq_db_file_path,
 
 	khash_t(MMER1) * mmer1_map;
 
-	fd = open(seq_db_file_path, O_RDONLY);
+	fd = open(seqdb_file_path, O_RDONLY);
 	if (fd == -1)
 		handle_error("open");
 	
