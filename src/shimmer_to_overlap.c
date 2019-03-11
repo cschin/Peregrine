@@ -52,6 +52,7 @@ void shimmer_to_overlap(
 		mp128_v * mpv,
 		khash_t(RLEN) * rlmap,
 		khash_t(RPAIR) * rid_pairs,
+		uint8_t bestn,
 		uint8_t * seq_p){
 
 	uint64_t ridp;
@@ -85,7 +86,7 @@ void shimmer_to_overlap(
 		}
 
 		size_t overlap_count = 0;
-		for (size_t __k1=1; (__k0+__k1-1 < mpv->n) && (overlap_count < BESTN); __k1++ ) {
+		for (size_t __k1=1; (__k0+__k1-1 < mpv->n) && (overlap_count < bestn); __k1++ ) {
 
 			if ( contained[__k0+__k1-1] == 1 ) continue;
 
@@ -170,7 +171,8 @@ void shimmer_to_overlap(
 void process_overlaps(char * seqdb_file_path,
 		khash_t(MMER0) * mmer0_map, 
 		khash_t(RLEN) *rlmap, 
-		khash_t(MMC) *mcmap) {
+		khash_t(MMC) *mcmap,
+		uint8_t bestn) {
 
 	int fd;
 	struct stat sb;
@@ -205,7 +207,7 @@ void process_overlaps(char * seqdb_file_path,
 			mpv = kh_val(mmer1_map, __j);
 			if (mpv->n <= 2 || mpv->n > LOCAL_OVERLAP_UPPERBOUND) continue;
 			qsort(mpv->a, mpv->n, sizeof(mp128_t), mp128_comp);
-			shimmer_to_overlap(mpv, rlmap, rid_pairs, seq_p);
+			shimmer_to_overlap(mpv, rlmap, rid_pairs, bestn, seq_p);
 			iter_count++;
 			if (iter_count % 10000 == 0) {
 				end = clock();
@@ -227,6 +229,7 @@ int main(int argc, char *argv[]) {
 	char seq_idx_file_path[8192];
 	char seqdb_file_path[8291];
         int c;	
+	uint8_t bestn = BESTN;
 	uint32_t total_chunk = 1, mychunk = 1;
 
 	wordexp_t p; 
@@ -247,7 +250,7 @@ int main(int argc, char *argv[]) {
 	
 	opterr = 0;
 
-	while ((c = getopt(argc, argv, "p:l:t:c:")) != -1) {
+	while ((c = getopt(argc, argv, "p:l:t:c:b:")) != -1) {
 		switch (c) {
 			case 'p':
 				seqdb_prefix = optarg;
@@ -260,6 +263,9 @@ int main(int argc, char *argv[]) {
 				break;
 			case 'c':
 				mychunk = atoi(optarg);
+				break;
+			case 'b':
+				bestn = atoi(optarg);
 				break;
 			case '?':
 				if (optopt == 'p') {
@@ -334,7 +340,7 @@ int main(int argc, char *argv[]) {
 
 	mmer0_map = kh_init(MMER0);
 	build_map(&mmers, mmer0_map, rlmap, mcmap, mychunk, total_chunk, MMER_COUNT_LOWER_BOUND, MMER_COUNT_UPPER_BOUND);
-	process_overlaps(seqdb_file_path, mmer0_map, rlmap, mcmap);
+	process_overlaps(seqdb_file_path, mmer0_map, rlmap, mcmap, bestn);
 	
 	for (khiter_t __i = kh_begin(mmer0_map); __i != kh_end(mmer0_map); ++__i) {
 		if (!kh_exist(mmer0_map,__i)) continue;
