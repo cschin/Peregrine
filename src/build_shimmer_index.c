@@ -4,15 +4,13 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <unistd.h>
+#include <sys/mman.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 #include "shimmer.h"
 #include "kseq.h"
 #include "kvec.h"
 #include "khash.h"
-#include "kseq.h"
-
-#include <sys/mman.h>
-#include <sys/stat.h>
-#include <fcntl.h>
 
 #define handle_error(msg) \
 	do { perror(msg); exit(EXIT_FAILURE); } while (0)
@@ -20,8 +18,6 @@
 #define REDUCTION_FACTOR 6
 #define DEFAULT_WINDOW_SIZE 80
 #define DEFAULT_KMER_SIZE 16
-
-KSEQ_INIT(gzFile, gzread);
 
 extern char *optarg;
 extern int optind, opterr, optopt;
