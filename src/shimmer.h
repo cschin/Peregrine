@@ -64,7 +64,7 @@ void build_map( mm128_v *, khash_t(MMER0) *, khash_t(RLEN) *, khash_t(MMC) *,
 		uint32_t, uint32_t, uint32_t, uint32_t); 
 
 char * get_read_seq(FILE *, uint32_t, khash_t(RLEN) *);
-uint8_t * get_read_seq_mmap(uint8_t *, uint32_t, khash_t(RLEN) *);
+uint8_t * get_read_seq_mmap_ptr(uint8_t *, uint32_t, khash_t(RLEN) *);
 
 // For DWalign
 typedef int32_t seq_coor_t;

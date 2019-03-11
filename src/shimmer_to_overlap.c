@@ -78,7 +78,7 @@ void shimmer_to_overlap(
 		assert(k != kh_end(rlmap));
 		rlen0 = kh_val(rlmap, k).len;	
 		strand0 = mpv->a[__k0-1].direction;
-		seq0 = get_read_seq_mmap(seq_p, rid0, rlmap);
+		seq0 = get_read_seq_mmap_ptr(seq_p, rid0, rlmap);
 
 		if (right_ext == 0) {
 			right_ext = rlen0;
@@ -109,7 +109,7 @@ void shimmer_to_overlap(
 			assert(k != kh_end(rlmap));
 			rlen1 = kh_val(rlmap, k).len;
 			strand1 = mpv->a[__k0+__k1-1].direction;
-			seq1 = get_read_seq_mmap(seq_p, rid1, rlmap);
+			seq1 = get_read_seq_mmap_ptr(seq_p, rid1, rlmap);
 
 			//printf("X1: %lu %lu %lu %lu %09u %09u\n", mpv->n, __k0, __k1, overlap_count, rid0, rid1);
 

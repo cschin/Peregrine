@@ -267,11 +267,12 @@ char * get_read_seq(FILE * seqdb, uint32_t rid, khash_t(RLEN) *rlmap) {
 	seq = kmalloc(NULL, sizeof(char) * rl.len+1);
 	fseek(seqdb, rl.offset, SEEK_SET);
 	fread(seq, sizeof(char), rl.len, seqdb);
+	decode_4bit_bidirection((uint8_t *)seq, seq, rl.len, ORIGINAL);
 	seq[rl.len] = 0; // terminate the string
     return seq;	
 }	
 
-inline uint8_t * get_read_seq_mmap(uint8_t * seq_p, uint32_t rid, khash_t(RLEN) *rlmap) {
+inline uint8_t * get_read_seq_mmap_ptr(uint8_t * seq_p, uint32_t rid, khash_t(RLEN) *rlmap) {
 	rl_t rl;
 	khiter_t k;
 	k = kh_get(RLEN, rlmap, rid);
