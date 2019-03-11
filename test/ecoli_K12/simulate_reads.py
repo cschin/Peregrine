@@ -1,5 +1,7 @@
 import random
 
+random.seed(42)
+
 rcmap = dict(zip("ACGT","TGCA"))
 
 def rc_seq(seq):

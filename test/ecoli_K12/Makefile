@@ -1,4 +1,5 @@
-bogus: simreads clean run
+all: test
+bogus: simreads clean test
 
 simreads:
 	mkdir -p ./reads
