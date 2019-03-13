@@ -83,9 +83,9 @@ int main(int argc, char *argv[]) {
 				b_end = b_end >= rlen1 ? rlen1 : b_end;
 			}
 			double err_est;
-			err_est	= 100.0 - 100.0 * (double) (match.dist) / (double) (match.astr_size);
+			err_est	= 100.0 - 100.0 * (double) (match.dist) / (double) (match.m_size);
 			fprintf(stdout,"%09d %09d %d %0.1f %u %d %d %u %u %d %d %u %s\n",
-					rid0, rid1, -(match.astr_size), err_est,
+					rid0, rid1, -(match.m_size), err_est,
 					ORIGINAL, a_bgn, a_end, rlen0,
 					(strand0 == ORIGINAL ? strand1 : 1-strand1), b_bgn, b_end, rlen1,
 					ovlp.ovlp_type == OVERLAP ? "overlap" : "contains");

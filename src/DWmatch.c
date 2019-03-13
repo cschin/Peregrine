@@ -101,7 +101,7 @@ ovlp_match_t * ovlp_match(uint8_t * query_seq, seq_coor_t q_len, uint8_t q_stran
     k_offset = max_d;
 
     rtn = calloc( 1, sizeof(ovlp_match_t));
-    rtn->astr_size = 0;
+    rtn->m_size = 0;
     rtn->q_bgn = 0;
     rtn->q_end = 0;
     rtn->t_bgn = 0;
@@ -174,7 +174,7 @@ ovlp_match_t * ovlp_match(uint8_t * query_seq, seq_coor_t q_len, uint8_t q_stran
             rtn->t_end = y;
             rtn->dist = d;
 			// we don't really generate the alingment path here, so we can only estimate the alignment string size
-            rtn->astr_size = (rtn->q_end - rtn->q_bgn + rtn->t_end - rtn->t_bgn + 2*d) / 2;
+            rtn->m_size = (rtn->q_end - rtn->q_bgn + rtn->t_end - rtn->t_bgn + 2*d) / 2;
             break;
         } 
     }
