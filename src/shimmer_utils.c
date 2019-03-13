@@ -44,7 +44,8 @@ void encode_4bit_bidirection(uint8_t * target, char * seq, size_t len) {
 
 };
 
-char bits_to_base[] = {'N', 'A', 'C', 'N', 'G', 'N', 'N', 'N', 'T'};
+char bits_to_base[] = {'N', 'A', 'C', 'N', 'G', 'N', 'N', 'N', 
+	                   'T', 'N', 'N', 'N', 'N', 'N', 'N', 'N'};
 
 void decode_4bit_bidirection(uint8_t * src, char * seq, size_t len, uint8_t strand) {
 	size_t p;
