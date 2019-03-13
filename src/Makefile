@@ -30,9 +30,9 @@ build_shimmer_index: build_shimmer_index.c kalloc.o shimmer_reduce.o mm_sketch.o
 
 accumulate_mc: accumulate_mc.o kalloc.o shimmer_utils.o
 
-DW_banded.o: DW_banded.c
+DWmatch.o: DWmatch.c
 
-shimmer_to_overlap: shimmer_to_overlap.c shimmer_utils.o kalloc.o  DW_banded.o
+shimmer_to_overlap: shimmer_to_overlap.c shimmer_utils.o kalloc.o  DWmatch.o
 
 dedup_overlaps: dedup_overlaps.c kalloc.o
 

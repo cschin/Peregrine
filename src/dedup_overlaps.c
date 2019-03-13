@@ -52,10 +52,10 @@ int main(int argc, char *argv[]) {
 			uint32_t rlen1 = ovlp.rl1;	
 			uint8_t strand1 = ovlp.strand1;
 
-			alignment_t aln = ovlp.aln;
+			ovlp_match_t match = ovlp.match;
 			seq_coor_t q_bgn, q_end, t_bgn, t_end;
-			q_bgn = aln.q_bgn; q_end = aln.q_end; 
-			t_bgn = aln.t_bgn; t_end = aln.t_end;
+			q_bgn = match.q_bgn; q_end = match.q_end; 
+			t_bgn = match.t_bgn; t_end = match.t_end;
 			q_bgn -= t_bgn;
 			t_bgn = 0;
 			if (strand0 == ORIGINAL) {
@@ -83,9 +83,9 @@ int main(int argc, char *argv[]) {
 				b_end = b_end >= rlen1 ? rlen1 : b_end;
 			}
 			double err_est;
-			err_est	= 100.0 - 100.0 * (double) (aln.dist) / (double) (aln.astr_size);
+			err_est	= 100.0 - 100.0 * (double) (match.dist) / (double) (match.astr_size);
 			fprintf(stdout,"%09d %09d %d %0.1f %u %d %d %u %u %d %d %u %s\n",
-					rid0, rid1, -(aln.astr_size), err_est,
+					rid0, rid1, -(match.astr_size), err_est,
 					ORIGINAL, a_bgn, a_end, rlen0,
 					(strand0 == ORIGINAL ? strand1 : 1-strand1), b_bgn, b_end, rlen1,
 					ovlp.ovlp_type == OVERLAP ? "overlap" : "contains");

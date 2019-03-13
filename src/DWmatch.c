@@ -60,9 +60,9 @@
 #include <stdbool.h>
 #include "shimmer.h"
 
-alignment_t * align(uint8_t * query_seq, seq_coor_t q_len, uint8_t q_strand,
-		            uint8_t * target_seq, seq_coor_t t_len, uint8_t t_strand,
-		            seq_coor_t band_tolerance) {
+ovlp_match_t * ovlp_match(uint8_t * query_seq, seq_coor_t q_len, uint8_t q_strand,
+		uint8_t * target_seq, seq_coor_t t_len, uint8_t t_strand,
+		seq_coor_t band_tolerance) {
     seq_coor_t * V;
     seq_coor_t * U;  // array of matched bases for each "k"
     seq_coor_t k_offset;
@@ -81,8 +81,8 @@ alignment_t * align(uint8_t * query_seq, seq_coor_t q_len, uint8_t q_strand,
 
 	bool start = false;
 
-    alignment_t * rtn;
-    bool aligned = false;
+    ovlp_match_t * rtn;
+    bool matched = false;
 
 
 	q_shift = q_strand == 0 ? 0 : 4;
@@ -100,7 +100,7 @@ alignment_t * align(uint8_t * query_seq, seq_coor_t q_len, uint8_t q_strand,
 
     k_offset = max_d;
 
-    rtn = calloc( 1, sizeof(alignment_t));
+    rtn = calloc( 1, sizeof(ovlp_match_t));
     rtn->astr_size = 0;
     rtn->q_bgn = 0;
     rtn->q_end = 0;
@@ -146,7 +146,7 @@ alignment_t * align(uint8_t * query_seq, seq_coor_t q_len, uint8_t q_strand,
             }
 
             if ( x >= q_len || y >= t_len) {
-                aligned = true;
+                matched = true;
                 break;
             }
         }
@@ -169,7 +169,7 @@ alignment_t * align(uint8_t * query_seq, seq_coor_t q_len, uint8_t q_strand,
         max_k = new_max_k + 1;
         min_k = new_min_k - 1;
 
-        if (aligned == true) {
+        if (matched == true) {
             rtn->q_end = x;
             rtn->t_end = y;
             rtn->dist = d;
@@ -178,7 +178,7 @@ alignment_t * align(uint8_t * query_seq, seq_coor_t q_len, uint8_t q_strand,
             break;
         } 
     }
-	if (aligned == false) {
+	if (matched == false) {
 		rtn->q_bgn = 0;
 		rtn->t_bgn = 0;
 	}
@@ -188,6 +188,6 @@ alignment_t * align(uint8_t * query_seq, seq_coor_t q_len, uint8_t q_strand,
     return rtn;
 }
 
-void free_alignment(alignment_t * aln) {
-    free(aln);
+void free_ovlp_match(ovlp_match_t * match) {
+    free(match);
 }

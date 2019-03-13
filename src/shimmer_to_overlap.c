@@ -117,12 +117,12 @@ void shimmer_to_overlap(
 			//printf("%09d %s\n%09d %s\n",rid0, seq0+pos0-pos1,rid1, seq1); 
 			uint32_t slen0 = rlen0 - pos0 + pos1;
 			uint32_t slen1 = rlen1;
-			alignment_t * aln;
-			aln = align(seq0 + pos0 - pos1, slen0, strand0, 
+			ovlp_match_t * match;
+			match = ovlp_match(seq0 + pos0 - pos1, slen0, strand0, 
 					                  seq1, slen1, strand1, ALNBANDSIZE);
 			seq_coor_t q_bgn, q_end, t_bgn, t_end;
-			q_bgn = aln->q_bgn; q_end = aln->q_end; 
-			t_bgn = aln->t_bgn; t_end = aln->t_end;
+			q_bgn = match->q_bgn; q_end = match->q_end; 
+			t_bgn = match->t_bgn; t_end = match->t_end;
 			//printf("X2: %u %u %d %d %d %d\n", pos0, pos1, q_bgn, q_end, t_bgn, t_end);
 
 			if ((q_bgn < READ_END_FUZZINESS &&
@@ -156,11 +156,11 @@ void shimmer_to_overlap(
 				ovlp.rl0 = rlen0; ovlp.rl1 = rlen1;
 				ovlp.strand0 = strand0; ovlp.strand1 = strand1;
 				ovlp.ovlp_type = ovlp_type;
-				ovlp.aln = *aln;
+				ovlp.match = *match;
 
 				fwrite(&ovlp, sizeof(ovlp_t), 1, stdout);
 			}
-			free_alignment(aln);
+			free_ovlp_match(match);
 			//kfree(NULL, seq1);
 		}
 		//kfree(NULL, seq0);

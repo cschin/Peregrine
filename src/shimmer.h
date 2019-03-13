@@ -66,34 +66,34 @@ void build_map( mm128_v *, khash_t(MMER0) *, khash_t(RLEN) *, khash_t(MMC) *,
 char * get_read_seq(FILE *, uint32_t, khash_t(RLEN) *);
 uint8_t * get_read_seq_mmap_ptr(uint8_t *, uint32_t, khash_t(RLEN) *);
 
-// For DWalign
+// For DWmatch 
 typedef int32_t seq_coor_t;
 
 typedef struct {
 	seq_coor_t astr_size, dist ;
 	seq_coor_t q_bgn, q_end;
 	seq_coor_t t_bgn, t_end;
-} alignment_t;
+} ovlp_match_t;
 
 typedef struct {
 	uint64_t y0, y1;
 	uint32_t rl0, rl1;
 	uint8_t strand0, strand1;
 	uint8_t ovlp_type;
-	alignment_t aln;
+	ovlp_match_t match;
 } ovlp_t;
 
 typedef struct {
     seq_coor_t s1, e1;
     seq_coor_t s2, e2;
     long int score;
-} aln_range;
+} match_range;
 
-alignment_t * align(uint8_t *, seq_coor_t, uint8_t,
-                    uint8_t *, seq_coor_t, uint8_t,
-                  seq_coor_t); 
+ovlp_match_t * ovlp_match(uint8_t *, seq_coor_t, uint8_t,
+		uint8_t *, seq_coor_t, uint8_t,
+		seq_coor_t); 
 
-void free_alignment(alignment_t *);
+void free_ovlp_match(ovlp_match_t *);
 
 #ifdef __cplusplus
 }
