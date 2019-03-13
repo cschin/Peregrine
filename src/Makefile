@@ -4,7 +4,7 @@ CFLAGS+=-Wall -Wno-unused-result -Wno-unused-function -Werror
 #CFLAGS+=-Wall -Wno-unused-result -Wno-unused-function
 LDLIBS=-lz
 
-all: build_read_index build_shimmer_index accumulate_mc shimmer_to_overlap dedup_overlaps shimmer4py.so shimmer_utils.so
+all: build_read_index build_shimmer_index accumulate_mc shimmer_to_overlap dedup_overlaps shimmer4py.so shimmer_utils.so DWmatch.so
 
 kalloc.o: kalloc.c
 
@@ -31,6 +31,9 @@ build_shimmer_index: build_shimmer_index.c kalloc.o shimmer_reduce.o mm_sketch.o
 accumulate_mc: accumulate_mc.o kalloc.o shimmer_utils.o
 
 DWmatch.o: DWmatch.c
+
+DWmatch.so: DWmatch.c
+	gcc -O3 -shared -fPIC -Wall DWmatch.c -o DWmatch.so
 
 shimmer_to_overlap: shimmer_to_overlap.c shimmer_utils.o kalloc.o  DWmatch.o
 
