@@ -307,6 +307,7 @@ void build_map(
 	size_t s=0;
 
 	for(;;) {
+		if (s >= mmers->n) break;
 		mmer0 = mmers->a[s];
 		mhash = mmer0.x >> 8;
 		k = kh_get(MMC, mcmap, mhash);
@@ -391,7 +392,6 @@ void build_map(
 		}	
 		mmer0 = mmer1;
 	}
-
 }
 
 void build_map4py(
