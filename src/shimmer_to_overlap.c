@@ -34,7 +34,8 @@ extern int optind, opterr, optopt;
 #define LOCAL_OVERLAP_UPPERBOUND 120
 #define BESTN 4
 #define OVERLAP 0
-#define CONTAINMENT 1
+#define CONTAINS 1
+#define CONTAINED 2
 #define ALNBANDSIZE 100
 
 
@@ -72,6 +73,7 @@ void shimmer_to_overlap(
 	// clock_t time_end;
 
 	for (size_t __k0 = (mpv->n)-1; __k0 > 0; __k0--) {  // note: k0 is an unsigned type
+		if ( contained[__k0-1] == 1 ) continue;
 		y0 = mpv->a[__k0-1].y0;
 		rid0 = (uint32_t) (y0 >> 32);
 		pos0 = (uint32_t) ((y0 & 0xFFFFFFFF) >> 1) + 1;
@@ -125,8 +127,7 @@ void shimmer_to_overlap(
 			t_bgn = match->t_bgn; t_end = match->t_end;
 			//printf("X2: %u %u %d %d %d %d\n", pos0, pos1, q_bgn, q_end, t_bgn, t_end);
 
-			if ((q_bgn < READ_END_FUZZINESS &&
-						t_bgn < READ_END_FUZZINESS &&
+			if ((q_bgn < READ_END_FUZZINESS && t_bgn < READ_END_FUZZINESS &&
 						(abs(slen0 - q_end) < READ_END_FUZZINESS ||
 						 abs(slen1 - t_end) < READ_END_FUZZINESS)) &&
 					q_end > 500 && t_end > 500) {
@@ -134,13 +135,25 @@ void shimmer_to_overlap(
 				// printf("%s\n%s\n", seq0+pos0-pos1, seq1); 
 
 				uint8_t ovlp_type;
-				if ( slen1 < slen0 + READ_END_FUZZINESS) {
-					t_end = slen1; 
-					q_end = slen1 + (q_end - t_end);
-					k = kh_put(RPAIR, rid_pairs, ridp, &absent);
-					kh_val(rid_pairs, k) = CONTAINMENT;
-					ovlp_type = CONTAINMENT;
-					contained[__k0+__k1-1] = 1;
+				if ( abs(rlen0 - (q_end - q_bgn)) < READ_END_FUZZINESS * 2 ||
+				     abs(rlen1 - (t_end - t_bgn)) < READ_END_FUZZINESS * 2 ) {		
+					if ( rlen0 >= rlen1) {
+						t_end = slen1; 
+						q_end = slen1 + (q_end - t_end);
+						k = kh_put(RPAIR, rid_pairs, ridp, &absent);
+						kh_val(rid_pairs, k) = CONTAINS;
+						ovlp_type = CONTAINS;
+						contained[__k0+__k1-1] = 1;
+					} else {
+						q_bgn = 0;
+						q_end = slen0;
+						t_bgn = 0;
+						t_end = slen0;
+						k = kh_put(RPAIR, rid_pairs, ridp, &absent);
+						kh_val(rid_pairs, k) = CONTAINED;
+						ovlp_type = CONTAINED;
+						contained[__k0-1] = 1;
+					}
 				} else {
 					t_end = slen0  - (q_end - t_end); 
 					overlap_count ++;
@@ -161,9 +174,8 @@ void shimmer_to_overlap(
 				fwrite(&ovlp, sizeof(ovlp_t), 1, stdout);
 			}
 			free_ovlp_match(match);
-			//kfree(NULL, seq1);
+			if (contained[__k0-1] == 1) break;
 		}
-		//kfree(NULL, seq0);
 	}
 	free(contained);
 }
@@ -178,7 +190,7 @@ void process_overlaps(char * seqdb_file_path,
 	struct stat sb;
 	uint8_t * seq_p;
 	mp128_v * mpv;
-	uint64_t mhash0, mhash1;
+	// uint64_t mhash0, mhash1;
 
 	khash_t(MMER1) * mmer1_map;
 
@@ -197,13 +209,13 @@ void process_overlaps(char * seqdb_file_path,
 	clock_t end;
 	for (khiter_t __i = kh_begin(mmer0_map); __i != kh_end(mmer0_map); ++__i) {
 		if (!kh_exist(mmer0_map,__i)) continue;
-		mhash0 = kh_key(mmer0_map, __i);
-	    mhash0 >>= 8;	
+		// mhash0 = kh_key(mmer0_map, __i);
+	    // mhash0 >>= 8;	
 		mmer1_map = kh_val(mmer0_map, __i);
 		for (khiter_t __j = kh_begin(mmer1_map); __j != kh_end(mmer1_map); ++__j) {
 		    if (!kh_exist(mmer1_map,__j)) continue;
-			mhash1 = kh_key(mmer1_map, __j);
-			mhash1 >>= 8;
+			// mhash1 = kh_key(mmer1_map, __j);
+			// mhash1 >>= 8;
 			mpv = kh_val(mmer1_map, __j);
 			if (mpv->n <= 2 || mpv->n > LOCAL_OVERLAP_UPPERBOUND) continue;
 			qsort(mpv->a, mpv->n, sizeof(mp128_t), mp128_comp);
@@ -356,6 +368,7 @@ int main(int argc, char *argv[]) {
 	kh_destroy(MMER0, mmer0_map);
 	kh_destroy(MMC, mcmap);
 	kh_destroy(RLEN, rlmap);
+	kv_destroy(mmers);
 	fflush(stdout);
 	// TODO: clean up memory
 }

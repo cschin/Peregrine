@@ -11,7 +11,8 @@
 #include "kalloc.h"
 
 #define OVERLAP 0
-#define CONTAINMENT 1
+#define CONTAINS 1
+#define CONTAINED 2
 
 KHASH_MAP_INIT_INT64(RPAIR, uint8_t);
 
@@ -88,7 +89,7 @@ int main(int argc, char *argv[]) {
 					rid0, rid1, -(match.m_size), err_est,
 					ORIGINAL, a_bgn, a_end, rlen0,
 					(strand0 == ORIGINAL ? strand1 : 1-strand1), b_bgn, b_end, rlen1,
-					ovlp.ovlp_type == OVERLAP ? "overlap" : "contains");
+					ovlp.ovlp_type == OVERLAP ? "overlap" : (ovlp.ovlp_type == CONTAINS ? "contains" : "contained"));
 
 			kh_put(RPAIR, rid_pairs, ridp, &absent);
 		}
