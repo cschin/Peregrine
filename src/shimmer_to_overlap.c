@@ -138,24 +138,17 @@ void shimmer_to_overlap(
 				if ( abs(rlen0 - (q_end - q_bgn)) < READ_END_FUZZINESS * 2 ||
 				     abs(rlen1 - (t_end - t_bgn)) < READ_END_FUZZINESS * 2 ) {		
 					if ( rlen0 >= rlen1) {
-						t_end = slen1; 
-						q_end = slen1 + (q_end - t_end);
 						k = kh_put(RPAIR, rid_pairs, ridp, &absent);
 						kh_val(rid_pairs, k) = CONTAINS;
 						ovlp_type = CONTAINS;
 						contained[__k0+__k1-1] = 1;
 					} else {
-						q_bgn = 0;
-						q_end = slen0;
-						t_bgn = 0;
-						t_end = slen0;
 						k = kh_put(RPAIR, rid_pairs, ridp, &absent);
 						kh_val(rid_pairs, k) = CONTAINED;
 						ovlp_type = CONTAINED;
 						contained[__k0-1] = 1;
 					}
 				} else {
-					t_end = slen0  - (q_end - t_end); 
 					overlap_count ++;
 					k = kh_put(RPAIR, rid_pairs, ridp, &absent);
 					kh_val(rid_pairs, k) = OVERLAP;
