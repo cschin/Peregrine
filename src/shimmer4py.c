@@ -22,12 +22,11 @@ extern int optind, opterr, optopt;
 	do { perror(msg); exit(EXIT_FAILURE); } while (0)
 
 #define MMER_COUNT_LOWER_BOUND 2
-#define MMER_COUNT_UPPER_BOUND 72
+#define MMER_COUNT_UPPER_BOUND 240
 #define ORIGINAL 0
 #define REVERSED 1
 #define READ_END_FUZZINESS 48
-#define LOCAL_OVERLAP_UPPERBOUND 72
-#define BESTN 2
+#define LOCAL_OVERLAP_UPPERBOUND 120
 #define OVERLAP 0
 #define CONTAINMENT 1
 
