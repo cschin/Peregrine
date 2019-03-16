@@ -22,7 +22,7 @@ extern int optind, opterr, optopt;
 #define handle_error(msg) \
 	do { perror(msg); exit(EXIT_FAILURE); } while (0)
 
-#define MMER_COUNT_LOWER_BOUND 2
+#define MMER_COUNT_LOWER_BOUND 1
 #define MMER_COUNT_UPPER_BOUND 240
 #ifndef ORIGINAL
 #define ORIGINAL 0
@@ -140,11 +140,20 @@ void process_map(
 			read_bgn = (uint32_t) ((mpv->a[j].y0 & 0xFFFFFFFF) >> 1);
 			read_end = (uint32_t) ((mpv->a[j].y1 & 0xFFFFFFFF) >> 1);
 			read_direction = mpv->a[j].direction;
-			assert( read_bgn < read_end);
-
-			printf("%u %u %u %u %u %u %d\n", 
+			assert(read_bgn < read_end);
+ 
+			uint64_t mhash = mmer0.x >> 8;
+			k = kh_get(MMC, mcmap, mhash);
+			assert(k != kh_end(mcmap));
+			uint32_t mcount0 = kh_val(mcmap, k);
+			mhash = mmer1.x >> 8;
+			k = kh_get(MMC, mcmap, mhash);
+			assert(k != kh_end(mcmap));
+			uint32_t mcount1 = kh_val(mcmap, k);
+			printf("%u %u %u %u %u %u %d %u %u\n", 
 					ref_id, ref_bgn, ref_end,
-					read_id, read_bgn, read_end, read_direction);
+					read_id, read_bgn, read_end, 
+					read_direction, mcount0, mcount1);
 
 		}
 		mmer0 = mmer1;
@@ -269,6 +278,7 @@ int main(int argc, char *argv[]) {
 	for (int i = 0; i < p.we_wordc; i++) {
 		fprintf(stderr, "using ref shimmer data file: %s\n", shimmer_fns[i]);
 		mmers_ = read_mmlist(shimmer_fns[i]);
+		fprintf(stderr, "number of shimmers load: %lu\n", mmers_.n);
 		append_mmlist(&ref_mmers, &mmers_);
 		kv_destroy(mmers_);
 	}
@@ -294,6 +304,7 @@ int main(int argc, char *argv[]) {
 	for (int i = 0; i < p.we_wordc; i++) {
 		fprintf(stderr, "using shimmer data file: %s\n", shimmer_fns[i]);
 		mmers_ = read_mmlist(shimmer_fns[i]);
+		fprintf(stderr, "number of shimmers load: %lu\n", mmers_.n);
 		append_mmlist(&mmers, &mmers_);
 		kv_destroy(mmers_);
 	}
@@ -322,14 +333,14 @@ int main(int argc, char *argv[]) {
 	mmer0_map = kh_init(MMER0);
 
 	build_map(&mmers, mmer0_map, 
-			rlmap, mcmap, 
+			rlmap, mcmap,
 			mychunk, total_chunk, 
 			MMER_COUNT_LOWER_BOUND, MMER_COUNT_UPPER_BOUND);
 
 	process_map(refdb_file_path, seqdb_file_path, 
 			&ref_mmers, ref_lmap, mmer0_map, 
 			rlmap, mcmap);
-	
+
 	for (khiter_t __i = kh_begin(mmer0_map); __i != kh_end(mmer0_map); ++__i) {
 		if (!kh_exist(mmer0_map,__i)) continue;
 		mmer1_map = kh_val(mmer0_map, __i);
