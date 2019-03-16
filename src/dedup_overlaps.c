@@ -31,11 +31,6 @@ int main(int argc, char *argv[]) {
 	khash_t(RPAIR) * rid_pairs = kh_init(RPAIR);
 
 	while ( !feof(stdin) ) {
-	 // while ( fscanf(stdin, "%s %s %s %s %s %s %s %s %s %s %s %s %s\n",
-	 //		rid0_s, rid1_s, score, acc,
-	 //		a_strand, a_bgn, a_end, a_len,
-	 //		b_strand, b_bgn, b_end, b_len,
-	 //		ovlp_type) != EOF) {
 	    ovlp_t ovlp;
 		fread(&ovlp, sizeof(ovlp), 1, stdin);
 
@@ -54,6 +49,13 @@ int main(int argc, char *argv[]) {
 			uint8_t strand1 = ovlp.strand1;
 
 			ovlp_match_t match = ovlp.match;
+			/* Dump raw alignment results for debugging */
+			/*
+			fprintf(stdout,"X %09d %u %u %d %d %d %09d %u %u %d %d %d %d %d %u\n",
+					rid0, pos0, strand0, match.q_bgn, match.q_end, rlen0, 
+					rid1, pos1, strand1, match.t_bgn, match.t_end, rlen1, 
+					match.m_size, match.dist, ovlp.ovlp_type);
+			*/
 			seq_coor_t q_bgn, q_end, t_bgn, t_end;
 			q_bgn = match.q_bgn; q_end = match.q_end; 
 			t_bgn = match.t_bgn; t_end = match.t_end;
@@ -90,10 +92,8 @@ int main(int argc, char *argv[]) {
 					ORIGINAL, a_bgn, a_end, rlen0,
 					(strand0 == ORIGINAL ? strand1 : 1-strand1), b_bgn, b_end, rlen1,
 					ovlp.ovlp_type == OVERLAP ? "overlap" : (ovlp.ovlp_type == CONTAINS ? "contains" : "contained"));
-
 			kh_put(RPAIR, rid_pairs, ridp, &absent);
 		}
 	}
 	kh_destroy(RPAIR, rid_pairs);
-
 }
