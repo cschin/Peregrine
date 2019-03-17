@@ -150,7 +150,7 @@ int main(int argc, char *argv[])
 	while (fscanf(seq_index_file, "%u %255s %u %lu", &rid, name_buf, &rlen, &offset) != EOF) {
 		if ( (rid % total_chunk) != (mychunk % total_chunk)) continue;
 		char * seq = malloc(rlen+1); 
-		decode_4bit_bidirection(seq_p + offset, seq, rlen, 0);
+		decode_biseq(seq_p + offset, seq, rlen, 0);
 		seq[rlen] = '\0'; 
 		mm_sketch(NULL, seq, rlen, window_size, kmer_size, rid, 0, &shimmerL0);
 		free(seq);

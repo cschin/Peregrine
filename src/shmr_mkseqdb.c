@@ -102,7 +102,7 @@ int main(int argc, char *argv[])
 		while ((l = kseq_read(seq)) >= 0) {
 			uint8_t * encoded;
 			encoded = malloc(seq->seq.l);
-			encode_4bit_bidirection(encoded, seq->seq.s, seq->seq.l);
+			encode_biseq(encoded, seq->seq.s, seq->seq.l);
 			fprintf(index_file, "%09d %s %u %lu\n", rid, seq->name.s, seq->seq.l, offset);
 			fwrite(encoded, sizeof(uint8_t), seq->seq.l, seqdb_file);
 			rid += 1;

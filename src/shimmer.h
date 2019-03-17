@@ -14,9 +14,9 @@
 extern "C" {
 #endif
 
-void encode_4bit_bidirection(uint8_t *, char *, size_t ); 
+void encode_biseq(uint8_t *, char *, size_t );
 
-void decode_4bit_bidirection(uint8_t *, char *, size_t, uint8_t);
+void decode_biseq(uint8_t *, char *, size_t, uint8_t);
 
 void reverse_complement(char *, size_t);
 

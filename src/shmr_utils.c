@@ -35,7 +35,7 @@ uint8_t fourbit_map_r[] = {
 	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 
-void encode_4bit_bidirection(uint8_t * target, char * seq, size_t len) {
+void encode_biseq(uint8_t * target, char * seq, size_t len) {
 	size_t p, rp;
 
 	for (p=0, rp=len-1; p < len; p++, rp--){
@@ -47,7 +47,7 @@ void encode_4bit_bidirection(uint8_t * target, char * seq, size_t len) {
 char bits_to_base[] = {'N', 'A', 'C', 'N', 'G', 'N', 'N', 'N', 
 	                   'T', 'N', 'N', 'N', 'N', 'N', 'N', 'N'};
 
-void decode_4bit_bidirection(uint8_t * src, char * seq, size_t len, uint8_t strand) {
+void decode_biseq(uint8_t * src, char * seq, size_t len, uint8_t strand) {
 	size_t p;
 	for (p=0; p < len; p++){
 		*(seq + p) = strand == ORIGINAL ? bits_to_base[(*(src+p)) & 0x0F] :  bits_to_base[(*(src+p)) >> 4] ;
@@ -268,7 +268,7 @@ char * get_read_seq(FILE * seqdb, uint32_t rid, khash_t(RLEN) *rlmap) {
 	seq = kmalloc(NULL, sizeof(char) * rl.len+1);
 	fseek(seqdb, rl.offset, SEEK_SET);
 	fread(seq, sizeof(char), rl.len, seqdb);
-	decode_4bit_bidirection((uint8_t *)seq, seq, rl.len, ORIGINAL);
+	decode_biseq((uint8_t *)seq, seq, rl.len, ORIGINAL);
 	seq[rl.len] = 0; // terminate the string
     return seq;	
 }	
