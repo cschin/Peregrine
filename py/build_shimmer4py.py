@@ -31,7 +31,7 @@ ffi.set_source("_shimmer4py",
                """,
                sources=['../src/shimmer4py.c',
                         '../src/DWmatch.c',
-                        '../src/shimmer_utils.c',
+                        '../src/shmr_utils.c',
                         '../src/kalloc.c'])   # library name, for the linker
 
 if __name__ == "__main__":
