@@ -47,7 +47,7 @@ if __name__ == "__main__":
         seq = ffi.new("char[{}]".format(slen0))
         lib.decode_biseq(bseq0, seq, slen0, strand0)
         segments.append(seq)
-        for row in tiling_path_data[ctg][1:]:
+        for row in tiling_path_data[ctg]:
             ctg_id, v, w, r, s, e, olen, idt = row
             v = v.split(":")
             w = w.split(":")
