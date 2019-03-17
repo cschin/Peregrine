@@ -45,7 +45,7 @@ if __name__ == "__main__":
         strand0 = 0 if v[1] == "E" else 1
 
         seq = ffi.new("char[{}]".format(slen0))
-        lib.decode_4bit_bidirection(bseq0, seq, slen0, strand0)
+        lib.decode_biseq(bseq0, seq, slen0, strand0)
         segments.append(seq)
         for row in tiling_path_data[ctg][1:]:
             ctg_id, v, w, r, s, e, olen, idt = row
@@ -82,7 +82,7 @@ if __name__ == "__main__":
             if strand1 == 1:
                 s, e = slen1 - s, slen1 - e
             if e > s:
-                lib.decode_4bit_bidirection(bseq1[s:e], seq, e-s, strand1)
+                lib.decode_biseq(bseq1[s:e], seq, e-s, strand1)
                 segments.append(seq)
             else:
                 seq = ffi.new("char[1]", "N")
