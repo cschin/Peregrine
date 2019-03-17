@@ -1,0 +1,111 @@
+from cffi import FFI
+
+ffi = FFI()
+
+ffi.cdef("""
+
+typedef int seq_coor_t;
+
+typedef struct {
+    seq_coor_t aln_str_size ;
+    seq_coor_t dist ;
+    seq_coor_t aln_q_s;
+    seq_coor_t aln_q_e;
+    seq_coor_t aln_t_s;
+    seq_coor_t aln_t_e;
+    char * q_aln_str;
+    char * t_aln_str;
+
+} alignment;
+
+typedef struct {
+    seq_coor_t t_pos;
+    uint8_t delta;
+    char q_base;
+    seq_coor_t p_t_pos;   // the tag position of the previous base
+    uint8_t p_delta; // the tag delta of the previous base
+    char p_q_base;        // the previous base
+    unsigned q_id;
+} align_tag_t;
+
+typedef struct {
+    seq_coor_t len;
+    align_tag_t * align_tags;
+} align_tags_t;
+
+
+typedef struct {
+    uint16_t size;
+    uint16_t n_link;
+    seq_coor_t * p_t_pos;   // the tag position of the previous base
+    uint8_t * p_delta; // the tag delta of the previous base
+    char * p_q_base;        // the previous base
+    uint16_t * link_count;
+    uint16_t count;
+    seq_coor_t best_p_t_pos;
+    uint8_t best_p_delta;
+    uint8_t best_p_q_base; // encoded base
+    double score;
+} align_tag_col_t;
+
+typedef struct {
+    align_tag_col_t * base;
+} msa_base_group_t;
+
+typedef struct {
+    uint8_t size;
+    uint8_t max_delta;
+    msa_base_group_t * delta;
+} msa_delta_group_t;
+
+typedef msa_delta_group_t * msa_pos_t;
+
+typedef struct {
+    seq_coor_t s1;
+    seq_coor_t e1;
+    seq_coor_t s2;
+    seq_coor_t e2;
+    long int score;
+} aln_range;
+
+typedef struct {
+    char * sequence;
+    int * eqv;
+} consensus_data;
+
+
+align_tags_t * get_align_tags( char * aln_q_seq,
+                            char * aln_t_seq,
+                            seq_coor_t aln_seq_len,
+                            aln_range * range,
+                            unsigned q_id,
+                            seq_coor_t t_offset);
+
+void free_align_tags( align_tags_t * tags);
+
+consensus_data * get_cns_from_align_tags( align_tags_t ** tag_seqs,
+                                          unsigned n_tag_seqs,
+                                          unsigned t_len,
+                                          unsigned min_cov );
+
+void free_consensus_data( consensus_data * consensus );
+
+alignment * align(char * query_seq, seq_coor_t q_len,
+                  char * target_seq, seq_coor_t t_len,
+                  seq_coor_t band_tolerance,
+                  int get_aln_str);
+
+void free_alignment(alignment *);
+void *malloc(size_t size);
+void free(void *ptr);
+""")
+
+ffi.set_source("_falcon4py",
+               """
+               #include "../falcon/common.h"
+               #include "../falcon/falcon.h"
+               """, sources = ['../falcon/falcon.c',
+                               '../falcon/DW_banded.c' ])   # library name, for the linker
+
+if __name__ == "__main__":
+    ffi.compile(verbose=True)
