@@ -3,8 +3,8 @@ from cffi import FFI
 ffi = FFI()
 
 ffi.cdef("""
-void decode_4bit_bidirection(uint8_t * src, char * seq,
-                             size_t len, uint8_t strand);
+void decode_biseq(uint8_t * src, char * seq,
+                  size_t len, uint8_t strand);
 
 typedef int32_t seq_coor_t;
 
