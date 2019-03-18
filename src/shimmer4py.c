@@ -104,7 +104,7 @@ void build_shimmer_map4py(py_mmer_t * py_mmer,
 	assert(written < sizeof(mmer_file_path));
 	wordexp(mmer_file_path, &p, 0);
 	shimmer_fns = p.we_wordv;
-	for (int i = 0; i < p.we_wordc; i++) {
+	for (uint8_t i = 0; i < p.we_wordc; i++) {
 		fprintf(stderr, "using shimmer data file: %s\n", shimmer_fns[i]);
 		mmers_ = read_mmlist(shimmer_fns[i]);
 		append_mmlist(py_mmer->mmers, &mmers_);
@@ -117,7 +117,7 @@ void build_shimmer_map4py(py_mmer_t * py_mmer,
 	assert(written < sizeof(mmc_file_path));
 	wordexp(mmc_file_path, &p, 0);
 	mmc_fns = p.we_wordv;
-	for (int i = 0; i < p.we_wordc; i++) {
+	for (uint8_t i = 0; i < p.we_wordc; i++) {
 		fprintf(stderr, "using shimmer count file: %s\n", mmc_fns[i]);
 		mmc = read_mm_count(mmc_fns[i]);
 		aggregate_mm_count(mcmap_, &mmc);
