@@ -57,8 +57,6 @@ with open(read_to_contig_map) as f:
 
 rng = ffi.new("aln_range[1]")
 for ctg in contig_to_read_map:
-    if ctg < 4240:
-        continue
 
     print("ctg {}".format(ref_idx[ctg]["name"]), file=sys.stderr)
     contig_to_read_map[ctg].sort(key=lambda x: x[1])
