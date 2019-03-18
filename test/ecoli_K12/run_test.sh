@@ -32,6 +32,8 @@ cp $SHIMMER/py/graph_to_contig.py .
 cp $SHIMMER/py/ovlp_to_graph.py .
 cp $SHIMMER/py/graph_to_path.py .
 cp $SHIMMER/py/path_to_contig.py .
+cp $SHIMMER/py/cns_prototype.py .
+cp $SHIMMER/py/_falcon4py.cpython-36m-x86_64-linux-gnu.so .
 cp $SHIMMER/py/_shimmer4py.cpython-36m-x86_64-linux-gnu.so .
 /usr/bin/time pypy ovlp_to_graph.py >& asm.log
 ln -sf ../index/seq_dataset.* .
@@ -42,4 +44,5 @@ echo $PWD/p_ctg.fa > p_ctg.lst
 time (/usr/bin/time $SHIMMERBIN/shmr_mkseqdb -p $INDEX/p_ctg -d p_ctg.lst 2> build_p_ctg_db.log)
 time (for c in `seq 1 1`; do echo "/usr/bin/time $SHIMMERBIN/shmr_index -p $INDEX/p_ctg -t 1 -c $c -o $INDEX/p_ctg 2> build_p_ctg_index.$c.log" ; done | parallel -j 4)
 time (/usr/bin/time $SHIMMERBIN/shmr_map -r $INDEX/p_ctg -m $INDEX/p_ctg-L2 -p $INDEX/seq_dataset -l $INDEX/shmr-L2 -t 1 -c 1 > read_map.txt 2> map.log)
+time (/usr/bin/time python3 cns_prototype.py $INDEX/seq_dataset $INDEX/p_ctg read_map.txt > p_ctg_cns.fa 2> cns.log)
 
