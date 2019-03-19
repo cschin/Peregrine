@@ -63,24 +63,29 @@ for ctg in contig_to_read_map:
     read_map_groups = []
     left_anchor = 500
     map_group = []
+
     for row in contig_to_read_map[ctg]:
         ref_p1 = row[1]
         if ref_p1 - left_anchor < 50000:
             map_group.append(row)
         else:
-            read_map_groups.append([left_anchor, ref_p1, map_group])
+            if ref_p1 - left_anchor < 100000:
+                read_map_groups.append([left_anchor, ref_p1, map_group])
+            else:
+                read_map_groups.append([left_anchor, ref_p1, []])
             map_group = []
             left_anchor = ref_p1
 
-    if ref_idx[ctg]["length"] - left_anchor > 10000:
-        read_map_groups.append((left_anchor, ref_idx[ctg]["length"], map_group))
-    elif len(read_map_groups) > 0:
-        read_map_groups[-1][1] = ref_idx[ctg]["length"]
-        read_map_groups[-1][2].extend(map_group)
+    if ref_idx[ctg]["length"] - left_anchor < 100000:  #current max template size for consensus
+        if ref_idx[ctg]["length"] - left_anchor > 1000:
+            read_map_groups.append((left_anchor, ref_idx[ctg]["length"], map_group))
+        elif len(read_map_groups) > 0:
+            read_map_groups[-1][1] = ref_idx[ctg]["length"]
+            read_map_groups[-1][2].extend(map_group)
+        else:
+            read_map_groups.append((left_anchor, ref_idx[ctg]["length"], []))
     else:
-        continue #igorn small contig
-
-
+        read_map_groups.append((left_anchor, ref_idx[ctg]["length"], []))
 
     print("ctg {}".format(ref_idx[ctg]["name"]), len(read_map_groups), file=sys.stderr)
 
