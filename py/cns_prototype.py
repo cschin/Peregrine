@@ -11,6 +11,8 @@ from collections import OrderedDict
 read_db_prefix=sys.argv[1]
 ref_db_prefix=sys.argv[2]
 read_to_contig_map=sys.argv[3]
+total_chunks = int(sys.argv[4])
+my_chunk = int(sys.argv[5])
 
 
 f=open("{}.seqdb".format(read_db_prefix), "rb")
@@ -52,6 +54,8 @@ with open(read_to_contig_map) as f:
         row = row.strip().split()
         row = tuple(int(c) for c in row)
         ctg_id = row[0]
+        if (my_chunk % total_chunks) != (ctg_id % total_chunks):
+            continue
         contig_to_read_map.setdefault(ctg_id, [])
         contig_to_read_map[ctg_id].append(row)
 
