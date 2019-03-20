@@ -85,7 +85,7 @@ if __name__ == "__main__":
                 lib.decode_biseq(bseq1[s:e], seq, e-s, strand1)
                 segments.append(seq)
             else:
-                seq = ffi.new("char[1]", "N")
+                seq = ffi.new("char[1]", b"N")
                 segments.append(seq)
                 print(row, file=sys.stderr)
         print(">{}".format(ctg_id))
