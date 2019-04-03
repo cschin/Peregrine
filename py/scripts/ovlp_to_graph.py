@@ -1,6 +1,4 @@
-from __future__ import absolute_import
-from __future__ import print_function
-
+#!/usr/bin/env pypy3
 
 #from future.utils import viewitems
 #from future.utils import itervalues
@@ -15,7 +13,7 @@ DEBUG_LOG_LEVEL = 0
 
 
 def viewitems(iter_):
-    return iter_.items()
+    return list(iter_.items())
 
 def itervalues(iter_):
     return iter_.value()

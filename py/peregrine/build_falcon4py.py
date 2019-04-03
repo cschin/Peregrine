@@ -1,8 +1,11 @@
 from cffi import FFI
+import os
 
-ffi = FFI()
+basedir = os.environ["peregrine_base"]
 
-ffi.cdef("""
+ffibuilder = FFI()
+
+ffibuilder.cdef("""
 
 typedef int seq_coor_t;
 
@@ -100,12 +103,12 @@ void *malloc(size_t size);
 void free(void *ptr);
 """)
 
-ffi.set_source("_falcon4py",
-               """
-               #include "../falcon/common.h"
-               #include "../falcon/falcon.h"
-               """, sources = ['../falcon/falcon.c',
-                               '../falcon/DW_banded.c' ])   # library name, for the linker
+ffibuilder.set_source("peregrine._falcon4py",
+               f"""
+               #include "{basedir}/falcon/common.h"
+               #include "{basedir}/falcon/falcon.h"
+               """, sources = [f'{basedir}/falcon/falcon.c',
+                               f'{basedir}/falcon/DW_banded.c' ])   # library name, for the linker
 
 if __name__ == "__main__":
-    ffi.compile(verbose=True)
+    ffibuilder.compile(verbose=True)

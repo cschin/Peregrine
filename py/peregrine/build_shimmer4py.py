@@ -1,8 +1,11 @@
 from cffi import FFI
+import os
 
-ffi = FFI()
+basedir = os.environ["peregrine_base"]
 
-ffi.cdef("""
+ffibuilder = FFI()
+
+ffibuilder.cdef("""
 void decode_biseq(uint8_t * src, char * seq,
                   size_t len, uint8_t strand);
 
@@ -25,14 +28,14 @@ ovlp_match_t * ovlp_match(uint8_t * query_seq,
 void free_ovlp_match(ovlp_match_t * match);
 """)
 
-ffi.set_source("_shimmer4py",
-               """
-               #include "../src/shimmer.h"
+ffibuilder.set_source("peregrine._shimmer4py",
+               f"""
+               #include "{basedir}/src/shimmer.h"
                """,
-               sources=['../src/shimmer4py.c',
-                        '../src/DWmatch.c',
-                        '../src/shmr_utils.c',
-                        '../src/kalloc.c'])   # library name, for the linker
+               sources=[f'{basedir}/src/shimmer4py.c',
+                        f'{basedir}/src/DWmatch.c',
+                        f'{basedir}/src/shmr_utils.c',
+                        f'{basedir}/src/kalloc.c'])   # library name, for the linker
 
 if __name__ == "__main__":
-    ffi.compile(verbose=True)
+    ffibuilder.compile(verbose=True)

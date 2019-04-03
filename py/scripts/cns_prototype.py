@@ -1,8 +1,10 @@
+#!/usr/bin/env python3
+
 import mmap
 import sys
-from _falcon4py import ffi
-from _falcon4py import lib as falcon
-from _shimmer4py import lib as shimmer
+from peregrine._falcon4py import ffi
+from peregrine._falcon4py import lib as falcon
+from peregrine._shimmer4py import lib as shimmer
 import numpy as np
 from collections import OrderedDict
 

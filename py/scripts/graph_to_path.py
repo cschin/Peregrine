@@ -1,3 +1,5 @@
+#/usr/bin/env pypy3
+
 """
 TODO: (from convo w/ Ivan)
 the issue with this script (but would still like to re-read it to refresh my memory). The script loads all edge sequences and tries to do two things at once: create p_ctg and a_ctg sequences, and align the bubbles using those sequences
@@ -16,8 +18,8 @@ It aligns them to produce the identity score
 After that the dedup_a_tigs.py script is used to deduplicate fake a_ctg.
 But that script is simple, and only depends on the alignment info that the previous script stored in the a_ctg header.
 """
-from __future__ import absolute_import
-from __future__ import print_function
+
+
 
 
 #from builtins import zip
@@ -27,26 +29,12 @@ import logging
 import sys
 import networkx as nx
 import contextlib
-import mmap
-import logging
 #from pbcore.io import FastaReader
 #from myio import open_progress
 
 LOG = logging.getLogger()
-RCMAP = dict(zip("ACGTacgtNn-", "TGCAtgcaNn-"))
+RCMAP = dict(list(zip("ACGTacgtNn-", "TGCAtgcaNn-")))
 
-def FilePercenter(fn, log=LOG.info):
-    if '-' == fn or not fn:
-        size = sys.maxint
-    else:
-        size = filesize(fn)
-        if fn.endswith('.dexta'):
-            size = size * 4
-        elif fn.endswith('.gz'):
-            size = sys.maxint # probably 2.8x to 3.2x, but we are not sure, and higher is better than lower
-            # https://stackoverflow.com/a/22348071
-            # https://jira.pacificbiosciences.com/browse/TAG-2836
-    return Percenter(fn, size, log, units='bytes')
 
 @contextlib.contextmanager
 def open_progress(fn, mode='r', log=LOG.info):
@@ -63,7 +51,6 @@ def open_progress(fn, mode='r', log=LOG.info):
             #progress(len(line))
             yield line
 
-    #fp = FilePercenter(fn, log=log)
     fp = None
     with open(fn, mode=mode) as stream:
         yield get_iter(stream, fp)
@@ -77,10 +64,12 @@ def log(msg):
 def rc(seq):
     return "".join([RCMAP[c] for c in seq[::-1]])
 
+
 def reverse_end(node_id):
     node_id, end = node_id.split(":")
     new_end = "B" if end == "E" else "E"
     return node_id + ":" + new_end
+
 
 bit2base = ('N', 'A', 'C', 'N', 'G', 'N', 'N', 'N', 'T')
 def decode_seq(encoded_seq, strand):
@@ -90,7 +79,6 @@ def decode_seq(encoded_seq, strand):
     else: # REVERSED
         seq = "".join([ bit2base[ord(c) >> 4] for c in encoded_seq ])
     return seq
-
 
 
 def yield_first_seq(one_path_edges, seqs, read_idx):
@@ -110,27 +98,20 @@ def yield_first_seq(one_path_edges, seqs, read_idx):
             first_seq = "".join([RCMAP[c] for c in seq])
         yield first_seq
 
-def compose_ctg(seqs, read_idx, edge_data, ctg_id, path_edges, proper_ctg):
+def compose_ctg(edge_data, ctg_id, path_edges, proper_ctg):
     total_score = 0
     total_length = 0
     edge_lines = []
-    sub_seqs = []
-
-    # If required, add the first read to the path sequence.
-    if proper_ctg:
-        sub_seqs = list(yield_first_seq(path_edges, seqs, read_idx))
-        total_length = 0 if len(sub_seqs) == 0 else len(sub_seqs[0])
 
     # Splice-in the rest of the path sequence.
     for vv, ww in path_edges:
-        rid, s, t, aln_score, idt, e_seq = edge_data[(vv, ww)]
-        sub_seqs.append(e_seq)
+        rid, s, t, aln_score, idt = edge_data[(vv, ww)]
         edge_lines.append('%s %s %s %s %d %d %d %0.2f' % (
             ctg_id, vv, ww, rid, s, t, aln_score, idt))
         total_length += abs(s - t)
         total_score += aln_score
 
-    return edge_lines, sub_seqs, total_score, total_length
+    return edge_lines, total_score, total_length
 
 
 def get_read_index(idx_fn):
@@ -149,8 +130,6 @@ def get_read_index(idx_fn):
     return read_idx
 
 
-
-
 def run(improper_p_ctg, proper_a_ctg, seqdb_prefix, sg_edges_list_fn, utg_data_fn, ctg_paths_fn):
     """improper==True => Neglect the initial read.
     We used to need that for unzip.
@@ -167,15 +146,6 @@ def run(improper_p_ctg, proper_a_ctg, seqdb_prefix, sg_edges_list_fn, utg_data_f
             reads_in_layout.add(r1)
             r2 = w.split(":")[0]
             reads_in_layout.add(r2)
-
-    seqdb_index_path = seqdb_prefix + ".idx"
-    read_idx = get_read_index(seqdb_index_path)
-
-    seqdb_file=open( seqdb_prefix + ".seqdb", "rb")
-    seqs = mmap.mmap(seqdb_file.fileno(), 0, flags=mmap.MAP_SHARED, prot=mmap.PROT_READ)
-
-
-
 
     edge_data = {}
     with open_progress(sg_edges_list_fn) as f:
@@ -196,19 +166,11 @@ def run(improper_p_ctg, proper_a_ctg, seqdb_prefix, sg_edges_list_fn, utg_data_f
             aln_score = int(aln_score)
             idt = float(idt)
 
-            seq_s = read_idx[int(rid)]["offset"]
-            seq_e = seq_s + read_idx[int(rid)]["length"]
-            seq = decode_seq(seqs[seq_s:seq_e], 0)
-
             if s < t:
-                e_seq = seq[s:t]
                 assert 'E' == dir2
             else:
-                # t and s were swapped for 'c' alignments in ovlp_to_graph.generate_string_graph():702
-                # They were translated from reverse-dir to forward-dir coordinate system in LA4Falcon.
-                e_seq = "".join([RCMAP[c] for c in seq[t:s][::-1]])
                 assert 'B' == dir2
-            edge_data[(v, w)] = (rid, s, t, aln_score, idt, e_seq)
+            edge_data[(v, w)] = (rid, s, t, aln_score, idt)
 
     utg_data = {}
     with open_progress(utg_data_fn) as f:
@@ -226,16 +188,14 @@ def run(improper_p_ctg, proper_a_ctg, seqdb_prefix, sg_edges_list_fn, utg_data_f
                                  for e in path_or_edges.split("|")]
             utg_data[(s, v, t)] = type_, length, score, path_or_edges
 
-    p_ctg_out = open("p_ctg.fa", "w")
-    a_ctg_out = open("a_ctg_all.fa", "w")
     p_ctg_t_out = open("p_ctg_tiling_path", "w")
     a_ctg_t_out = open("a_ctg_all_tiling_path", "w")
     layout_ctg = set()
 
     with open_progress(ctg_paths_fn) as f:
-        for l in f:
-            l = l.strip().split()
-            ctg_id, c_type_, i_utig, t0, length, score, utgs = l
+        for row in f:
+            row = row.strip().split()
+            ctg_id, c_type_, i_utig, t0, length, score, utgs = row
             ctg_id = ctg_id
             s0 = i_utig.split("~")[0]
 
@@ -244,14 +204,12 @@ def run(improper_p_ctg, proper_a_ctg, seqdb_prefix, sg_edges_list_fn, utg_data_f
             else:
                 layout_ctg.add((s0, t0))
 
-            ctg_label = i_utig + "~" + t0
             length = int(length)
             utgs = utgs.split("|")
             one_path = []
             total_score = 0
             total_length = 0
 
-            #a_ctg_data = []
             a_ctg_group = {}
 
             for utg in utgs:
@@ -318,33 +276,26 @@ def run(improper_p_ctg, proper_a_ctg, seqdb_prefix, sg_edges_list_fn, utg_data_f
             one_path_edges = list(zip(one_path[:-1], one_path[1:]))
 
             # Compose the primary contig.
-            p_edge_lines, p_ctg_seq_chunks, p_total_score, p_total_length = compose_ctg(seqs, read_idx, edge_data, ctg_id, one_path_edges, (not improper_p_ctg))
+            p_edge_lines, p_total_score, p_total_length = compose_ctg(
+                edge_data, ctg_id, one_path_edges, (not improper_p_ctg))
 
             # Write out the tiling path.
             p_ctg_t_out.write('\n'.join(p_edge_lines))
             p_ctg_t_out.write('\n')
 
-            # Write the sequence.
-            # Using the `total_score` instead of `p_total_score` intentionally. Sum of
-            # edge scores is not identical to sum of unitig scores.
-            p_ctg_out.write('>%s %s %s %d %d\n' % (ctg_id, ctg_label, c_type_, p_total_length, total_score))
-            p_ctg_out.write(''.join(p_ctg_seq_chunks))
-            p_ctg_out.write('\n')
 
             a_id = 0
             for v, w in a_ctg_group:
                 atig_output = []
 
                 # Compose the base sequence.
-                for sub_id in xrange(len(a_ctg_group[(v, w)])):
+                for sub_id in range(len(a_ctg_group[(v, w)])):
                     score, atig_path = a_ctg_group[(v, w)][sub_id]
                     atig_path_edges = list(zip(atig_path[:-1], atig_path[1:]))
 
                     a_ctg_id = '%s-%03d-%02d' % (ctg_id, a_id + 1, sub_id)
-                    a_edge_lines, sub_seqs, a_total_score, a_total_length = compose_ctg(
-                        seqs, read_idx, edge_data, a_ctg_id, atig_path_edges, proper_a_ctg)
-
-                    seq = ''.join(sub_seqs)
+                    a_edge_lines, a_total_score, a_total_length = compose_ctg(
+                        edge_data, a_ctg_id, atig_path_edges, proper_a_ctg)
 
                     # Keep the placeholder for these values for legacy purposes, but mark
                     # them as for deletion.
@@ -352,30 +303,28 @@ def run(improper_p_ctg, proper_a_ctg, seqdb_prefix, sg_edges_list_fn, utg_data_f
                     delta_len = 0
                     idt = 1.0
                     cov = 1.0
-                    atig_output.append((v, w, atig_path, a_total_length, a_total_score, seq, atig_path_edges, a_ctg_id, a_edge_lines, delta_len, idt, cov))
+                    atig_output.append((v, w, atig_path, a_total_length,
+                                        a_total_score, atig_path_edges,
+                                        a_ctg_id, a_edge_lines,
+                                        delta_len, idt, cov))
 
                 if len(atig_output) == 1:
                     continue
 
                 for sub_id, data in enumerate(atig_output):
-                    v, w, tig_path, a_total_length, a_total_score, seq, atig_path_edges, a_ctg_id, a_edge_lines, delta_len, a_idt, cov = data
+                    (v, w, tig_path, a_total_length, a_total_score,
+                     tig_path_edges, a_ctg_id, a_edge_lines,
+                     delta_len, a_idt, cov) = data
 
                     # Write out the tiling path.
                     a_ctg_t_out.write('\n'.join(a_edge_lines))
                     a_ctg_t_out.write('\n')
 
-                    # Write the sequence.
-                    a_ctg_out.write('>%s %s %s %d %d %d %d %0.2f %0.2f\n' % (a_ctg_id, v, w, a_total_length, a_total_score, len(atig_path_edges), delta_len, idt, cov))
-                    a_ctg_out.write(''.join(seq))
-                    a_ctg_out.write('\n')
-
                 a_id += 1
-    seqs.close()
-    seqdb_file.close()
-    a_ctg_out.close()
-    p_ctg_out.close()
+
     a_ctg_t_out.close()
     p_ctg_t_out.close()
+
 
 def main(argv=sys.argv):
     description = 'Generate the primary and alternate contig fasta files and tiling paths, given the string graph.'

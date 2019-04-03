@@ -1,6 +1,8 @@
+#!/usr/bin/env python3
+
 import mmap
 import sys
-from _shimmer4py import ffi, lib
+from peregrine._shimmer4py import ffi, lib
 
 if __name__ == "__main__":
     seqdb_prefix = sys.argv[1]
