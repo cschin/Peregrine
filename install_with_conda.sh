@@ -1,0 +1,19 @@
+#!/bin/bash
+. ~/anaconda3/bin/activate
+conda create -n peregrine -y python=3.6
+
+conda activate peregrine
+conda install -c conda-forge -y pypy3.6
+
+pushd py
+rm -rf .eggs/ dist/ build/ peregrine.egg-info/ peregrine_pypy.egg-info get-pip.py
+python3 setup.py install
+python3 setup.py clean --all
+wget -q https://bootstrap.pypa.io/get-pip.py
+pypy3 get-pip.py
+pypy3 setup_pypy.py install
+popd
+
+pushd src
+make install
+popd
