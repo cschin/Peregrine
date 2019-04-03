@@ -38,8 +38,9 @@ shmr_dedup: shmr_dedup.c kalloc.o
 
 shmr_dedup2: shmr_dedup2.c kalloc.o
 
+BINDIR=$(shell dirname $(shell which python))
 install:
-	mkdir -p bin/; cp $(ALL) bin/	
+	cp $(ALL) $(BINDIR) 
 
 clean:
 	rm -f shmr_dedup shmr_gather_mc shmr_overlap \
