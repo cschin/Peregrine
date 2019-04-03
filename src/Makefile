@@ -1,10 +1,14 @@
+
+.PHONY:all clean install 
+
 CC=gcc
 CFLAGS=-O3 
 CFLAGS+=-Wall -Wno-unused-result -Wno-unused-function -Werror
 #CFLAGS+=-Wall -Wno-unused-result -Wno-unused-function
 LDLIBS=-lz
+ALL=shmr_mkseqdb shmr_index shmr_gather_mc shmr_overlap shmr_dedup shmr_map
 
-all: shmr_mkseqdb shmr_index shmr_gather_mc shmr_overlap shmr_dedup shmr_map
+all: $(ALL)
 
 kalloc.o: kalloc.c
 
@@ -34,7 +38,10 @@ shmr_dedup: shmr_dedup.c kalloc.o
 
 shmr_dedup2: shmr_dedup2.c kalloc.o
 
+install:
+	mkdir -p bin/; cp $(ALL) bin/	
+
 clean:
 	rm -f shmr_dedup shmr_gather_mc shmr_overlap \
 		shmr_map shmr_mkseqdb shmr_index \
-		shmr_gather_mc *.o *.so
+		shmr_gather_mc *.o *.so; rm -rf ./bin/
