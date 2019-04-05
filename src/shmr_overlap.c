@@ -54,7 +54,8 @@ void shimmer_to_overlap(
 		khash_t(RLEN) * rlmap,
 		khash_t(RPAIR) * rid_pairs,
 		uint8_t bestn,
-		uint8_t * seq_p){
+		uint8_t * seq_p,
+		FILE *output){
 
 	uint64_t ridp;
 	uint64_t y0;
@@ -164,7 +165,7 @@ void shimmer_to_overlap(
 				ovlp.ovlp_type = ovlp_type;
 				ovlp.match = *match;
 
-				fwrite(&ovlp, sizeof(ovlp_t), 1, stdout);
+				fwrite(&ovlp, sizeof(ovlp_t), 1, output);
 			}
 			free_ovlp_match(match);
 			if (contained[__k0-1] == 1) break;
@@ -177,7 +178,8 @@ void process_overlaps(char * seqdb_file_path,
 		khash_t(MMER0) * mmer0_map, 
 		khash_t(RLEN) *rlmap, 
 		khash_t(MMC) *mcmap,
-		uint8_t bestn) {
+		uint8_t bestn,
+		FILE *ovlp_file) {
 
 	int fd;
 	struct stat sb;
@@ -212,7 +214,7 @@ void process_overlaps(char * seqdb_file_path,
 			mpv = kh_val(mmer1_map, __j);
 			if (mpv->n <= 2 || mpv->n > LOCAL_OVERLAP_UPPERBOUND) continue;
 			qsort(mpv->a, mpv->n, sizeof(mp128_t), mp128_comp);
-			shimmer_to_overlap(mpv, rlmap, rid_pairs, bestn, seq_p);
+			shimmer_to_overlap(mpv, rlmap, rid_pairs, bestn, seq_p, ovlp_file);
 			iter_count++;
 			if (iter_count % 10000 == 0) {
 				end = clock();
@@ -228,12 +230,15 @@ void process_overlaps(char * seqdb_file_path,
 int main(int argc, char *argv[]) {
 	char * seqdb_prefix = NULL;
 	char * shimmer_prefix = NULL;
+	char * ovlp_file_path = NULL;
+
+	FILE * ovlp_file;
 
 	char mmc_file_path[8192];
 	char mmer_file_path[8192]; 
 	char seq_idx_file_path[8192];
 	char seqdb_file_path[8291];
-        int c;	
+	int c;	
 	uint8_t bestn = BESTN;
 	uint32_t total_chunk = 1, mychunk = 1;
 
@@ -255,7 +260,7 @@ int main(int argc, char *argv[]) {
 	
 	opterr = 0;
 
-	while ((c = getopt(argc, argv, "p:l:t:c:b:")) != -1) {
+	while ((c = getopt(argc, argv, "p:l:t:c:b:o:")) != -1) {
 		switch (c) {
 			case 'p':
 				seqdb_prefix = optarg;
@@ -272,12 +277,18 @@ int main(int argc, char *argv[]) {
 			case 'b':
 				bestn = atoi(optarg);
 				break;
+			case 'o':
+				ovlp_file_path = optarg;
+				break;
 			case '?':
 				if (optopt == 'p') {
 					fprintf (stderr, "Option -%c not specified, using 'seq_dataset' as the sequence db prefix\n", optopt);
 				}
 				if (optopt == 'l') {
 					fprintf(stderr, "Option -%c not specified, using 'shimmer-L2' as the L2 index prefix\n", optopt);
+				}
+				if (optopt == 'o') {
+					fprintf(stderr, "Option -%c not specified, using 'ovlp.# as default output' \n", optopt);
 				}
 				return 1;
 			default:
@@ -294,10 +305,14 @@ int main(int argc, char *argv[]) {
 	}
 
 	if (shimmer_prefix == NULL) {
-		seqdb_prefix = (char *) calloc(8192, 1);
+		shimmer_prefix = (char *) calloc(8192, 1);
 		snprintf( shimmer_prefix, 8191, "shimmer-L2" );
 	}
 
+	if (ovlp_file_path == NULL) {
+		ovlp_file_path = (char *) calloc(8192, 1);
+		snprintf( ovlp_file_path, 8191, "ovlp.%02d", mychunk );
+	}
 
 	int written;
 	written = snprintf(seq_idx_file_path, sizeof(seq_idx_file_path), "%s.idx", seqdb_prefix);
@@ -323,9 +338,6 @@ int main(int argc, char *argv[]) {
 	}
 	wordfree(&p);	
 
-	char buffer[32768];
-
-	setvbuf(stdout, buffer, _IOFBF, sizeof(buffer));
 
 
 	written = snprintf(mmc_file_path, sizeof(mmc_file_path), "%s-MC-[0-9]*-of-[0-9]*.dat", shimmer_prefix);
@@ -341,11 +353,16 @@ int main(int argc, char *argv[]) {
 
 	wordfree(&p);	
 	
+	ovlp_file = fopen(ovlp_file_path, "w");
+
+	char buffer[32768];
+
+	setvbuf(ovlp_file, buffer, _IOFBF, sizeof(buffer));
 
 
 	mmer0_map = kh_init(MMER0);
 	build_map(&mmers, mmer0_map, rlmap, mcmap, mychunk, total_chunk, MMER_COUNT_LOWER_BOUND, MMER_COUNT_UPPER_BOUND);
-	process_overlaps(seqdb_file_path, mmer0_map, rlmap, mcmap, bestn);
+	process_overlaps(seqdb_file_path, mmer0_map, rlmap, mcmap, bestn, ovlp_file);
 	
 	for (khiter_t __i = kh_begin(mmer0_map); __i != kh_end(mmer0_map); ++__i) {
 		if (!kh_exist(mmer0_map,__i)) continue;
@@ -362,7 +379,9 @@ int main(int argc, char *argv[]) {
 	kh_destroy(MMC, mcmap);
 	kh_destroy(RLEN, rlmap);
 	kv_destroy(mmers);
-	fflush(stdout);
-	// TODO: clean up memory
+	fclose(ovlp_file);
+	if (!seqdb_prefix) free(seqdb_prefix);
+	if (!shimmer_prefix) free(shimmer_prefix);
+	if (!ovlp_file_path) free(ovlp_file_path);
 }
 
