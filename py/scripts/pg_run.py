@@ -191,7 +191,7 @@ cat {params.ovlps} | shmr_dedup > preads.ovl; echo "-" >> preads.ovl
     p_ctg_tiling_path > {output.p_ctg} 2> to_contig.log
 """
     asm_dir = os.path.join(os.path.abspath(args["--output"]), "3-asm")
-    ovlps_list = " ".join([v for k, v in ovlps.items()])
+    ovlps_list = " ".join(sorted([v for v in ovlps.values()]))
     inputs = {}
     inputs.update(ovlps)
     inputs.update(read_db)
@@ -291,18 +291,36 @@ echo {input.p_ctg} > p_ctg.lst
 
     wf.max_jobs = mapping_nproc
     wf.refreshTargets()
+    mapping_chunk_outputs = outputs
+    map_files = " ".join(sorted([v for v in mapping_chunk_outputs.values()]))
 
-    cns_script = """\
+    mapping_merge_script = """
 mkdir -p {params.tmp_dir}
 cat {params.map_files} | \
     sort -T {params.tmp_dir} -S 8g --parallel {params.sort_nproc}\
-        -k 1 -g -k 2 -g > reads2ref_all.out
+        -k 1 -g -k 2 -g > {output.merged_mapping_file}
+"""
+    mapping_merge_dir = os.path.join(cns_dir, "map-merge")
+    merged_mapping_fn = os.path.join(mapping_merge_dir, "reads2ref_all.out")
+
+    wf.addTask(Task(
+        script=mapping_merge_script,
+        inputs=mapping_chunk_outputs,
+        outputs={"merged_mapping_file": merged_mapping_fn},
+        parameters={
+            'tmp_dir': os.path.join(cns_dir, "tmp"),
+            'sort_nproc': sort_nproc,
+            'map_files': map_files
+        },
+        dist=Dist(NPROC=1, local=True)
+    ))
+
+    cns_script = """\
 /usr/bin/time cns_prototype.py {params.read_db_prefix} \
-    {params.p_ctg_db_prefix} reads2ref_all.out \
+    {params.p_ctg_db_prefix} {input.merged_mapping_file} \
     {params.n_chunk} {params.my_chunk} > {output.cns_file} 2> cns.log
 """
-    map_files = " ".join([v for k, v in outputs.items()])
-    inputs.update(outputs)
+    inputs.update({"merged_mapping_file": merged_mapping_fn})
     outputs = {}
     for my_chunk in range(1, cns_nchunk+1):
         cns_chunk_dir = os.path.join(cns_dir, f"cns-{my_chunk:02d}")
@@ -317,10 +335,7 @@ cat {params.map_files} | \
                 'read_db_prefix': read_db_abs_prefix,
                 'p_ctg_db_prefix': p_ctg_db_abs_prefix,
                 'n_chunk': cns_nchunk,
-                'my_chunk': my_chunk,
-                'tmp_dir': 'wd/tmp',
-                'sort_nproc': sort_nproc,
-                'map_files': map_files
+                'my_chunk': my_chunk
             },
             dist=Dist(NPROC=1, local=True)
         ))
@@ -331,7 +346,7 @@ cat {params.map_files} | \
     gather_cns_script = """\
 cat {params.cns_chunk_files} > {output.cns_file}
 """
-    cns_chunk_files = " ".join([v for k, v in outputs.items()])
+    cns_chunk_files = " ".join(sorted([v for v in outputs.values()]))
     inputs = outputs
     cns_merge_dir = os.path.join(cns_dir, f"cns-merge")
     cns_fn = os.path.join(cns_merge_dir, "p_ctg_cns.fa")
