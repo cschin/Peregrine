@@ -1,6 +1,6 @@
 
-This software uses the following libraray from Heng Li's Minimap2 code under
-MIT Licesne
+This software uses the following libraray from Heng Li's Minimap2 
+code under MIT License:
 
 mm_sketch.c kvec.h kseq.h khash.h kalloc.h kalloc.c
 
@@ -28,7 +28,3 @@ BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN
 ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
-
-
-
-
