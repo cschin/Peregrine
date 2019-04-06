@@ -1,20 +1,21 @@
+import peregrine
 from pypeflow.simple_pwatcher_bridge import (PypeProcWatcherWorkflow, Dist)
 from pypeflow.tasks import gen_task
 from docopt import docopt
-import peregrine
 import logging
 import os
 import sys
 
 __version__ = peregrine.__version__
 
-__doc__ = """Peregrine: A Fast Genome Assembler 
-
+__doc__ = """
+Peregrine
+===============================================================
 Peregrine is a fast genome assembler for accurate long
 reads (length > 10kb, accuraccy > 99%). It can assemble
 a human genome from 30x reads within 20 cpu hours from 
 reads to polished consensus. It uses Sparse HIereachical 
-MimiMizeR (SHIMMER) for fast read-to-read overlaps without 
+MimiMizER (SHIMMER) for fast read-to-read overlaps without 
 explicitly quadratic comparisions used in other OLC 
 assemblers. 
 
@@ -65,8 +66,7 @@ this work. If not, see
 ************************************************************
 If you want to use it for any commericial purposes 
 (including promotion activity for a commerical product), 
-please contact Jason Chin for a commericial license to 
-use this software.
+please contact Jason Chin for a commericial license.
 ************************************************************
 
 This software uses the following libraray from Heng Li's 
@@ -553,7 +553,46 @@ def main(args):
 
 
 if __name__ == "__main__":
+    import pkg_resources
+    short_doc = """
+Peregrine 
+=========
+
+Peregrine is a fast genome assembler for accurate long
+reads (length > 10kb, accuraccy > 99%). It can assemble
+a human genome from 30x reads within 20 cpu hours from 
+reads to polished consensus. It uses Sparse HIereachical 
+MimiMizER (SHIMMER) for fast read-to-read overlaps without 
+explicitly quadratic comparisions used in other OLC 
+assemblers. 
+
+Peregrine Assembler and SHIMMER Genome Assembly Toolkit
+Copyright (c) 2019- by Jason, Chen-Shan, Chin
+
+Peregrine Assembler and  SHIMMER Genome Assembly Toolkit 
+is licensed under a Creative Commons 
+Attribution-NonCommercial-ShareAlike 4.0 International 
+License.
+
+You should have received a copy of the license along with 
+this work. If not, see 
+<http://creativecommons.org/licenses/by-nc-sa/4.0/>.
+
+************************************************************
+If you want to use it for any commericial purposes 
+(including promotion activity for a commerical product), 
+please contact Jason Chin for a commericial license.
+************************************************************
+
+run `pg_run.py -h` for help and other license information
+
+
+"""
+    sys.stderr.write(short_doc)
+
+    sys.stderr.write('using {}\n\n'.format(pkg_resources.get_distribution('pypeflow')))
+
     logging.basicConfig(level=logging.INFO)
     args = docopt(__doc__, version=__version__)
-    print("Peregrine Assembler ({__version__}) has been started with the following option:\n", args, file=sys.stderr)
+    print(f"Peregrine Assembler ({__version__}) has been started with the following option:\n", args, file=sys.stderr)
     main(args)
