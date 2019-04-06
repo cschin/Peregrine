@@ -1185,7 +1185,7 @@ def identify_spurs(ug, u_edge_data, spur_len):
             v1 = s_path[0]
             total_length = 0
             for v2 in s_path[1:]:
-                for s, t, v in ug2.out_edges(v1, keys=True):
+                for s, t, v in list(ug2.out_edges(v1, keys=True)):
                     if t != v2:
                         continue
                     length, score, edges, type_ = u_edge_data[(s, t, v)]
@@ -1197,7 +1197,7 @@ def identify_spurs(ug, u_edge_data, spur_len):
 
             v1 = s_path[0]
             for v2 in s_path[1:]:
-                for s, t, v in ug2.out_edges(v1, keys=True):
+                for s, t, v in list(ug2.out_edges(v1, keys=True)):
                     if t != v2:
                         continue
                     length, score, edges, type_ = u_edge_data[(s, t, v)]
