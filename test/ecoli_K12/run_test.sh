@@ -1,6 +1,6 @@
 #!/bin/bash
 set -e
-find ./reads/ -name "reads_*.fa" > seq_dataset.lst
+find $PWD/reads/ -name "reads_*.fa" > seq_dataset.lst
 WORKDIR=$PWD/wd
 INDEX=$WORKDIR/index
 OVLOUT=$WORKDIR/ovlp
