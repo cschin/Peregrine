@@ -8,22 +8,136 @@ import sys
 
 __version__ = peregrine.__version__
 
-__doc__ = """Peregrine Long Accurate Read Fast Genome Assembler
+__doc__ = """Peregrine: A Fast Genome Assembler 
+
+Peregrine is a fast genome assembler for accurate long
+reads (length > 10kb, accuraccy > 99%). It can assemble
+a human genome from 30x reads within 20 cpu hours from 
+reads to polished consensus. It uses Sparse HIereachical 
+MimiMizeR (SHIMMER) for fast read-to-read overlaps without 
+explicitly quadratic comparisions used in other OLC 
+assemblers. 
+
+Currently, the assembly graph process is more or less
+identical to the approaches used in the FALCON assembler
+developed by Jason Chin and others in Pacific Biosciences, Inc.
 
 Usage:
   pg_run.py asm <reads.lst> <index_nchunk> <index_nproc>
                             <ovlp_nchunk> <ovlp_nproc>
                             <mapping_nchunk> <mapping_nproc>
                             <cns_nchunk> <cns_nproc>
-                            <sort_nproc> [--with-consensus]
+                            <sort_nproc> 
+                            [--with-consensus]
+                            [--best_n_ovlp <n_ovlp>]
+                            [--mc_lower <mc_lower>]
+                            [--mc_upper <mc_upper>]
+                            [--aln_bw <aln_bw>]
+                            [--ovlp_upper <ovlp_upper>]
                             [--output <output>]
   pg_run.py (-h | --help)
   pg_run.py --verison
 
 Options:
-  -h --help     Show this help
-  --version     Show version
-  --output <output>     set output directory (will be created if not exist) [default: ./wd]
+  -h --help                   Show this help
+  --version                   Show version
+  --output <output>           Set output directory (will be created if not exist) [default: ./wd]
+  --best_n_ovlp <n_ovlp>      Find best n_ovlp overlap [default: 4]
+  --mc_lower <mc_lower>       Does not cosider SHIMMER with count less than mc_low [default: 2]
+  --mc_upper <mc_upper>       Does not cosider SHIMMER with count greater than mc_upper [default: 240]
+  --aln_bw <aln_bw>           Max off-diagonal gap allow during overlap confirmation [default: 100] 
+  --ovlp_upper <ovlp_upper>   Ignore cluster with overlap count greater ovlp_upper [default: 120]
+
+Licenses:
+
+Peregrine Assembler and SHIMMER Genome Assembly Toolkit
+Copyright (c) 2019- by Jason, Chen-Shan, Chin
+
+Peregrine Assembler and  SHIMMER Genome Assembly Toolkit 
+is licensed under a Creative Commons 
+Attribution-NonCommercial-ShareAlike 4.0 International 
+License.
+
+You should have received a copy of the license along with 
+this work. If not, see 
+<http://creativecommons.org/licenses/by-nc-sa/4.0/>.
+
+************************************************************
+If you want to use it for any commericial purposes 
+(including promotion activity for a commerical product), 
+please contact Jason Chin for a commericial license to 
+use this software.
+************************************************************
+
+This software uses the following libraray from Heng Li's 
+Minimap2 codebase under MIT License:
+
+mm_sketch.c kvec.h kseq.h khash.h kalloc.h kalloc.c
+
+The MIT License
+
+Copyright (c) 2018-     Dana-Farber Cancer Institute
+2017-2018 Broad Institute, Inc.
+
+Permission is hereby granted, free of charge, to any person obtaining
+a copy of this software and associated documentation files (the
+"Software"), to deal in the Software without restriction, including
+without limitation the rights to use, copy, modify, merge, publish,
+distribute, sublicense, and/or sell copies of the Software, and to
+permit persons to whom the Software is furnished to do so, subject to
+the following conditions:
+
+The above copyright notice and this permission notice shall be
+included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS
+BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN
+ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+
+License for code from FALCON
+
+#################################################################################$$
+# Copyright (c) 2011-2015, Pacific Biosciences of California, Inc.
+#
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted (subject to the limitations in the
+# disclaimer below) provided that the following conditions are met:
+#
+#  * Redistributions of source code must retain the above copyright
+#  notice, this list of conditions and the following disclaimer.
+#
+#  * Redistributions in binary form must reproduce the above
+#  copyright notice, this list of conditions and the following
+#  disclaimer in the documentation and/or other materials provided
+#  with the distribution.
+#
+#  * Neither the name of Pacific Biosciences nor the names of its
+#  contributors may be used to endorse or promote products derived
+#  from this software without specific prior written permission.
+#
+# NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
+# GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY PACIFIC
+# BIOSCIENCES AND ITS CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
+# WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+# OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL PACIFIC BIOSCIENCES OR ITS
+# CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+# SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+# LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF
+# USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+# ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+# OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+# OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+# SUCH DAMAGE.
+#################################################################################$$
 """
 
 LOG = logging.getLogger(__name__)
@@ -149,6 +263,11 @@ def run_overlapper(wf, args,
     n_proc = int(args["<ovlp_nproc>"])
     shmr_ovlp_script = """
 /usr/bin/time shmr_overlap\
+    -b {params.best_n_ovlp}\
+    -m {params.mc_lower}\
+    -M {params.mc_upper}\
+    -w {params.align_bandwidth}\
+    -n {params.ovlp_upper}\
     -p {params.read_db_prefix}\
     -l {params.index_prefix}\
     -t {params.n_chunk}\
@@ -171,7 +290,12 @@ def run_overlapper(wf, args,
                 'read_db_prefix': read_db_abs_prefix,
                 'index_prefix': index_abs_prefix,
                 'n_chunk': n_chunk,
-                'my_chunk': my_chunk
+                'my_chunk': my_chunk,
+                'best_n_ovlp': int(args["--best_n_ovlp"]),
+                'mc_lower': int(args["--mc_lower"]),
+                'mc_upper': int(args["--mc_upper"]),
+                'align_bandwidth': int(args["--aln_bw"]),
+                'ovlp_upper': int(args["--ovlp_upper"]),
             },
             dist=Dist(NPROC=1, local=True)
         ))
@@ -431,5 +555,5 @@ def main(args):
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
     args = docopt(__doc__, version=__version__)
-    print(args)
+    print("Peregrine Assembler ({__version__}) has been started with the following option:\n", args, file=sys.stderr)
     main(args)

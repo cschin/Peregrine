@@ -54,6 +54,7 @@ void shimmer_to_overlap(
 		khash_t(RLEN) * rlmap,
 		khash_t(RPAIR) * rid_pairs,
 		uint8_t bestn,
+		uint32_t align_bandwidth,
 		uint8_t * seq_p,
 		FILE *output){
 
@@ -122,7 +123,7 @@ void shimmer_to_overlap(
 			uint32_t slen1 = rlen1;
 			ovlp_match_t * match;
 			match = ovlp_match(seq0 + pos0 - pos1, slen0, strand0, 
-					                  seq1, slen1, strand1, ALNBANDSIZE);
+					                  seq1, slen1, strand1, align_bandwidth);
 			seq_coor_t q_bgn, q_end, t_bgn, t_end;
 			q_bgn = match->q_bgn; q_end = match->q_end; 
 			t_bgn = match->t_bgn; t_end = match->t_end;
@@ -179,6 +180,8 @@ void process_overlaps(char * seqdb_file_path,
 		khash_t(RLEN) *rlmap, 
 		khash_t(MMC) *mcmap,
 		uint8_t bestn,
+		uint32_t ovlp_upper,
+		uint32_t align_bandwidth,
 		FILE *ovlp_file) {
 
 	int fd;
@@ -212,9 +215,9 @@ void process_overlaps(char * seqdb_file_path,
 			// mhash1 = kh_key(mmer1_map, __j);
 			// mhash1 >>= 8;
 			mpv = kh_val(mmer1_map, __j);
-			if (mpv->n <= 2 || mpv->n > LOCAL_OVERLAP_UPPERBOUND) continue;
+			if (mpv->n <= 2 || mpv->n > ovlp_upper) continue;
 			qsort(mpv->a, mpv->n, sizeof(mp128_t), mp128_comp);
-			shimmer_to_overlap(mpv, rlmap, rid_pairs, bestn, seq_p, ovlp_file);
+			shimmer_to_overlap(mpv, rlmap, rid_pairs, bestn, align_bandwidth, seq_p, ovlp_file);
 			iter_count++;
 			if (iter_count % 10000 == 0) {
 				end = clock();
@@ -240,6 +243,11 @@ int main(int argc, char *argv[]) {
 	char seqdb_file_path[8291];
 	int c;	
 	uint8_t bestn = BESTN;
+	uint32_t mc_lower = MMER_COUNT_LOWER_BOUND;
+	uint32_t mc_upper = MMER_COUNT_UPPER_BOUND;
+	uint32_t ovlp_upper = LOCAL_OVERLAP_UPPERBOUND;
+	uint32_t align_bandwidth = ALNBANDSIZE;
+
 	uint32_t total_chunk = 1, mychunk = 1;
 
 	wordexp_t p; 
@@ -260,7 +268,7 @@ int main(int argc, char *argv[]) {
 	
 	opterr = 0;
 
-	while ((c = getopt(argc, argv, "p:l:t:c:b:o:")) != -1) {
+	while ((c = getopt(argc, argv, "p:l:t:c:b:o:m:M:w:n:")) != -1) {
 		switch (c) {
 			case 'p':
 				seqdb_prefix = optarg;
@@ -279,6 +287,18 @@ int main(int argc, char *argv[]) {
 				break;
 			case 'o':
 				ovlp_file_path = optarg;
+				break;
+			case 'm':
+				mc_lower = atoi(optarg);
+				break;
+			case 'M':
+				mc_upper = atoi(optarg);
+				break;
+			case 'w':
+				align_bandwidth = atoi(optarg);
+				break;
+			case 'n':
+				ovlp_upper = atoi(optarg);
 				break;
 			case '?':
 				if (optopt == 'p') {
@@ -338,8 +358,6 @@ int main(int argc, char *argv[]) {
 	}
 	wordfree(&p);	
 
-
-
 	written = snprintf(mmc_file_path, sizeof(mmc_file_path), "%s-MC-[0-9]*-of-[0-9]*.dat", shimmer_prefix);
 	assert(written < sizeof(mmc_file_path));
 	wordexp(mmc_file_path, &p, 0);
@@ -361,8 +379,14 @@ int main(int argc, char *argv[]) {
 
 
 	mmer0_map = kh_init(MMER0);
-	build_map(&mmers, mmer0_map, rlmap, mcmap, mychunk, total_chunk, MMER_COUNT_LOWER_BOUND, MMER_COUNT_UPPER_BOUND);
-	process_overlaps(seqdb_file_path, mmer0_map, rlmap, mcmap, bestn, ovlp_file);
+
+	build_map(&mmers, mmer0_map, rlmap, mcmap, 
+			mychunk, total_chunk, 
+			mc_lower, mc_upper);
+
+	process_overlaps(seqdb_file_path, mmer0_map, rlmap, mcmap, 
+			bestn, ovlp_upper, align_bandwidth, 
+			ovlp_file);
 	
 	for (khiter_t __i = kh_begin(mmer0_map); __i != kh_end(mmer0_map); ++__i) {
 		if (!kh_exist(mmer0_map,__i)) continue;
