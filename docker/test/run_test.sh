@@ -1,10 +1,15 @@
 #!/bin/bash
 set -e
-find ./reads/ -name "reads_*.fa" > seq_dataset.lst
+find $PWD/reads/ -name "reads_*.fa" > seq_dataset.lst
 WORKDIR=$PWD/wd
 INDEX=$WORKDIR/index
 OVLOUT=$WORKDIR/ovlp
 ASM=$WORKDIR/asm
+SHIMMER=../../..
+pushd $SHIMMER
+echo SHIMMER revision: $(git rev-parse HEAD)
+popd
+echo get SHIMMER binaries from $SHIMMER
 mkdir -p $INDEX
 mkdir -p $OVLOUT
 mkdir -p $ASM
@@ -16,11 +21,11 @@ echo build shimmer index
 time (for c in `seq 1 12`; do echo "/usr/bin/time shmr_index -p $INDEX/seq_dataset -t 12 -c $c -o $INDEX/shmr 2> build_index.$c.log" ; done | parallel -j 4)
 echo
 echo build overlaps
-time (for c in `seq -f "%02g" 1 8`; do echo "/usr/bin/time shmr_overlap -p $INDEX/seq_dataset -l $INDEX/shmr-L2 -t 8 -c $c > $OVLOUT/out.$c 2> ovlp.$c.log"; done | parallel -j 4)
+time (for c in `seq -f "%02g" 1 8`; do echo "/usr/bin/time shmr_overlap -p $INDEX/seq_dataset -l $INDEX/shmr-L2 -t 8 -c $c -o $OVLOUT/ovlp.$c 2> ovlp.$c.log"; done | parallel -j 4)
 echo
 echo faclon ovlp to graph
 cd $ASM
-time (cat ../ovlp/out.* | shmr_dedup > preads.ovl; echo "-" >> preads.ovl)
+time (cat ../ovlp/ovlp.* | shmr_dedup > preads.ovl; echo "-" >> preads.ovl)
 /usr/bin/time ovlp_to_graph.py >& asm.log
 ln -sf ../index/seq_dataset.* .
 #/usr/bin/time pypy graph_to_contig.py >& to_contig.log

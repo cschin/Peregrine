@@ -26,4 +26,6 @@ COPY test/Makefile /opt/test
 COPY test/run_test.sh /opt/test
 COPY test/simulate_reads.py /opt/test
 COPY bashrc /root/.bashrc
+COPY entry.sh /opt/
 WORKDIR /opt/test
+ENTRYPOINT ["/opt/entry.sh"]
