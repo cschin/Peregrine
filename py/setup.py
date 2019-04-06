@@ -1,9 +1,11 @@
 from setuptools import setup
+import versioneer
 import os
 os.environ["peregrine_base"] = os.path.abspath(os.path.pardir)
 
 setup(name='peregrine',
-      version='0.1',
+      version=versioneer.get_version(),
+      cmdclass=versioneer.get_cmdclass(),
       packages=['peregrine'],
       package_dir = {'peregrine': 'peregrine'},
       scripts = ["scripts/path_to_contig.py",
