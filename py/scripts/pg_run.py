@@ -30,19 +30,26 @@ Usage:
                             <cns_nchunk> <cns_nproc>
                             <sort_nproc> 
                             [--with-consensus]
+                            [--output <output>]
+                            [--shimmer-k <shimmer_k>]
+                            [--shimmer-w <shimmer_w>]
+                            [--shimmer-r <shimmer_r>]
                             [--best_n_ovlp <n_ovlp>]
                             [--mc_lower <mc_lower>]
                             [--mc_upper <mc_upper>]
                             [--aln_bw <aln_bw>]
                             [--ovlp_upper <ovlp_upper>]
-                            [--output <output>]
   pg_run.py (-h | --help)
   pg_run.py --verison
 
 Options:
   -h --help                   Show this help
   --version                   Show version
+  --with-consensus            Generate consensus after getting the draft contigs
   --output <output>           Set output directory (will be created if not exist) [default: ./wd]
+  --shimmer-k <shimmer_k>     Level 0 k-mer size [default: 16]
+  --shimmer-w <shimmer_w>     Level 0 window size [default: 80]
+  --shimmer-r <shimmer_r>     Reduction factore for high level SHIMMER [default: 6]
   --best_n_ovlp <n_ovlp>      Find best n_ovlp overlap [default: 4]
   --mc_lower <mc_lower>       Does not cosider SHIMMER with count less than mc_low [default: 2]
   --mc_upper <mc_upper>       Does not cosider SHIMMER with count greater than mc_upper [default: 240]
@@ -212,6 +219,9 @@ def run_build_idx(wf, args, read_db_abs_prefix):
     build_idx = """
 /usr/bin/time shmr_index\
     -p {params.read_db_prefix}\
+    -k {params.shimmer_k}\
+    -w {params.shimmer_w}\
+    -r {params.shimmer_r}\
     -t {params.n_chunk}\
     -c {params.my_chunk}\
     -o {params.index_prefix}
@@ -245,6 +255,9 @@ ln -s {params.index_prefix}* {params.index_dir}
                 'read_db_prefix': read_db_abs_prefix,
                 'index_prefix': index_chunk_abs_prefix,
                 'index_dir': index_dir,
+                'shimmer_k': int(args["--shimmer-k"]),
+                'shimmer_w': int(args["--shimmer-w"]),
+                'shimmer_r': int(args["--shimmer-r"]),
                 'n_chunk': n_chunk,
                 'my_chunk': my_chunk
             },
