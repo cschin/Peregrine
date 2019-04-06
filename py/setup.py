@@ -11,7 +11,10 @@ setup(name='peregrine',
       scripts = ["scripts/path_to_contig.py",
                  "scripts/cns_prototype.py",
                  "scripts/pg_run.py"],
-      setup_requires=["cffi>=1.12.0"],
+      setup_requires=["cffi>=1.12.0",
+                      "versioneer==0.18"],
       cffi_modules=["peregrine/build_shimmer4py.py:ffibuilder",
                     "peregrine/build_falcon4py.py:ffibuilder"],
-      install_requires=["cffi>=1.12.0", "numpy>=1.16.2"])
+      install_requires=["cffi>=1.12.0",
+                        "docopt>=0.6.2",
+                        "numpy>=1.16.2"])
