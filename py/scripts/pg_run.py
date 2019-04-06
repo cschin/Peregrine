@@ -604,9 +604,9 @@ run `pg_run.py -h` for help and other license information
     sys.stderr.write(short_doc)
 
     sys.stderr.write('using {}\n\n'.format(pkg_resources.get_distribution('pypeflow')))
-    r = input("I agrees that I am not using this software for any commericial purposes (yes/no): ")
+    r = input("I agree that I am not using this software for any commericial purposes (yes/no): ")
     if r != "yes":
-        print("Sorry, please get a commericial license before considering using Peregrine. Thanks")
+        print("Sorry, please contact us to get a license before using Peregrine. Thanks")
         sys.exit(128)
 
     logging.basicConfig(level=logging.INFO)
