@@ -1,5 +1,1 @@
-"_version" export-subst
-_version export-subst
-scripts/_version export-subst
-peregrine/_version export-subst
 peregrine/_version.py export-subst
