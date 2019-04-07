@@ -13,11 +13,11 @@ Peregrine
 ===============================================================
 Peregrine is a fast genome assembler for accurate long
 reads (length > 10kb, accuraccy > 99%). It can assemble
-a human genome from 30x reads within 20 cpu hours from 
-reads to polished consensus. It uses Sparse HIereachical 
-MimiMizER (SHIMMER) for fast read-to-read overlaps without 
-explicitly quadratic comparisions used in other OLC 
-assemblers. 
+a human genome from 30x reads within 20 cpu hours from
+reads to polished consensus. It uses Sparse HIereachical
+MimiMizER (SHIMMER) for fast read-to-read overlaps without
+explicitly quadratic comparisions used in other OLC
+assemblers.
 
 Currently, the assembly graph process is more or less
 identical to the approaches used in the FALCON assembler
@@ -28,7 +28,7 @@ Usage:
                             <ovlp_nchunk> <ovlp_nproc>
                             <mapping_nchunk> <mapping_nproc>
                             <cns_nchunk> <cns_nproc>
-                            <sort_nproc> 
+                            <sort_nproc>
                             [--with-consensus]
                             [--output <output>]
                             [--shimmer-k <shimmer_k>]
@@ -53,7 +53,7 @@ Options:
   --best_n_ovlp <n_ovlp>      Find best n_ovlp overlap [default: 4]
   --mc_lower <mc_lower>       Does not cosider SHIMMER with count less than mc_low [default: 2]
   --mc_upper <mc_upper>       Does not cosider SHIMMER with count greater than mc_upper [default: 240]
-  --aln_bw <aln_bw>           Max off-diagonal gap allow during overlap confirmation [default: 100] 
+  --aln_bw <aln_bw>           Max off-diagonal gap allow during overlap confirmation [default: 100]
   --ovlp_upper <ovlp_upper>   Ignore cluster with overlap count greater ovlp_upper [default: 120]
 
 Licenses:
@@ -61,22 +61,22 @@ Licenses:
 Peregrine Assembler and SHIMMER Genome Assembly Toolkit
 Copyright (c) 2019- by Jason, Chen-Shan, Chin
 
-Peregrine Assembler and  SHIMMER Genome Assembly Toolkit 
-is licensed under a Creative Commons 
-Attribution-NonCommercial-ShareAlike 4.0 International 
+Peregrine Assembler and  SHIMMER Genome Assembly Toolkit
+is licensed under a Creative Commons
+Attribution-NonCommercial-ShareAlike 4.0 International
 License.
 
-You should have received a copy of the license along with 
-this work. If not, see 
+You should have received a copy of the license along with
+this work. If not, see
 <http://creativecommons.org/licenses/by-nc-sa/4.0/>.
 
 ************************************************************
-If you want to use it for any commericial purposes 
-(including promotion activity for a commerical product), 
+If you want to use it for any commericial purposes
+(including promotion activity for a commerical product),
 please contact Jason Chin for a commericial license.
 ************************************************************
 
-This software uses the following libraray from Heng Li's 
+This software uses the following libraray from Heng Li's
 Minimap2 codebase under MIT License:
 
 mm_sketch.c kvec.h kseq.h khash.h kalloc.h kalloc.c
@@ -568,32 +568,32 @@ def main(args):
 if __name__ == "__main__":
     import pkg_resources
     short_doc = """
-Peregrine 
+Peregrine
 =========
 
 Peregrine is a fast genome assembler for accurate long
 reads (length > 10kb, accuraccy > 99%). It can assemble
-a human genome from 30x reads within 20 cpu hours from 
-reads to polished consensus. It uses Sparse HIereachical 
-MimiMizER (SHIMMER) for fast read-to-read overlaps without 
-explicitly quadratic comparisions used in other OLC 
-assemblers. 
+a human genome from 30x reads within 20 cpu hours from
+reads to polished consensus. It uses Sparse HIereachical
+MimiMizER (SHIMMER) for fast read-to-read overlaps without
+explicitly quadratic comparisions used in other OLC
+assemblers.
 
 Peregrine Assembler and SHIMMER Genome Assembly Toolkit
 Copyright (c) 2019- by Jason, Chen-Shan, Chin
 
-Peregrine Assembler and  SHIMMER Genome Assembly Toolkit 
-is licensed under a Creative Commons 
-Attribution-NonCommercial-ShareAlike 4.0 International 
+Peregrine Assembler and  SHIMMER Genome Assembly Toolkit
+is licensed under a Creative Commons
+Attribution-NonCommercial-ShareAlike 4.0 International
 License.
 
-You should have received a copy of the license along with 
-this work. If not, see 
+You should have received a copy of the license along with
+this work. If not, see
 <http://creativecommons.org/licenses/by-nc-sa/4.0/>.
 
 ************************************************************
-If you want to use it for any commericial purposes 
-(including promotion activity for a commerical product), 
+If you want to use it for any commericial purposes
+(including promotion activity for a commerical product),
 please contact Jason Chin for a commericial license.
 ************************************************************
 
