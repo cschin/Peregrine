@@ -150,7 +150,7 @@ uint32_t get_mmer_count( py_mmer_t * py_mmer, uint64_t mhash ) {
 
 
 
-mp256_v *get_shimmer_hits(py_mmer_t * py_mmer, uint64_t mhash0, uint32_t span) {
+void get_shimmer_hits(mp256_v * mpv_out, py_mmer_t * py_mmer, uint64_t mhash0, uint32_t span) {
 
 	khash_t(MMER0) * mmer0_map_ = (khash_t(MMER0) *) py_mmer->mmer0_map; 
 	//khash_t(RLEN) * rlmap_ = (khash_t(RLEN) *) rlmap_;
@@ -158,11 +158,8 @@ mp256_v *get_shimmer_hits(py_mmer_t * py_mmer, uint64_t mhash0, uint32_t span) {
 
 	mp128_v * mpv;
 	mp256_t mp256;
-	mp256_v * mpv_out;
 	uint64_t mhash1;
 	khiter_t k;
-
-	mpv_out = calloc(sizeof(mp256_v), 1);
 
 	khash_t(MMER1) * mmer1_map;
     mhash0 <<= 8;
@@ -190,5 +187,4 @@ mp256_v *get_shimmer_hits(py_mmer_t * py_mmer, uint64_t mhash0, uint32_t span) {
 			kv_push(mp256_t, NULL, *mpv_out, mp256); 
 		}
 	}
-	return mpv_out;
 }

@@ -55,7 +55,7 @@ typedef struct { uint64_t x0, x1, y0, y1; uint8_t direction;} mp256_t;
 typedef struct { size_t n, m; mp256_t *a; } mp256_v;
 
 uint32_t get_mmer_count(py_mmer_t * , uint64_t);
-mp256_v * get_shimmer_hits(py_mmer_t *, uint32_t, uint32_t);
+void get_shimmer_hits(mp256_v *, py_mmer_t *, uint64_t, uint32_t);
 
 """)
 

@@ -19,6 +19,7 @@ time (/usr/bin/time shmr_mkseqdb -p $INDEX/seq_dataset -d seq_dataset.lst 2> bui
 echo
 echo build shimmer index
 time (for c in `seq 1 12`; do echo "/usr/bin/time shmr_index -p $INDEX/seq_dataset -t 12 -c $c -o $INDEX/shmr 2> build_index.$c.log" ; done | parallel -j 4)
+time (for c in `seq 1 12`; do echo "/usr/bin/time shmr_index -p $INDEX/seq_dataset -l 1 -t 12 -c $c -o $INDEX/shmr 2> build_index.$c.log" ; done | parallel -j 4)
 echo
 echo build overlaps
 time (for c in `seq -f "%02g" 1 8`; do echo "/usr/bin/time shmr_overlap -p $INDEX/seq_dataset -l $INDEX/shmr-L2 -t 8 -c $c -o $OVLOUT/ovlp.$c 2> ovlp.$c.log"; done | parallel -j 4)
