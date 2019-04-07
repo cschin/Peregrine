@@ -30,12 +30,6 @@ extern int optind, opterr, optopt;
 #define OVERLAP 0
 #define CONTAINMENT 1
 
-typedef struct {
-	mm128_v * mmers;
-	void * mmer0_map;
-	void * rlmap;
-	void * mcmap;} py_mmer_t;
-
 KHASH_MAP_INIT_INT64(RPAIR, uint8_t);
 
 int mp128_comp(const void * a, const void * b) {
@@ -155,8 +149,6 @@ uint32_t get_mmer_count( py_mmer_t * py_mmer, uint64_t mhash ) {
 }
 
 
-typedef struct { uint64_t x0, x1, y0, y1; uint8_t direction;} mp256_t;
-typedef struct { size_t n, m; mp256_t *a; } mp256_v;
 
 mp256_v *get_shimmer_hits(py_mmer_t * py_mmer, uint64_t mhash0, uint32_t span) {
 

@@ -18,6 +18,12 @@ mm_sketch.o: mm_sketch.c
 
 shmr_utils.o: shmr_utils.c
 
+shmr_utils.so: shmr_utils.c kalloc.c
+	gcc -O3 -shared -fPIC -Wall kalloc.c shmr_utils.c -o shmr_utils.so
+
+shimmer4py.so: shimmer4py.c shmr_utils.c kalloc.c
+	gcc -O3 -shared -fPIC -Wall kalloc.c shmr_utils.c shimmer4py.c -o shimmer4py.so
+
 shmr_end_filter.o: shmr_end_filter.c
 
 shmr_gather_mc.o: shmr_gather_mc.c

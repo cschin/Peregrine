@@ -51,8 +51,6 @@ mm_count_v read_mm_count(char *fn);
 
 void aggregate_mm_count(khash_t(MMC) *,  mm_count_v *); 
 
-typedef struct { uint64_t x0, x1, y0, y1; } mm256_t;
-typedef struct { size_t n, m; mm256_t *a; } mm256_v;
 
 typedef struct { uint64_t y0, y1; uint8_t direction;} mp128_t;
 typedef struct { size_t n, m; mp128_t *a; } mp128_v;
@@ -94,6 +92,15 @@ ovlp_match_t * ovlp_match(uint8_t *, seq_coor_t, uint8_t,
 		seq_coor_t); 
 
 void free_ovlp_match(ovlp_match_t *);
+
+typedef struct { uint64_t x0, x1, y0, y1; uint8_t direction; } mp256_t;
+typedef struct { size_t n, m; mp256_t *a; } mp256_v;
+
+typedef struct {
+    mm128_v * mmers;
+    void * mmer0_map;
+    void * rlmap;
+    void * mcmap;} py_mmer_t;
 
 #ifdef __cplusplus
 }

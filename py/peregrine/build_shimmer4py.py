@@ -26,6 +26,37 @@ ovlp_match_t * ovlp_match(uint8_t * query_seq,
                           seq_coor_t band_tolerance);
 
 void free_ovlp_match(ovlp_match_t * match);
+
+typedef struct { uint64_t x, y; } mm128_t;
+
+typedef struct { size_t n, m; mm128_t *a; } mm128_v;
+
+mm128_v read_mmlist(char *);
+
+void free(void *ptr);
+
+typedef unsigned int khint32_t;
+
+typedef unsigned long khint64_t;
+
+typedef khint32_t khint_t;
+
+typedef struct {
+    mm128_v * mmers;
+    void * mmer0_map;
+    void * rlmap;
+    void * mcmap;} py_mmer_t;
+
+void build_shimmer_map4py(py_mmer_t *,
+        char *, char *,
+        uint32_t, uint32_t, uint32_t, uint32_t);
+
+typedef struct { uint64_t x0, x1, y0, y1; uint8_t direction;} mp256_t;
+typedef struct { size_t n, m; mp256_t *a; } mp256_v;
+
+uint32_t get_mmer_count(py_mmer_t * , uint64_t);
+mp256_v * get_shimmer_hits(py_mmer_t *, uint32_t, uint32_t);
+
 """)
 
 ffibuilder.set_source("peregrine._shimmer4py",
