@@ -27,7 +27,7 @@ static inline uint64_t hash64(uint64_t key, uint64_t mask)
 
 
 void pop_push(small_m_buffer_t * smb, mm128_t mer) {
-	smb->mers[ smb->head == smb->size ? 0 : smb->head  ] = mer;
+	smb->mers[ smb->head ] = mer;
 	smb->head ++;
 	smb->head %= smb->size;
 }
@@ -39,12 +39,13 @@ void find_minimizer(small_m_buffer_t * smb, mm128_t * mmer) {
 
 	mmer->x = smb->mers[0].x;
 	mmer->y = smb->mers[0].y;
+	min_val = smb->mers[0].x >> 8;
 
-	for (i = 0; i < smb->size; i++) {
+	for (i = 1; i < smb->size; i++) {
 		h = smb->mers[i].x >> 8 ;
 		if  (h < min_val) {
 			min_val = h;
-			mmer->x = (smb->mers[i].x & 0xFF) | (h << 8);
+			mmer->x = smb->mers[i].x;
 			mmer->y = smb->mers[i].y;
 		}
 	}
@@ -73,6 +74,7 @@ void mm_reduce(mm128_v *p, mm128_v *p_out,  uint8_t rs) {
 		if (rid != rid_) {
 			r_offset = 0;
 			memset(smb.mers, UINT8_MAX, rs * 16);
+			smb.head = 0;
 			rid_ = rid;
 		}
 		pop_push(&smb, p->a[idx]);
