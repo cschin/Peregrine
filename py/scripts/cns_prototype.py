@@ -10,17 +10,17 @@ from collections import OrderedDict
 
 ## No option parsing at thie moment, perhaps letter
 
-read_db_prefix=sys.argv[1]
-ref_db_prefix=sys.argv[2]
-read_to_contig_map=sys.argv[3]
+read_db_prefix = sys.argv[1]
+ref_db_prefix = sys.argv[2]
+read_to_contig_map = sys.argv[3]
 total_chunks = int(sys.argv[4])
 my_chunk = int(sys.argv[5])
 
 
-f=open("{}.seqdb".format(read_db_prefix), "rb")
+f = open("{}.seqdb".format(read_db_prefix), "rb")
 seqdb = mmap.mmap(f.fileno(), 0, flags=mmap.MAP_SHARED, prot=mmap.PROT_READ)
 
-f=open("{}.seqdb".format(ref_db_prefix), "rb")
+f = open("{}.seqdb".format(ref_db_prefix), "rb")
 refdb = mmap.mmap(f.fileno(), 0, flags=mmap.MAP_SHARED, prot=mmap.PROT_READ)
 
 read_idx = {}
@@ -62,8 +62,10 @@ with open(read_to_contig_map) as f:
         contig_to_read_map[ctg_id].append(row)
 
 rng = ffi.new("aln_range[1]")
-for ctg in contig_to_read_map:
 
+
+# TODO: we need to refactor this loop
+for ctg in contig_to_read_map:
     print("ctg {}".format(ref_idx[ctg]["name"]), file=sys.stderr)
     contig_to_read_map[ctg].sort(key=lambda x: x[1])
     read_map_groups = []
@@ -84,7 +86,9 @@ for ctg in contig_to_read_map:
 
     if ref_idx[ctg]["length"] - left_anchor < 100000:  #current max template size for consensus
         if ref_idx[ctg]["length"] - left_anchor > 1000:
-            read_map_groups.append((left_anchor, ref_idx[ctg]["length"], map_group))
+            read_map_groups.append((left_anchor,
+                                    ref_idx[ctg]["length"],
+                                    map_group))
         elif len(read_map_groups) > 0:
             read_map_groups[-1][1] = ref_idx[ctg]["length"]
             read_map_groups[-1][2].extend(map_group)
@@ -93,7 +97,9 @@ for ctg in contig_to_read_map:
     else:
         read_map_groups.append((left_anchor, ref_idx[ctg]["length"], []))
 
-    print("ctg {}".format(ref_idx[ctg]["name"]), len(read_map_groups), file=sys.stderr)
+    print("ctg {}".format(ref_idx[ctg]["name"]),
+          len(read_map_groups),
+          file=sys.stderr)
 
     #if len(read_map_groups) <= 2: #ignore short contig for now
     #    continue
@@ -120,7 +126,7 @@ for ctg in contig_to_read_map:
         for (read_id, read_strand), v in rmap.items():
             reads.append((read_id, read_strand, np.min(v)-left, len(v)))
 
-        reads.sort(key = lambda x: x[2])
+        reads.sort(key=lambda x: x[2])
         s = ref_idx[ctg]["offset"] + left
         ref_len = right-left
 
@@ -130,11 +136,29 @@ for ctg in contig_to_read_map:
 
         shimmer.decode_biseq(bseq0, ref_seq, ref_len, 0)
 
-        print("ctg {}".format(ref_idx[ctg]["name"]), len(read_map_groups), len(mapped), file=sys.stderr)
+        print("ctg {}".format(ref_idx[ctg]["name"]),
+              len(read_map_groups),
+              len(mapped), file=sys.stderr)
 
-        tags = ffi.new("align_tags_t * [{}]".format(len(reads)))
+        tags = ffi.new("align_tags_t * [{}]".format(len(reads)+1))
 
+        # need a back bone for some boundary case
+        aln = falcon.align(ref_seq, ref_len,
+                           ref_seq, ref_len,
+                           150, 1)
+        rng[0].s1 = aln.aln_q_s
+        rng[0].e1 = aln.aln_q_e
+        rng[0].s2 = aln.aln_t_s
+        rng[0].e2 = aln.aln_t_e
+        tag = falcon.get_align_tags(aln.q_aln_str,
+                                    aln.t_aln_str,
+                                    aln.aln_str_size,
+                                    rng, 0, 0)
         aln_count = 0
+        tags[aln_count] = tag
+        aln_count += 1
+        falcon.free_alignment(aln)
+
         aln_base = 0
         for d in reads:
             #print(d)
@@ -220,7 +244,7 @@ for ctg in contig_to_read_map:
                            s1[:500], 500, 100, 0)
         #print(aln.aln_q_s, aln.aln_q_e, aln.aln_t_s, aln.aln_t_e, aln.dist)
         print(len(s1[aln.aln_t_e:]), file=sys.stderr)
-        stiched_segments.append( s1[aln.aln_t_e:])
+        stiched_segments.append(s1[aln.aln_t_e:])
         s0 = s1
         falcon.free_alignment(aln)
 
