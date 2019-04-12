@@ -175,9 +175,9 @@ for ctg in contig_to_read_map:
             t_offset = 0
             if read_shift < 0:
                 aln = falcon.align(read_seq[abs(read_shift):read_len],
-                                   read_len - abs(read_shift)-5,
+                                   read_len - abs(read_shift),
                                    ref_seq,
-                                   ref_len-5,
+                                   ref_len,
                                    150, 1)
 
                 if abs(abs(aln.aln_q_e-aln.aln_q_s) -
@@ -193,9 +193,9 @@ for ctg in contig_to_read_map:
                     falcon.free_alignment(aln)
             else:
                 aln = falcon.align(read_seq,
-                                   read_len-5,
+                                   read_len,
                                    ref_seq[read_shift:ref_len],
-                                   ref_len-read_shift-5, 150, 1)
+                                   ref_len-read_shift, 150, 1)
 
                 if abs(abs(aln.aln_q_e-aln.aln_q_s)-read_len) < 48 or \
                    abs(ref_len-read_shift-abs(aln.aln_q_e-aln.aln_q_s)) < 48:
