@@ -15,43 +15,43 @@
  *
  * =====================================================================================
 
- #################################################################################$$
- # Copyright (c) 2011-2014, Pacific Biosciences of California, Inc.
- #
- # All rights reserved.
- #
- # Redistribution and use in source and binary forms, with or without
- # modification, are permitted (subject to the limitations in the
- # disclaimer below) provided that the following conditions are met:
- #
- #  * Redistributions of source code must retain the above copyright
- #  notice, this list of conditions and the following disclaimer.
- #
- #  * Redistributions in binary form must reproduce the above
- #  copyright notice, this list of conditions and the following
- #  disclaimer in the documentation and/or other materials provided
- #  with the distribution.
- #
- #  * Neither the name of Pacific Biosciences nor the names of its
- #  contributors may be used to endorse or promote products derived
- #  from this software without specific prior written permission.
- #
- # NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- # GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY PACIFIC
- # BIOSCIENCES AND ITS CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- # WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- # OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- # DISCLAIMED. IN NO EVENT SHALL PACIFIC BIOSCIENCES OR ITS
- # CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- # SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
- # LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF
- # USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
- # ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
- # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
- # OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- # SUCH DAMAGE.
- #################################################################################$$
- */
+#################################################################################$$
+# Copyright (c) 2011-2014, Pacific Biosciences of California, Inc.
+#
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted (subject to the limitations in the
+# disclaimer below) provided that the following conditions are met:
+#
+#  * Redistributions of source code must retain the above copyright
+#  notice, this list of conditions and the following disclaimer.
+#
+#  * Redistributions in binary form must reproduce the above
+#  copyright notice, this list of conditions and the following
+#  disclaimer in the documentation and/or other materials provided
+#  with the distribution.
+#
+#  * Neither the name of Pacific Biosciences nor the names of its
+#  contributors may be used to endorse or promote products derived
+#  from this software without specific prior written permission.
+#
+# NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
+# GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY PACIFIC
+# BIOSCIENCES AND ITS CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
+# WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+# OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL PACIFIC BIOSCIENCES OR ITS
+# CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+# SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+# LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF
+# USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+# ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+# OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+# OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+# SUCH DAMAGE.
+#################################################################################$$
+*/
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -138,12 +138,12 @@ seq_coor_t get_kmer_bitvector(seq_array sa, unsigned int K) {
 }
 
 void add_sequence ( seq_coor_t start,
-                    unsigned int K,
-                    char * seq,
-                    seq_coor_t seq_len,
-                    seq_addr_array sda,
-                    seq_array sa,
-                    kmer_lookup * lk ) {
+        unsigned int K,
+        char * seq,
+        seq_coor_t seq_len,
+        seq_addr_array sda,
+        seq_array sa,
+        kmer_lookup * lk ) {
 
     seq_coor_t i;
     seq_coor_t kmer_bv;
@@ -205,8 +205,8 @@ void mask_k_mer(seq_coor_t size, kmer_lookup * kl, seq_coor_t threshold) {
 
 
 kmer_match * find_kmer_pos_for_seq( char * seq, seq_coor_t seq_len, unsigned int K,
-                    seq_addr_array sda,
-                    kmer_lookup * lk) {
+        seq_addr_array sda,
+        kmer_lookup * lk) {
     seq_coor_t i;
     seq_coor_t kmer_bv;
     seq_coor_t kmer_mask;
@@ -262,9 +262,9 @@ kmer_match * find_kmer_pos_for_seq( char * seq, seq_coor_t seq_len, unsigned int
         if (kmer_match_rtn->count > kmer_match_rtn_allocation_size - 1000) {
             kmer_match_rtn_allocation_size += KMERMATCHINC;
             kmer_match_rtn->query_pos = (seq_coor_t *) realloc( kmer_match_rtn->query_pos,
-                                                                   kmer_match_rtn_allocation_size  * sizeof(seq_coor_t) );
+                    kmer_match_rtn_allocation_size  * sizeof(seq_coor_t) );
             kmer_match_rtn->target_pos = (seq_coor_t *) realloc( kmer_match_rtn->target_pos,
-                                                                    kmer_match_rtn_allocation_size  * sizeof(seq_coor_t) );
+                    kmer_match_rtn_allocation_size  * sizeof(seq_coor_t) );
         }
         while ( next_kmer_pos > kmer_pos ){
             kmer_pos = next_kmer_pos;
@@ -275,9 +275,9 @@ kmer_match * find_kmer_pos_for_seq( char * seq, seq_coor_t seq_len, unsigned int
             if (kmer_match_rtn->count > kmer_match_rtn_allocation_size - 1000) {
                 kmer_match_rtn_allocation_size += KMERMATCHINC;
                 kmer_match_rtn->query_pos = (seq_coor_t *) realloc( kmer_match_rtn->query_pos,
-                                                                       kmer_match_rtn_allocation_size  * sizeof(seq_coor_t) );
+                        kmer_match_rtn_allocation_size  * sizeof(seq_coor_t) );
                 kmer_match_rtn->target_pos = (seq_coor_t *) realloc( kmer_match_rtn->target_pos,
-                                                                        kmer_match_rtn_allocation_size  * sizeof(seq_coor_t) );
+                        kmer_match_rtn_allocation_size  * sizeof(seq_coor_t) );
             }
         }
     }
@@ -292,9 +292,9 @@ void free_kmer_match( kmer_match * ptr) {
 }
 
 aln_range* find_best_aln_range(kmer_match * km_ptr,
-                              seq_coor_t K,
-                              seq_coor_t bin_size,
-                              seq_coor_t count_th) {
+        seq_coor_t K,
+        seq_coor_t bin_size,
+        seq_coor_t count_th) {
     seq_coor_t i;
     seq_coor_t j;
     seq_coor_t q_min, q_max, t_min, t_max;
@@ -427,9 +427,9 @@ aln_range* find_best_aln_range(kmer_match * km_ptr,
 }
 
 aln_range* find_best_aln_range2(kmer_match * km_ptr,
-                                seq_coor_t K,
-                                seq_coor_t bin_width,
-                                seq_coor_t count_th) {
+        seq_coor_t K,
+        seq_coor_t bin_width,
+        seq_coor_t count_th) {
 
     seq_coor_t * d_coor;
     seq_coor_t * hit_score;

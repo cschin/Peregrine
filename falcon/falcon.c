@@ -15,43 +15,43 @@
  *
  * =====================================================================================
 
- #################################################################################$$
- # Copyright (c) 2011-2014, Pacific Biosciences of California, Inc.
- #
- # All rights reserved.
- #
- # Redistribution and use in source and binary forms, with or without
- # modification, are permitted (subject to the limitations in the
- # disclaimer below) provided that the following conditions are met:
- #
- #  * Redistributions of source code must retain the above copyright
- #  notice, this list of conditions and the following disclaimer.
- #
- #  * Redistributions in binary form must reproduce the above
- #  copyright notice, this list of conditions and the following
- #  disclaimer in the documentation and/or other materials provided
- #  with the distribution.
- #
- #  * Neither the name of Pacific Biosciences nor the names of its
- #  contributors may be used to endorse or promote products derived
- #  from this software without specific prior written permission.
- #
- # NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- # GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY PACIFIC
- # BIOSCIENCES AND ITS CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- # WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- # OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- # DISCLAIMED. IN NO EVENT SHALL PACIFIC BIOSCIENCES OR ITS
- # CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- # SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
- # LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF
- # USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
- # ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
- # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
- # OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- # SUCH DAMAGE.
- #################################################################################$$
- */
+#################################################################################$$
+# Copyright (c) 2011-2014, Pacific Biosciences of California, Inc.
+#
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted (subject to the limitations in the
+# disclaimer below) provided that the following conditions are met:
+#
+#  * Redistributions of source code must retain the above copyright
+#  notice, this list of conditions and the following disclaimer.
+#
+#  * Redistributions in binary form must reproduce the above
+#  copyright notice, this list of conditions and the following
+#  disclaimer in the documentation and/or other materials provided
+#  with the distribution.
+#
+#  * Neither the name of Pacific Biosciences nor the names of its
+#  contributors may be used to endorse or promote products derived
+#  from this software without specific prior written permission.
+#
+# NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
+# GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY PACIFIC
+# BIOSCIENCES AND ITS CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
+# WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+# OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL PACIFIC BIOSCIENCES OR ITS
+# CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+# SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+# LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF
+# USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+# ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+# OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+# OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+# SUCH DAMAGE.
+#################################################################################$$
+*/
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -64,11 +64,11 @@
 
 
 align_tags_t * get_align_tags( char * aln_q_seq,
-                               char * aln_t_seq,
-                               seq_coor_t aln_seq_len,
-                               aln_range * range,
-                               unsigned q_id,
-                               seq_coor_t t_offset) {
+        char * aln_t_seq,
+        seq_coor_t aln_seq_len,
+        aln_range * range,
+        unsigned q_id,
+        seq_coor_t t_offset) {
     char p_q_base;
     align_tags_t * tags;
     seq_coor_t i, j, jj, k, p_j, p_jj;
@@ -86,9 +86,9 @@ align_tags_t * get_align_tags( char * aln_q_seq,
     for (k = 0; k < aln_seq_len; k++) {
         if (aln_q_seq[k] != '-') {
             i ++;
-			if (jj < 12) {  // we cap the biggest insert gap up to 12 bases
-				jj ++;
-			}
+            if (jj < 12) {  // we cap the biggest insert gap up to 12 bases
+                jj ++;
+            }
         }
         if (aln_t_seq[k] != '-') {
             j ++;
@@ -97,13 +97,13 @@ align_tags_t * get_align_tags( char * aln_q_seq,
         //printf("t %d %d %d %c %c\n", q_id, j, jj, aln_t_seq[k], aln_q_seq[k]);
 
         if ( j + t_offset >= 0 && jj < UINT8_MAX && p_jj < UINT8_MAX) {
-			(tags->align_tags[k]).t_pos = j + t_offset;
-			(tags->align_tags[k]).delta = jj;
-			(tags->align_tags[k]).p_t_pos = p_j + t_offset;
-			(tags->align_tags[k]).p_delta = p_jj;
-			(tags->align_tags[k]).p_q_base = p_q_base;
-			(tags->align_tags[k]).q_base = aln_q_seq[k];
-			(tags->align_tags[k]).q_id = q_id;
+            (tags->align_tags[k]).t_pos = j + t_offset;
+            (tags->align_tags[k]).delta = jj;
+            (tags->align_tags[k]).p_t_pos = p_j + t_offset;
+            (tags->align_tags[k]).p_delta = p_jj;
+            (tags->align_tags[k]).p_q_base = p_q_base;
+            (tags->align_tags[k]).q_base = aln_q_seq[k];
+            (tags->align_tags[k]).q_id = q_id;
             p_j = j;
             p_jj = jj;
             p_q_base = aln_q_seq[k];
@@ -156,8 +156,8 @@ void allocate_delta_group( msa_delta_group_t * g) {
     for (i = 0; i< g->size; i++) {
         g->delta[i].base = ( align_tag_col_t * ) calloc( 5, sizeof(align_tag_col_t ) );
         for (j = 0; j < 5; j++ ) {
-             g->delta[i].base[j].size = 8;
-             allocate_aln_col(&(g->delta[i].base[j]));
+            g->delta[i].base[j].size = 8;
+            allocate_aln_col(&(g->delta[i].base[j]));
         }
     }
 }
@@ -170,8 +170,8 @@ void realloc_delta_group( msa_delta_group_t * g, uint16_t new_size ) {
     for (i=bs; i < es; i++) {
         g->delta[i].base = ( align_tag_col_t *) calloc( 5, sizeof(align_tag_col_t ) );
         for (j = 0; j < 5; j++ ) {
-             g->delta[i].base[j].size = 8;
-             allocate_aln_col(&(g->delta[i].base[j]));
+            g->delta[i].base[j].size = 8;
+            allocate_aln_col(&(g->delta[i].base[j]));
         }
     }
     g->size = new_size;
@@ -195,8 +195,8 @@ void update_col( align_tag_col_t * col, seq_coor_t p_t_pos, uint8_t p_delta, cha
     col->count += 1;
     for (link = 0; link < col->n_link; link++) {
         if ( p_t_pos == col->p_t_pos[link] &&
-             p_delta == col->p_delta[link] &&
-             p_q_base == col->p_q_base[link] ) {
+                p_delta == col->p_delta[link] &&
+                p_q_base == col->p_q_base[link] ) {
             col->link_count[link] ++;
             updated = 1;
             break;
@@ -243,13 +243,13 @@ void clean_msa_working_space( msa_pos_t * msa_array, unsigned int max_t_len) {
             for (k = 0; k < 5; k++ ) {
                 col = msa_array[i]->delta[j].base + k;
                 /*
-                for (c =0; c < col->size; c++) {
-                    col->p_t_pos[c] = 0;
-                    col->p_delta[c] = 0;
-                    col->p_q_base[c] = 0;
-                    col->link_count[c] =0;
-                }
-                */
+                   for (c =0; c < col->size; c++) {
+                   col->p_t_pos[c] = 0;
+                   col->p_delta[c] = 0;
+                   col->p_q_base[c] = 0;
+                   col->link_count[c] =0;
+                   }
+                   */
                 col->n_link = 0;
                 col->count = 0;
                 col->best_p_t_pos = 0;
@@ -266,9 +266,9 @@ void clean_msa_working_space( msa_pos_t * msa_array, unsigned int max_t_len) {
 //#undef STATIC_ALLOCATE
 
 consensus_data * get_cns_from_align_tags( align_tags_t ** tag_seqs,
-                                          unsigned n_tag_seqs,
-                                          unsigned t_len,
-                                          unsigned min_cov ) {
+        unsigned n_tag_seqs,
+        unsigned t_len,
+        unsigned min_cov ) {
 
     seq_coor_t i, j;
     seq_coor_t t_pos = 0;
@@ -350,7 +350,7 @@ consensus_data * get_cns_from_align_tags( align_tags_t ** tag_seqs,
     seq_coor_t g_best_t_pos = 0;
     {
         int k;
-		int best_k;
+        int best_k;
         double score;
         double best_score;
         double g_best_score;
@@ -359,7 +359,7 @@ consensus_data * get_cns_from_align_tags( align_tags_t ** tag_seqs,
 
         g_best_score = -1;
 
-		best_k = 0;
+        best_k = 0;
         for (i = 0; (unsigned) i < t_len; i++) {  //loop through every template base
             for (j = 0; j <= msa_array[i]->max_delta; j++) { // loop through every delta position
                 for (k = 0; k < 5; k++) {  // loop through diff bases of the same delta posiiton
@@ -385,17 +385,17 @@ consensus_data * get_cns_from_align_tags( align_tags_t ** tag_seqs,
                             if (aln_col->p_t_pos[link] == -1) {
                                 score =  (double) aln_col->link_count[link] - (double) coverage[i] * 0.5;
                             } else {
-								//printf("XXX %d %d\n", pj, msa_array[pi]->size);
-								assert( pj < msa_array[pi]->size);
+                                //printf("XXX %d %d\n", pj, msa_array[pi]->size);
+                                assert( pj < msa_array[pi]->size);
                                 score = msa_array[pi]->delta[pj].base[pk].score +
-                                        (double) aln_col->link_count[link] - (double) coverage[i] * 0.5;
+                                    (double) aln_col->link_count[link] - (double) coverage[i] * 0.5;
                             }
                             if (score > best_score) {
                                 best_score = score;
                                 aln_col->best_p_t_pos = pi;
                                 aln_col->best_p_delta = pj;
                                 aln_col->best_p_q_base = pk;
-								best_k = k;
+                                best_k = k;
                             }
                         }
                         aln_col->score = best_score;
@@ -403,7 +403,7 @@ consensus_data * get_cns_from_align_tags( align_tags_t ** tag_seqs,
                             g_best_score = best_score;
                             g_best_aln_col = aln_col;
                             g_best_t_pos = i;
-							g_best_k = best_k;
+                            g_best_k = best_k;
                         }
                     }
                 }
@@ -425,7 +425,7 @@ consensus_data * get_cns_from_align_tags( align_tags_t ** tag_seqs,
     consensus->eqv = calloc( t_len * 2 + 1, sizeof(unsigned int) );
     cns_str = consensus->sequence;
     eqv =  consensus->eqv;
-    
+
     index = 0;
     k = g_best_k;
     i = g_best_t_pos;

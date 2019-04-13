@@ -16,42 +16,42 @@
  *
  * =====================================================================================
 
- #################################################################################$$
- # Copyright (c) 2011-2014, Pacific Biosciences of California, Inc.
- #
- # All rights reserved.
- #
- # Redistribution and use in source and binary forms, with or without
- # modification, are permitted (subject to the limitations in the
- # disclaimer below) provided that the following conditions are met:
- #
- #  * Redistributions of source code must retain the above copyright
- #  notice, this list of conditions and the following disclaimer.
- #
- #  * Redistributions in binary form must reproduce the above
- #  copyright notice, this list of conditions and the following
- #  disclaimer in the documentation and/or other materials provided
- #  with the distribution.
- #
- #  * Neither the name of Pacific Biosciences nor the names of its
- #  contributors may be used to endorse or promote products derived
- #  from this software without specific prior written permission.
- #
- # NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
- # GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY PACIFIC
- # BIOSCIENCES AND ITS CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
- # WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
- # OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- # DISCLAIMED. IN NO EVENT SHALL PACIFIC BIOSCIENCES OR ITS
- # CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- # SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
- # LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF
- # USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
- # ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
- # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
- # OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- # SUCH DAMAGE.
- #################################################################################$$
+#################################################################################$$
+# Copyright (c) 2011-2014, Pacific Biosciences of California, Inc.
+#
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted (subject to the limitations in the
+# disclaimer below) provided that the following conditions are met:
+#
+#  * Redistributions of source code must retain the above copyright
+#  notice, this list of conditions and the following disclaimer.
+#
+#  * Redistributions in binary form must reproduce the above
+#  copyright notice, this list of conditions and the following
+#  disclaimer in the documentation and/or other materials provided
+#  with the distribution.
+#
+#  * Neither the name of Pacific Biosciences nor the names of its
+#  contributors may be used to endorse or promote products derived
+#  from this software without specific prior written permission.
+#
+# NO EXPRESS OR IMPLIED LICENSES TO ANY PARTY'S PATENT RIGHTS ARE
+# GRANTED BY THIS LICENSE. THIS SOFTWARE IS PROVIDED BY PACIFIC
+# BIOSCIENCES AND ITS CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED
+# WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+# OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL PACIFIC BIOSCIENCES OR ITS
+# CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+# SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+# LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF
+# USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+# ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+# OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+# OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+# SUCH DAMAGE.
+#################################################################################$$
 
 
 */
@@ -94,17 +94,17 @@ void print_d_path(  d_path_data2 * base, unsigned long max_idx) {
     unsigned long idx;
     for (idx = 0; idx < max_idx; idx++){
         printf("dp %ld %d %d %d %d %d %d %d\n",idx, 
-				(base+idx)->d, (base+idx)->k, 
-				(base+idx)->x1, (base+idx)->y1, 
-				(base+idx)->x2, (base+idx)->y2, (base+idx)->pre_k);
+                (base+idx)->d, (base+idx)->k, 
+                (base+idx)->x1, (base+idx)->y1, 
+                (base+idx)->x2, (base+idx)->y2, (base+idx)->pre_k);
     }
 }
 
 
 alignment * align(char * query_seq, seq_coor_t q_len,
-                  char * target_seq, seq_coor_t t_len,
-                  seq_coor_t band_tolerance,
-                  int get_aln_str) {
+        char * target_seq, seq_coor_t t_len,
+        seq_coor_t band_tolerance,
+        int get_aln_str) {
     seq_coor_t * V;
     seq_coor_t * U;  // array of matched bases for each "k"
     seq_coor_t k_offset;
