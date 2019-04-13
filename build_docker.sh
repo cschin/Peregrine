@@ -8,7 +8,7 @@ pushd src
 make clean
 popd
 
-tar czvf src.tgz src/ falcon/ py/
+tar czvf src.tgz src/ falcon/ py/ .git/
 mv src.tgz docker/
 
 pushd docker/
