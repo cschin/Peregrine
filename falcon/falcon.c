@@ -335,10 +335,12 @@ consensus_data * get_cns_from_align_tags( align_tags_t ** tag_seqs,
                 case 'T': base = 3; break;
                 case '-': base = 4; break;
             }
-            // Note: On bad input, base may be -1.
-            update_col( &(msa_array[t_pos]->delta[delta].base[base]), 
-					c_tag->p_t_pos, c_tag->p_delta, c_tag->p_q_base);
-            local_nbase[ t_pos ] ++;
+
+            // Note: On bad input, using a reference with "N", base may be -1.
+            if ( base != -1 ) {
+                update_col( &(msa_array[t_pos]->delta[delta].base[base]), 
+                        c_tag->p_t_pos, c_tag->p_delta, c_tag->p_q_base);
+            }
         }
     }
 
