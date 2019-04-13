@@ -195,7 +195,8 @@ for ctg in contig_to_read_map:
                 aln = falcon.align(read_seq,
                                    read_len,
                                    ref_seq[read_shift:ref_len],
-                                   ref_len-read_shift, 150, 1)
+                                   ref_len-read_shift,
+                                   150, 1)
 
                 if abs(abs(aln.aln_q_e-aln.aln_q_s)-read_len) < 48 or \
                    abs(ref_len-read_shift-abs(aln.aln_q_e-aln.aln_q_s)) < 48:
@@ -219,7 +220,9 @@ for ctg in contig_to_read_map:
                 aln_count += 1
                 aln_base += abs(rng[0].e2 - rng[0].s2)
                 falcon.free_alignment(aln)
+
             ffi.release(read_seq)
+
         print(aln_count, aln_base, aln_base/ref_len, file=sys.stderr)
 
         if aln_base/ref_len < 3:
