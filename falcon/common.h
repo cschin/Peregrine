@@ -54,6 +54,8 @@
 #################################################################################$$
 */
 
+#include <stdint.h>
+
 typedef int seq_coor_t; 
 
 typedef struct {    
@@ -122,7 +124,7 @@ typedef struct {
 
 typedef struct {
     char * sequence;
-    int * eqv;
+    uint8_t * eqv;
 } consensus_data;
 
 kmer_lookup * allocate_kmer_lookup (seq_coor_t);
@@ -138,7 +140,7 @@ seq_addr_array allocate_seq_addr(seq_coor_t size);
 void free_seq_addr_array(seq_addr_array);
 
 
-aln_range *  find_best_aln_range(kmer_match *, 
+aln_range * find_best_aln_range(kmer_match *, 
         seq_coor_t, 
         seq_coor_t, 
         seq_coor_t); 
@@ -156,7 +158,7 @@ void free_kmer_lookup(kmer_lookup * );
 
 
 
-void add_sequence ( seq_coor_t, 
+void add_sequence( seq_coor_t, 
         unsigned int, 
         char *, 
         seq_coor_t,
@@ -172,7 +174,6 @@ alignment * align(char *, seq_coor_t,
         int); 
 
 void free_alignment(alignment *);
-
 
 void free_consensus_data(consensus_data *);
 

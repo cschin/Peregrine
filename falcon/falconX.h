@@ -35,19 +35,13 @@ typedef struct {
     seq_coor_t t_pos;
     uint8_t delta;
     char q_base;
-    uint16_t edge_count;
-    align_edge_v align_edges;
-	align_edge_t best_edge;
+	align_edge_t * best_edge;
 	double best_score;
 } align_node_t;
 
-typedef struct { size_t n, m; align_node_t *a; } align_node_v;
-
-KHASH_MAP_INIT_INT64(EDGE, align_edge_t *);
-typedef khash_t(EDGE) * align_edge_map_t; 
 
 KHASH_MAP_INIT_INT64(NODE, align_node_t *);
-typedef khash_t(NODE) * align_node_map_t; 
+typedef khash_t(NODE) align_node_map_t; 
 
 align_tags_t * get_align_tags( char *, char *, seq_coor_t, aln_range *, unsigned, seq_coor_t);
 void free_align_tags( align_tags_t * tags);

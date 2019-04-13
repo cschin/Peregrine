@@ -6,7 +6,7 @@
  *    Description:
  *
  *        Version:  0.1
- *        Created:  04/12/2019 07:00:00 
+ *        Created:  04/13/2019 07:00:00 
  *       Revision:  none
  *       Compiler:  gcc
  *
@@ -59,11 +59,13 @@
 #include <string.h>
 #include <assert.h>
 #include <stdint.h>
+#include <ctype.h>
 #include "common.h"
 #include "falconX.h"
 
 
-align_tags_t * get_align_tags( char * aln_q_seq,
+align_tags_t * get_align_tags( 
+		char * aln_q_seq,
         char * aln_t_seq,
         seq_coor_t aln_seq_len,
         aln_range * range,
@@ -94,7 +96,7 @@ align_tags_t * get_align_tags( char * aln_q_seq,
             j ++;
             jj = 0;
         }
-        // printf("t %d %d %d %c %c\n", q_id, j, jj, aln_t_seq[k], aln_q_seq[k]);
+        // fprintf(stderr, "t %d %d %d %c %c\n", q_id, j, jj, aln_t_seq[k], aln_q_seq[k]);
 
         if ( j + t_offset >= 0 && jj < UINT8_MAX && p_jj < UINT8_MAX) {
             (tags->align_tags[k]).t_pos = j + t_offset;
@@ -126,7 +128,8 @@ void free_align_tags( align_tags_t * tags) {
     free( tags );
 }
 
-uint64_t get_tag_key(seq_coor_t t_pos, 
+uint64_t get_tag_key(
+		seq_coor_t t_pos, 
 		uint8_t delta, 
 		char base) {
 	assert(t_pos > 0);
@@ -148,11 +151,8 @@ int tag_key_comp(const void * a, const void * b) {
 }
 
 
-
-void sort_accumulate_tags(align_edge_v *edges,
-		align_edge_map_t * edge_map,
-		align_node_v * nodes,
-		align_node_map_t * node_map,
+void sort_accumulate_tags(
+		align_edge_v * edges,
 		align_edge_v * input_edges) {
 	
 	align_tag_t c_tag =  {0, 0, '.', 0, 0, '.'};
@@ -163,7 +163,10 @@ void sort_accumulate_tags(align_edge_v *edges,
 	for (size_t i = 0; i < input_edges->n; i++){
 		align_edge_t e;
 		e = input_edges->a[i];
-		// printf("E0 %d %d %c %d %d %c %d\n", e.t_pos, e.delta, e.q_base, e.p_t_pos, e.p_delta, e.p_q_base, e.count); 
+
+		// fprintf(stderr,"E0 %d %d %c %d %d %c %d\n", 
+		// e.t_pos, e.delta, e.q_base, e.p_t_pos, 
+		// e.p_delta, e.p_q_base, e.count); 
 
 		if (c_tag.t_pos != e.t_pos || 
 				c_tag.delta != e.delta || 
@@ -185,7 +188,10 @@ void sort_accumulate_tags(align_edge_v *edges,
 			edges->a[edges->n-1].count ++;
 		}
 		e = edges->a[edges->n-1];
-		//printf("E1 %d %d %c %d %d %c %d\n", e.t_pos, e.delta, e.q_base, e.p_t_pos, e.p_delta, e.p_q_base, e.count); 
+
+		// fprintf(stderr, "E1 %d %d %c %d %d %c %d\n", 
+		// e.t_pos, e.delta, e.q_base, 
+		// e.p_t_pos, e.p_delta, e.p_q_base, e.count); 
 	   
 		c_tag.t_pos = e.t_pos;
 		c_tag.delta = e.delta;
@@ -194,43 +200,156 @@ void sort_accumulate_tags(align_edge_v *edges,
 		c_tag.p_delta = e.p_delta;
 		c_tag.p_q_base = e.p_q_base;
 	}
-	for (size_t i = 0; i < edges->n; i++){
-		align_edge_t e;
-		e = edges->a[i];
-		printf("E2 %d %d %c %d %d %c %d\n", e.t_pos, e.delta, e.q_base, e.p_t_pos, e.p_delta, e.p_q_base, e.count); 
-	}
 }
 
+uint64_t get_node_score(
+		align_node_map_t * node_map,
+		align_edge_v * edges, 
+		uint16_t * coverage) {
 
-consensus_data * get_cns_from_align_tags( align_tags_t ** tag_seqs,
+	uint64_t node_key, p_node_key;
+	uint64_t best_node_key=0;
+	double global_best_score=0;
+	int absent;
+	khiter_t k;
+	align_node_t * node;
+	align_node_t * p_node;
+
+	for (size_t i = 0; i < edges->n; i++){
+		align_edge_t * e;
+		e = edges->a+i;
+		e->score = (double) e->count - 0.5 * ((double) coverage[e->t_pos]);
+		/* 
+		   fprintf(stderr,"E2 %d %d %c %d %d %c %d %0.3f\n", 
+		   e->t_pos, e->delta, e->q_base, 
+		   e->p_t_pos, e->p_delta, e->p_q_base, e->count, e->score); 
+		   */
+		node_key = get_tag_key(e->t_pos, e->delta, e->q_base);
+	    
+		k = kh_get(NODE, node_map, node_key);
+		if (k == kh_end(node_map)) {
+			k = kh_put(NODE, node_map, node_key, &absent);
+			node = malloc(sizeof(align_node_t));
+			node->t_pos = e->t_pos;
+			node->delta = e->delta;
+			node->q_base = e->q_base;
+			node->best_edge = NULL;
+			node->best_score = 0;
+			kh_val(node_map, k) = node;
+			// fprintf(stderr, "XX %lu %d %d %c\n", node_key, e.t_pos, e.delta, e.q_base);
+
+		} else {
+			node = kh_val(node_map, k);
+		}
+	
+		if (e->p_q_base == '.') {
+			node->best_edge=e;
+			continue;
+		}
+
+		p_node_key = get_tag_key(e->p_t_pos, e->p_delta, e->p_q_base);
+		k = kh_get(NODE, node_map, p_node_key);
+		p_node = kh_val(node_map, k);
+		double new_score;
+		new_score = e->score + p_node->best_score;
+		if (new_score > node->best_score) {
+			node->best_score = new_score;
+			node->best_edge = e;
+			/*
+			   fprintf(stderr, "N %d %d %c %d %d %c %0.3f\n", 
+			   node->t_pos, node->delta, node->q_base, 
+			   p_node->t_pos, p_node->delta, p_node->q_base, node->best_score); 
+			*/
+			if (new_score > global_best_score) {
+				global_best_score = new_score;
+				best_node_key = node_key;
+			}
+		}
+	}
+	return best_node_key;
+}
+
+consensus_data * backtracking(
+		align_node_map_t * node_map,
+		uint64_t best_node_key,
+		align_edge_v *edges, 
+		uint16_t * coverage,
+		unsigned min_cov) {
+
+	khiter_t k;
+	align_node_t * node;
+	uint64_t node_key;
+	consensus_data * consensus;
+	char * cns;
+	// uint8_t * eqv;
+	uint32_t idx = 0;
+
+    consensus = (consensus_data *) calloc(1, sizeof(consensus_data));
+    consensus->sequence = calloc( edges->n, sizeof(char) );
+    // consensus->eqv = calloc(1, sizeof(uint8_t)); //not used, reserve for future QV output
+    cns = consensus->sequence; // just an alias
+    // eqv = consensus->eqv;  // just an alias
+
+	node_key = best_node_key;
+	k = kh_get(NODE, node_map, node_key);
+	assert( k != kh_end(node_map) );
+	node = kh_val(node_map, k);
+	idx = 0;
+	for (;;) {
+		align_edge_t * e;
+		e = node->best_edge;
+		if (node->q_base != '-') {
+			if (coverage[node->t_pos] > min_cov) {
+				cns[idx] = node->q_base;
+			} else {
+				cns[idx] = tolower(node->q_base);
+			}
+			idx++;
+		}
+		/*
+		   fprintf(stderr, "N2 %d %d %c %d %d %c %0.3f\n", 
+		   e->t_pos, e->delta, e->q_base, 
+		   e->p_t_pos, e->p_delta, e->p_q_base, node->best_score); 
+		   */
+		if (e->p_q_base == '.') break;
+		node_key = get_tag_key( e->p_t_pos, e->p_delta, e->p_q_base );
+		k = kh_get(NODE, node_map, node_key);
+		node = kh_val(node_map, k);
+	}
+    
+	// reverse the sequence
+    for (uint32_t i = 0; i < idx/2; i++) {
+        cns[i] = cns[i] ^ cns[idx-i-1];
+        cns[idx-i-1] = cns[i] ^ cns[idx-i-1];
+        cns[i] = cns[i] ^ cns[idx-i-1];
+    }
+
+    cns[idx] = 0; //terminate the string
+	return consensus;
+}
+
+consensus_data * get_cns_from_align_tags( 
+		align_tags_t ** tag_seqs,
         unsigned n_tag_seqs,
         unsigned t_len,
         unsigned min_cov ) {
 
-    seq_coor_t i, j;
     seq_coor_t t_pos = 0;
-	uint32_t total_aln_tags = 0;
-    unsigned int * coverage;
-    unsigned int * local_nbase;
+    uint16_t * coverage;
 
     consensus_data * consensus;
     align_tag_t * c_tag;
 	align_edge_t align_edge;
 	align_edge_v all_edges = {0, 0, 0};  // initial k_vec with {0, 0, 0}
-
 	align_edge_v edges = {0, 0, 0};
-	align_edge_map_t * edge_map = kh_init(EDGE);
-    align_node_v nodes = {0, 0, 0};
 	align_node_map_t * node_map = kh_init(NODE);
 
-
     coverage = calloc( t_len, sizeof(unsigned int) );
-    local_nbase = calloc( t_len, sizeof(unsigned int) );
 
     // loop through every alignment
 	printf("n tag %d\n", n_tag_seqs);
     for (unsigned ii = 0; ii < n_tag_seqs; ii++) {
-        // for each alignment position, insert the alignment tag to msa_array
+        // for each alignment position, insert the alignment tag to the table
         for (int jj = 0; jj < tag_seqs[ii]->len; jj++) {
 			c_tag = tag_seqs[ii]->align_tags + jj; 
 			align_edge.t_pos = c_tag->t_pos;
@@ -239,24 +358,26 @@ consensus_data * get_cns_from_align_tags( align_tags_t ** tag_seqs,
 			align_edge.p_t_pos = c_tag->p_t_pos;
 			align_edge.p_delta = c_tag->p_delta;
 			align_edge.p_q_base = c_tag->p_q_base;
-			printf("C %d %d %c %d %d %c\n", c_tag->t_pos, c_tag->delta, c_tag->q_base, 
-					c_tag->p_t_pos, c_tag->p_delta, c_tag->p_q_base); 
 			align_edge.coverage = 1;
 			align_edge.count = 1;
 			align_edge.score = 0.0;
 			kv_push(align_edge_t, NULL, all_edges, align_edge);
             if (c_tag->delta == 0) {
                 t_pos = c_tag->t_pos;
-                coverage[ t_pos ] ++;
+                coverage[t_pos] ++;
             }
 
 		}
 	}
 
-    sort_accumulate_tags(&edges, edge_map,
-		&nodes, node_map,
-		&all_edges);
+    sort_accumulate_tags(&edges, &all_edges);
+	uint64_t best_node_key;
+	best_node_key = get_node_score(node_map, &edges, coverage);
+	consensus = backtracking(node_map, best_node_key, &edges, coverage ,min_cov);
 
+	kh_destroy(NODE, node_map);
+	kv_destroy(edges);
+	kv_destroy(all_edges);
     free(coverage);
     return consensus;
 }
@@ -264,7 +385,7 @@ consensus_data * get_cns_from_align_tags( align_tags_t ** tag_seqs,
 
 void free_consensus_data( consensus_data * consensus ){
     free(consensus->sequence);
-    free(consensus->eqv);
+    // free(consensus->eqv);
     free(consensus);
 }
 
