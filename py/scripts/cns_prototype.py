@@ -229,7 +229,8 @@ for ctg in contig_to_read_map:
             cns_seq = ffi.string(ref_seq)
             cns_seq = cns_seq.lower()
         else:
-            cns = falcon.get_cns_from_align_tags(tags, aln_count, len(ref_seq), 1)
+            cns = falcon.get_cns_from_align_tags(tags,
+                                                 aln_count, len(ref_seq), 1)
             cns_seq = ffi.string(cns.sequence)
             falcon.free_consensus_data(cns)
 
@@ -242,12 +243,21 @@ for ctg in contig_to_read_map:
 
     s0 = cns_segments[0]
     stiched_segments = [s0]
+    p = 0
     for s1 in cns_segments[1:]:
         aln = falcon.align(s0[-500:], 500,
-                           s1[:500], 500, 100, 0)
-        #print(aln.aln_q_s, aln.aln_q_e, aln.aln_t_s, aln.aln_t_e, aln.dist)
-        print(len(s1[aln.aln_t_e:]), file=sys.stderr)
+                           s1[:525], 525, 100, 0)
+        # print(aln.aln_q_s, aln.aln_q_e, aln.aln_t_s, aln.aln_t_e, aln.dist)
+        if aln.aln_q_e < 500:
+            stiched_segments[-1] = stiched_segments[-1][:-(500-aln.aln_q_e)]
+
         stiched_segments.append(s1[aln.aln_t_e:])
+        p += len(s1[aln.aln_t_e:])
+        print("stiching point:", p, file=sys.stderr)
+        print("aln.aln_q_e:", aln.aln_q_e, file=sys.stderr)
+        print("aln.aln_t_e:", aln.aln_t_e, file=sys.stderr)
+        # print(ffi.string(aln.q_aln_str), file=sys.stderr)
+        # print(ffi.string(aln.t_aln_str), file=sys.stderr)
         s0 = s1
         falcon.free_alignment(aln)
 
