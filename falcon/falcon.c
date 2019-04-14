@@ -1,12 +1,12 @@
 /*
  * =====================================================================================
  *
- *       Filename:  fastcon.c
+ *       Filename:  falconX.c
  *
  *    Description:
  *
  *        Version:  0.1
- *        Created:  07/20/2013 17:00:00
+ *        Created:  04/13/2019 07:00:00 
  *       Revision:  none
  *       Compiler:  gcc
  *
@@ -59,11 +59,13 @@
 #include <string.h>
 #include <assert.h>
 #include <stdint.h>
+#include <ctype.h>
 #include "common.h"
-#include "falcon.h"
+#include "falconX.h"
 
 
-align_tags_t * get_align_tags( char * aln_q_seq,
+align_tags_t * get_align_tags( 
+		char * aln_q_seq,
         char * aln_t_seq,
         seq_coor_t aln_seq_len,
         aln_range * range,
@@ -94,7 +96,7 @@ align_tags_t * get_align_tags( char * aln_q_seq,
             j ++;
             jj = 0;
         }
-        //printf("t %d %d %d %c %c\n", q_id, j, jj, aln_t_seq[k], aln_q_seq[k]);
+        // fprintf(stderr, "t %d %d %d %c %c\n", q_id, j, jj, aln_t_seq[k], aln_q_seq[k]);
 
         if ( j + t_offset >= 0 && jj < UINT8_MAX && p_jj < UINT8_MAX) {
             (tags->align_tags[k]).t_pos = j + t_offset;
@@ -126,377 +128,271 @@ void free_align_tags( align_tags_t * tags) {
     free( tags );
 }
 
-
-void allocate_aln_col( align_tag_col_t * col) {
-    col->p_t_pos = ( seq_coor_t * ) calloc(col->size, sizeof( seq_coor_t ));
-    col->p_delta = ( uint8_t * ) calloc(col->size, sizeof( uint8_t ));
-    col->p_q_base = ( char * )calloc(col->size, sizeof( char ));
-    col->link_count = ( uint16_t * ) calloc(col->size, sizeof( uint16_t ));
-}
-
-void realloc_aln_col( align_tag_col_t * col ) {
-    col->p_t_pos = (seq_coor_t *) realloc( col->p_t_pos, (col->size) * sizeof( seq_coor_t ));
-    col->p_delta = ( uint8_t *)  realloc( col->p_delta, (col->size) * sizeof( uint8_t ));
-    col->p_q_base = (char *) realloc( col->p_q_base, (col->size) * sizeof( char ));
-    col->link_count = ( uint16_t *) realloc( col->link_count, (col->size) * sizeof( uint16_t ));
-}
-
-void free_aln_col( align_tag_col_t * col) {
-    free(col->p_t_pos);
-    free(col->p_delta);
-    free(col->p_q_base);
-    free(col->link_count);
+uint64_t get_tag_key(
+		seq_coor_t t_pos, 
+		uint8_t delta, 
+		char base) {
+	assert(t_pos > 0);
+	return (((uint64_t) t_pos) << 32) | (delta << 8) | base;   
 }
 
 
-void allocate_delta_group( msa_delta_group_t * g) {
-    int i,j;
-    g->max_delta = 0;
-    g->delta = (msa_base_group_t *) calloc( g->size, sizeof(msa_base_group_t));
-    for (i = 0; i< g->size; i++) {
-        g->delta[i].base = ( align_tag_col_t * ) calloc( 5, sizeof(align_tag_col_t ) );
-        for (j = 0; j < 5; j++ ) {
-            g->delta[i].base[j].size = 8;
-            allocate_aln_col(&(g->delta[i].base[j]));
-        }
+int tag_key_comp(const void * a, const void * b) {
+	uint64_t t1, t1p;
+	uint64_t t2, t2p;
+	align_edge_t * e1 = (align_edge_t *) a;
+	align_edge_t * e2 = (align_edge_t *) b;
+	t1  = get_tag_key(e1->t_pos, e1->delta, e1->q_base);
+	t1p = get_tag_key(e1->p_t_pos, e1->p_delta, e1->p_q_base);
+	t2  = get_tag_key(e2->t_pos, e2->delta, e2->q_base);
+	t2p = get_tag_key(e2->p_t_pos, e2->p_delta, e2->p_q_base);
+
+	return (t1 == t2) ? (t1p > t2p) : (t1 > t2); 
+}
+
+
+void sort_accumulate_tags(
+		align_edge_v * edges,
+		align_edge_v * input_edges) {
+	
+	align_tag_t c_tag =  {0, 0, '.', 0, 0, '.'};
+	align_edge_t align_edge;
+
+	qsort(input_edges->a, input_edges->n, sizeof(align_edge_t), tag_key_comp);
+	
+	for (size_t i = 0; i < input_edges->n; i++){
+		align_edge_t e;
+		e = input_edges->a[i];
+
+		// fprintf(stderr,"E0 %d %d %c %d %d %c %d\n", 
+		// e.t_pos, e.delta, e.q_base, e.p_t_pos, 
+		// e.p_delta, e.p_q_base, e.count); 
+
+		if (c_tag.t_pos != e.t_pos || 
+				c_tag.delta != e.delta || 
+				c_tag.q_base != e.q_base || 
+				c_tag.p_t_pos != e.p_t_pos || 
+				c_tag.p_delta != e.p_delta ||
+			   	c_tag.p_q_base != e.p_q_base) {
+
+			align_edge.t_pos = e.t_pos;
+			align_edge.delta = e.delta;
+			align_edge.q_base = e.q_base;
+			align_edge.p_t_pos = e.p_t_pos;
+			align_edge.p_delta = e.p_delta;
+			align_edge.p_q_base = e.p_q_base;
+			align_edge.count = 1;
+			align_edge.score = 0.0;
+			kv_push(align_edge_t, NULL, *edges, align_edge); 
+		} else {
+			edges->a[edges->n-1].count ++;
+		}
+		e = edges->a[edges->n-1];
+
+		// fprintf(stderr, "E1 %d %d %c %d %d %c %d\n", 
+		// e.t_pos, e.delta, e.q_base, 
+		// e.p_t_pos, e.p_delta, e.p_q_base, e.count); 
+	   
+		c_tag.t_pos = e.t_pos;
+		c_tag.delta = e.delta;
+		c_tag.q_base = e.q_base;
+		c_tag.p_t_pos = e.p_t_pos;
+		c_tag.p_delta = e.p_delta;
+		c_tag.p_q_base = e.p_q_base;
+	}
+}
+
+uint64_t get_node_score(
+		align_node_map_t * node_map,
+		align_edge_v * edges, 
+		uint16_t * coverage) {
+
+	uint64_t node_key, p_node_key;
+	uint64_t best_node_key=0;
+	double global_best_score=0;
+	int absent;
+	khiter_t k;
+	align_node_t * node;
+	align_node_t * p_node;
+
+	for (size_t i = 0; i < edges->n; i++){
+		align_edge_t * e;
+		e = edges->a+i;
+		e->score = (double) e->count - 0.5 * ((double) coverage[e->t_pos]+1);
+		/* 
+		   fprintf(stderr,"E2 %d %d %c %d %d %c %d %0.3f\n", 
+		   e->t_pos, e->delta, e->q_base, 
+		   e->p_t_pos, e->p_delta, e->p_q_base, e->count, e->score); 
+		   */
+		node_key = get_tag_key(e->t_pos, e->delta, e->q_base);
+	    
+		k = kh_get(NODE, node_map, node_key);
+		if (k == kh_end(node_map)) {
+			k = kh_put(NODE, node_map, node_key, &absent);
+			node = malloc(sizeof(align_node_t));
+			node->t_pos = e->t_pos;
+			node->delta = e->delta;
+			node->q_base = e->q_base;
+			node->best_edge = e;
+			node->best_score = e->score;
+			kh_val(node_map, k) = node;
+			// fprintf(stderr, "XX %lu %d %d %c\n", node_key, e.t_pos, e.delta, e.q_base);
+
+		} else {
+			node = kh_val(node_map, k);
+		}
+	
+		if (e->p_q_base == '.') {
+			continue;
+		}
+
+		p_node_key = get_tag_key(e->p_t_pos, e->p_delta, e->p_q_base);
+		k = kh_get(NODE, node_map, p_node_key);
+		if (k == kh_end(node_map)) {
+			continue;
+		};
+		p_node = kh_val(node_map, k);
+		double new_score;
+		new_score = e->score + p_node->best_score;
+		if (new_score > node->best_score) {
+			node->best_score = new_score;
+			node->best_edge = e;
+			/*
+			   fprintf(stderr, "N %d %d %c %d %d %c %0.3f\n", 
+			   node->t_pos, node->delta, node->q_base, 
+			   p_node->t_pos, p_node->delta, p_node->q_base, node->best_score); 
+			*/
+			if (new_score > global_best_score) {
+				global_best_score = new_score;
+				best_node_key = node_key;
+			}
+		}
+	}
+	return best_node_key;
+}
+
+consensus_data * backtracking(
+		align_node_map_t * node_map,
+		uint64_t best_node_key,
+		align_edge_v *edges, 
+		uint16_t * coverage,
+		unsigned min_cov) {
+
+	khiter_t k;
+	align_node_t * node;
+	uint64_t node_key;
+	consensus_data * consensus;
+	char * cns;
+	// uint8_t * eqv;
+	uint32_t idx = 0;
+
+    consensus = (consensus_data *) calloc(1, sizeof(consensus_data));
+    consensus->sequence = calloc( edges->n, sizeof(char) );
+    // consensus->eqv = calloc(1, sizeof(uint8_t)); //not used, reserve for future QV output
+    cns = consensus->sequence; // just an alias
+    // eqv = consensus->eqv;  // just an alias
+
+	node_key = best_node_key;
+	k = kh_get(NODE, node_map, node_key);
+	assert( k != kh_end(node_map) );
+	node = kh_val(node_map, k);
+	idx = 0;
+	for (;;) {
+		if (node->q_base != '-') {
+			if (coverage[node->t_pos] > min_cov) {
+				cns[idx] = node->q_base;
+			} else {
+				cns[idx] = tolower(node->q_base);
+			}
+			idx++;
+		}
+
+		align_edge_t * e;
+		e = node->best_edge;
+		/*
+		   fprintf(stderr, "N2 %d %d %c %d %d %c %0.3f\n", 
+		   e->t_pos, e->delta, e->q_base, 
+		   e->p_t_pos, e->p_delta, e->p_q_base, node->best_score); 
+		   */
+		if (node->best_edge == NULL || e->p_q_base == '.') break;
+		node_key = get_tag_key( e->p_t_pos, e->p_delta, e->p_q_base );
+		k = kh_get(NODE, node_map, node_key);
+		node = kh_val(node_map, k);
+	}
+    
+	// reverse the sequence
+    for (uint32_t i = 0; i < idx/2; i++) {
+        cns[i] = cns[i] ^ cns[idx-i-1];
+        cns[idx-i-1] = cns[i] ^ cns[idx-i-1];
+        cns[i] = cns[i] ^ cns[idx-i-1];
     }
+
+    cns[idx] = 0; //terminate the string
+	return consensus;
 }
 
-void realloc_delta_group( msa_delta_group_t * g, uint16_t new_size ) {
-    int i, j, bs, es;
-    bs = g->size;
-    es = new_size;
-    g->delta = (msa_base_group_t *) realloc(g->delta, new_size * sizeof(msa_base_group_t));
-    for (i=bs; i < es; i++) {
-        g->delta[i].base = ( align_tag_col_t *) calloc( 5, sizeof(align_tag_col_t ) );
-        for (j = 0; j < 5; j++ ) {
-            g->delta[i].base[j].size = 8;
-            allocate_aln_col(&(g->delta[i].base[j]));
-        }
-    }
-    g->size = new_size;
-}
-
-void free_delta_group( msa_delta_group_t * g) {
-    //manything to do here
-    int i, j;
-    for (i = 0; i < g->size; i++) {
-        for (j = 0; j < 5; j++) {
-            free_aln_col( &(g->delta[i].base[j]) );
-        }
-        free(g->delta[i].base);
-    }
-    free(g->delta);
-}
-
-void update_col( align_tag_col_t * col, seq_coor_t p_t_pos, uint8_t p_delta, char p_q_base) {
-    int updated = 0;
-    int link;
-    col->count += 1;
-    for (link = 0; link < col->n_link; link++) {
-        if ( p_t_pos == col->p_t_pos[link] &&
-                p_delta == col->p_delta[link] &&
-                p_q_base == col->p_q_base[link] ) {
-            col->link_count[link] ++;
-            updated = 1;
-            break;
-        }
-    }
-    if (updated == 0) {
-        if (col->n_link + 1 > col->size) {
-            if (col->size < (UINT16_MAX >> 1)-1) {
-                col->size *= 2;
-            } else {
-                col->size += 256;
-            }
-            assert( col->size < UINT16_MAX-1 );
-            realloc_aln_col(col);
-        }
-        link = col->n_link;
-
-        col->p_t_pos[link] = p_t_pos;
-        col->p_delta[link] = p_delta;
-        col->p_q_base[link] = p_q_base;
-        col->link_count[link] = 1;
-        col->n_link++;
-    }
-}
-
-
-msa_pos_t * get_msa_working_sapce(unsigned int max_t_len) {
-    msa_pos_t * msa_array;
-    unsigned int i;
-    msa_array = calloc(max_t_len, sizeof(msa_pos_t *));
-    for (i = 0; i < max_t_len; i++) {
-        msa_array[i] = calloc(1, sizeof(msa_delta_group_t));
-        msa_array[i]->size = 16;
-        allocate_delta_group(msa_array[i]);
-    }
-    return msa_array;
-}
-
-void clean_msa_working_space( msa_pos_t * msa_array, unsigned int max_t_len) {
-    unsigned int i,k,j;
-    align_tag_col_t * col;
-    for (i = 0; i < max_t_len; i++) {
-        for (j =0; j < msa_array[i]->max_delta + 1; j++) {
-            for (k = 0; k < 5; k++ ) {
-                col = msa_array[i]->delta[j].base + k;
-                /*
-                   for (c =0; c < col->size; c++) {
-                   col->p_t_pos[c] = 0;
-                   col->p_delta[c] = 0;
-                   col->p_q_base[c] = 0;
-                   col->link_count[c] =0;
-                   }
-                   */
-                col->n_link = 0;
-                col->count = 0;
-                col->best_p_t_pos = 0;
-                col->best_p_delta = 0;
-                col->best_p_q_base = 0;
-                col->score = 0;
-            }
-        }
-        msa_array[i]->max_delta = 0;
-    }
-}
-
-#define STATIC_ALLOCATE
-//#undef STATIC_ALLOCATE
-
-consensus_data * get_cns_from_align_tags( align_tags_t ** tag_seqs,
+consensus_data * get_cns_from_align_tags( 
+		align_tags_t ** tag_seqs,
         unsigned n_tag_seqs,
         unsigned t_len,
         unsigned min_cov ) {
 
-    seq_coor_t i, j;
     seq_coor_t t_pos = 0;
-    unsigned int * coverage;
-    unsigned int * local_nbase;
+    uint16_t * coverage;
 
     consensus_data * consensus;
-    //char * consensus;
     align_tag_t * c_tag;
+	align_edge_t align_edge;
+	align_edge_v all_edges = {0, 0, 0};  // initial k_vec with {0, 0, 0}
+	align_edge_v edges = {0, 0, 0};
+	align_node_map_t * node_map = kh_init(NODE);
 
     coverage = calloc( t_len, sizeof(unsigned int) );
-    local_nbase = calloc( t_len, sizeof(unsigned int) );
-
-#ifndef STATIC_ALLOCATE
-
-    msa_pos_t * msa_array = NULL; // For more efficiency, this should be injected.
-    msa_array = calloc(t_len, sizeof(msa_pos_t *));
-
-    for (i = 0; i < t_len; i++) {
-        msa_array[i] = calloc(1, sizeof(msa_delta_group_t));
-        msa_array[i]->size = 8;
-        allocate_delta_group(msa_array[i]);
-    }
-
-#else
-
-    static msa_pos_t * msa_array = NULL;
-    if ( msa_array == NULL) {
-        msa_array = get_msa_working_sapce( 100000 );
-    }
-
-    assert(t_len < 100000);
-
-#endif
-
 
     // loop through every alignment
-    //printf("XX %d\n", n_tag_seqs);
     for (unsigned ii = 0; ii < n_tag_seqs; ii++) {
-
-        // for each alignment position, insert the alignment tag to msa_array
+        // for each alignment position, insert the alignment tag to the table
         for (int jj = 0; jj < tag_seqs[ii]->len; jj++) {
-            c_tag = tag_seqs[ii]->align_tags + jj;
-            unsigned int delta;
-            delta = c_tag->delta;
-            if (delta == 0) {
+			c_tag = tag_seqs[ii]->align_tags + jj; 
+			align_edge.t_pos = c_tag->t_pos;
+			align_edge.delta = c_tag->delta;
+			align_edge.q_base = c_tag->q_base;
+			align_edge.p_t_pos = c_tag->p_t_pos;
+			align_edge.p_delta = c_tag->p_delta;
+			align_edge.p_q_base = c_tag->p_q_base;
+			align_edge.coverage = 1;
+			align_edge.count = 1;
+			align_edge.score = 0.0;
+			kv_push(align_edge_t, NULL, all_edges, align_edge);
+            if (c_tag->delta == 0) {
                 t_pos = c_tag->t_pos;
-                coverage[ t_pos ] ++;
-            }
-            // Assume t_pos was set on earlier iteration.
-            // (Otherwise, use its initial value, which might be an error. ~cd)
-            if (delta > msa_array[t_pos]->max_delta) {
-                msa_array[t_pos]->max_delta = delta;
-                if (msa_array[t_pos]->max_delta + 4 > msa_array[t_pos]->size ) {
-                    realloc_delta_group(msa_array[t_pos], msa_array[t_pos]->max_delta + 16);
-                }
+                coverage[t_pos] ++;
             }
 
-            unsigned int base = -1;
-            switch (c_tag->q_base) {
-                case 'A': base = 0; break;
-                case 'C': base = 1; break;
-                case 'G': base = 2; break;
-                case 'T': base = 3; break;
-                case '-': base = 4; break;
-            }
+		}
+	}
 
-            // Note: On bad input, using a reference with "N", base may be -1.
-            if ( base != -1 ) {
-                update_col( &(msa_array[t_pos]->delta[delta].base[base]), 
-                        c_tag->p_t_pos, c_tag->p_delta, c_tag->p_q_base);
-            }
-        }
-    }
-
-    // propogate score throught the alignment links, setup backtracking information
-    align_tag_col_t * g_best_aln_col = 0;
-    unsigned int g_best_k = 0;
-    seq_coor_t g_best_t_pos = 0;
-    {
-        int k;
-        int best_k;
-        double score;
-        double best_score;
-        double g_best_score;
-
-        align_tag_col_t * aln_col;
-
-        g_best_score = -1;
-
-        best_k = 0;
-        for (i = 0; (unsigned) i < t_len; i++) {  //loop through every template base
-            for (j = 0; j <= msa_array[i]->max_delta; j++) { // loop through every delta position
-                for (k = 0; k < 5; k++) {  // loop through diff bases of the same delta posiiton
-                    aln_col = msa_array[i]->delta[j].base + k;
-                    if (aln_col->count >= 0) {
-                        best_score = -1;
-
-                        for (int link = 0; link < aln_col->n_link; link++) { // loop through differnt link to previous column
-                            int pi;
-                            int pj;
-                            int pk;
-                            pi = aln_col->p_t_pos[link];
-                            pj = aln_col->p_delta[link];
-                            switch (aln_col->p_q_base[link]) {
-                                case 'A': pk = 0; break;
-                                case 'C': pk = 1; break;
-                                case 'G': pk = 2; break;
-                                case 'T': pk = 3; break;
-                                case '-': pk = 4; break;
-                                default: pk = 4;
-                            }
-
-                            if (aln_col->p_t_pos[link] == -1) {
-                                score =  (double) aln_col->link_count[link] - (double) coverage[i] * 0.5;
-                            } else {
-                                //printf("XXX %d %d\n", pj, msa_array[pi]->size);
-                                assert( pj < msa_array[pi]->size);
-                                score = msa_array[pi]->delta[pj].base[pk].score +
-                                    (double) aln_col->link_count[link] - (double) coverage[i] * 0.5;
-                            }
-                            if (score > best_score) {
-                                best_score = score;
-                                aln_col->best_p_t_pos = pi;
-                                aln_col->best_p_delta = pj;
-                                aln_col->best_p_q_base = pk;
-                                best_k = k;
-                            }
-                        }
-                        aln_col->score = best_score;
-                        if (best_score > g_best_score) {
-                            g_best_score = best_score;
-                            g_best_aln_col = aln_col;
-                            g_best_t_pos = i;
-                            g_best_k = best_k;
-                        }
-                    }
-                }
-            }
-        }
-        assert(g_best_score > 0);
-    }
-
-    // reconstruct the sequences
-    unsigned int index;
-    char bb = '$';
-    int k;
-    char * cns_str;
-    int * eqv;
-    double score0;
-
-    consensus = calloc( 1, sizeof(consensus_data) );
-    consensus->sequence = calloc( t_len * 2 + 1, sizeof(char) );
-    consensus->eqv = calloc( t_len * 2 + 1, sizeof(unsigned int) );
-    cns_str = consensus->sequence;
-    eqv =  consensus->eqv;
-
-    index = 0;
-    k = g_best_k;
-    i = g_best_t_pos;
-
-    while (1) {
-        if (coverage[i] > min_cov) {
-            switch (k) {
-                case 0: bb = 'A'; break;
-                case 1: bb = 'C'; break;
-                case 2: bb = 'G'; break;
-                case 3: bb = 'T'; break;
-                case 4: bb = '-'; break;
-            }
-        } else {
-            switch (k) {
-                case 0: bb = 'a'; break;
-                case 1: bb = 'c'; break;
-                case 2: bb = 'g'; break;
-                case 3: bb = 't'; break;
-                case 4: bb = '-'; break;
-            }
-        }
-        // Note: On bad input, bb will keep previous value, possibly '$'.
-
-        score0 = g_best_aln_col->score;
-        i = g_best_aln_col->best_p_t_pos;
-        if (i == 0 || index >= t_len * 2) break;
-        j = g_best_aln_col->best_p_delta;
-        k = g_best_aln_col->best_p_q_base;
-        g_best_aln_col = msa_array[i]->delta[j].base + k;
-
-        if (bb != '-') {
-            cns_str[index] = bb;
-            eqv[index] = (int) score0 - (int) g_best_aln_col->score;
-            //printf("C %d %d %c %lf %d %d\n", i, index, bb, g_best_aln_col->score, coverage[i], eqv[index] );
-            index ++;
-        }
-    }
-
-    // reverse the sequence
-    for (i = 0; (unsigned) i < index/2; i++) {
-        cns_str[i] = cns_str[i] ^ cns_str[index-i-1];
-        cns_str[index-i-1] = cns_str[i] ^ cns_str[index-i-1];
-        cns_str[i] = cns_str[i] ^ cns_str[index-i-1];
-        eqv[i] = eqv[i] ^ eqv[index-i-1];
-        eqv[index-i-1] = eqv[i] ^ eqv[index-i-1];
-        eqv[i] = eqv[i] ^ eqv[index-i-1];
-    }
-
-    cns_str[index] = 0;
-    //printf("%s\n", cns_str);
-#ifndef STATIC_ALLOCATE
-    for (i = 0; i < t_len; i++) {
-        free_delta_group(msa_array[i]);
-        free(msa_array[i]);
-    }
-
-    free(msa_array);
-#else
-    clean_msa_working_space(msa_array, t_len+1);
-#endif
-
+    sort_accumulate_tags(&edges, &all_edges);
+	uint64_t best_node_key;
+	best_node_key = get_node_score(node_map, &edges, coverage);
+	consensus = backtracking(node_map, best_node_key, &edges, coverage ,min_cov);
+    
+	// need to clean the nodes here
+	for (khiter_t __i = kh_begin(node_map); __i != kh_end(node_map); ++__i) {
+		if (!kh_exist(node_map,__i)) continue;
+		free(kh_val(node_map, __i));
+	}
+	kh_destroy(NODE, node_map);
+	kv_destroy(edges);
+	kv_destroy(all_edges);
     free(coverage);
-    free(local_nbase);
     return consensus;
 }
 
 
 void free_consensus_data( consensus_data * consensus ){
     free(consensus->sequence);
-    free(consensus->eqv);
+    // free(consensus->eqv);
     free(consensus);
 }
 

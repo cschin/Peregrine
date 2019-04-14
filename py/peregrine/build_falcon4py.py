@@ -36,33 +36,6 @@ typedef struct {
     align_tag_t * align_tags;
 } align_tags_t;
 
-
-typedef struct {
-    uint16_t size;
-    uint16_t n_link;
-    seq_coor_t * p_t_pos;   // the tag position of the previous base
-    uint8_t * p_delta; // the tag delta of the previous base
-    char * p_q_base;        // the previous base
-    uint16_t * link_count;
-    uint16_t count;
-    seq_coor_t best_p_t_pos;
-    uint8_t best_p_delta;
-    uint8_t best_p_q_base; // encoded base
-    double score;
-} align_tag_col_t;
-
-typedef struct {
-    align_tag_col_t * base;
-} msa_base_group_t;
-
-typedef struct {
-    uint8_t size;
-    uint8_t max_delta;
-    msa_base_group_t * delta;
-} msa_delta_group_t;
-
-typedef msa_delta_group_t * msa_pos_t;
-
 typedef struct {
     seq_coor_t s1;
     seq_coor_t e1;
@@ -73,7 +46,7 @@ typedef struct {
 
 typedef struct {
     char * sequence;
-    int * eqv;
+    uint8_t * eqv;
 } consensus_data;
 
 
@@ -108,7 +81,9 @@ ffibuilder.set_source("peregrine._falcon4py",
                #include "{basedir}/falcon/common.h"
                #include "{basedir}/falcon/falcon.h"
                """, sources = [f'{basedir}/falcon/falcon.c',
-                               f'{basedir}/falcon/DW_banded.c' ])   # library name, for the linker
+                               f'{basedir}/falcon/DW_banded.c',
+                               f'{basedir}/falcon/kalloc.c'])   # library name, for the linker
 
 if __name__ == "__main__":
+    import sys
     ffibuilder.compile(verbose=True)
