@@ -31,6 +31,25 @@ typedef struct {
 
 typedef struct { size_t n, m; align_edge_t *a; } align_edge_v;
 
+
+typedef struct { size_t n, m; uint64_t *a; } uint64_v;
+typedef struct {
+    seq_coor_t t_pos;
+    uint8_t delta;
+    char q_base;
+} tag_t;
+
+typedef struct {
+    uint16_t coverage;
+    uint16_t count;
+    double score;
+} edge_data_t;
+
+KHASH_MAP_INIT_INT64(PTAG, uint16_t);
+typedef khash_t(PTAG) ptag_to_count_t; 
+KHASH_MAP_INIT_INT64(CTAG, khash_t(PTAG) *);
+typedef khash_t(CTAG) ctag_to_ptag_t; 
+
 typedef struct {
     seq_coor_t t_pos;
     uint8_t delta;

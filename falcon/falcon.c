@@ -144,72 +144,10 @@ uint64_t get_tag_key(
 }
 
 
-int tag_key_comp(const void * a, const void * b) {
-    uint64_t t1, t1p;
-    uint64_t t2, t2p;
-    align_edge_t * e1 = (align_edge_t *) a;
-    align_edge_t * e2 = (align_edge_t *) b;
-    t1  = get_tag_key(e1->t_pos, e1->delta, e1->q_base);
-    t1p = get_tag_key(e1->p_t_pos, e1->p_delta, e1->p_q_base);
-    t2  = get_tag_key(e2->t_pos, e2->delta, e2->q_base);
-    t2p = get_tag_key(e2->p_t_pos, e2->p_delta, e2->p_q_base);
-
-    return (t1 == t2) ? (t1p > t2p) : (t1 > t2); 
+int uint64_comp(const void * a, const void * b) {
+    return  * ((uint64_t *) a) > * ((uint64_t *) b); 
 }
 
-
-void sort_accumulate_tags(
-        align_edge_v * edges,
-        align_edge_v * input_edges) {
-
-    align_tag_t c_tag =  {0, 0, '.', 0, 0, '.'};
-    align_edge_t align_edge;
-
-    // which using a qsort to sore the whole array is convinient,
-    // there are other better way to get better performance
-    qsort(input_edges->a, input_edges->n, sizeof(align_edge_t), tag_key_comp);
-
-    for (size_t i = 0; i < input_edges->n; i++){
-        align_edge_t e;
-        e = input_edges->a[i];
-
-        // fprintf(stderr,"E0 %d %d %c %d %d %c %d\n", 
-        // e.t_pos, e.delta, e.q_base, e.p_t_pos, 
-        // e.p_delta, e.p_q_base, e.count); 
-
-        if (c_tag.t_pos != e.t_pos || 
-                c_tag.delta != e.delta || 
-                c_tag.q_base != e.q_base || 
-                c_tag.p_t_pos != e.p_t_pos || 
-                c_tag.p_delta != e.p_delta ||
-                c_tag.p_q_base != e.p_q_base) {
-
-            align_edge.t_pos = e.t_pos;
-            align_edge.delta = e.delta;
-            align_edge.q_base = e.q_base;
-            align_edge.p_t_pos = e.p_t_pos;
-            align_edge.p_delta = e.p_delta;
-            align_edge.p_q_base = e.p_q_base;
-            align_edge.count = 1;
-            align_edge.score = 0.0;
-            kv_push(align_edge_t, NULL, *edges, align_edge); 
-        } else {
-            edges->a[edges->n-1].count ++;
-        }
-        e = edges->a[edges->n-1];
-
-        // fprintf(stderr, "E1 %d %d %c %d %d %c %d\n", 
-        // e.t_pos, e.delta, e.q_base, 
-        // e.p_t_pos, e.p_delta, e.p_q_base, e.count); 
-
-        c_tag.t_pos = e.t_pos;
-        c_tag.delta = e.delta;
-        c_tag.q_base = e.q_base;
-        c_tag.p_t_pos = e.p_t_pos;
-        c_tag.p_delta = e.p_delta;
-        c_tag.p_q_base = e.p_q_base;
-    }
-}
 
 uint64_t get_node_score(
         align_node_map_t * node_map,
@@ -318,6 +256,7 @@ consensus_data * backtracking(
 
         align_edge_t * e;
         e = node->best_edge;
+        
         if (node->best_edge == NULL || e->p_q_base == '.') break;
         /*
            fprintf(stderr, "N2 %d %d %c %d %d %c %0.3f\n", 
@@ -351,10 +290,14 @@ consensus_data * get_cns_from_align_tags(
 
     consensus_data * consensus;
     align_tag_t * c_tag;
-    align_edge_t align_edge;
-    align_edge_v all_edges = {0, 0, 0};  // initial k_vec with {0, 0, 0}
-    align_edge_v edges = {0, 0, 0};
+
     align_node_map_t * node_map = kh_init(NODE);
+    ctag_to_ptag_t * ctag_to_ptag = kh_init(CTAG); 
+    ptag_to_count_t * ptag_to_count;
+    uint64_t ctag_key, ptag_key;
+
+    khiter_t k1, k2;
+    int absent;
 
     coverage = calloc( t_len, sizeof(unsigned int) );
 
@@ -364,21 +307,32 @@ consensus_data * get_cns_from_align_tags(
         int flag = 0;
         for (int jj = 0; jj < tag_seqs[ii]->len; jj++) {
             c_tag = tag_seqs[ii]->align_tags + jj; 
-            if (flag == 0 && c_tag->p_q_base == "-") {
+            if (flag == 0 && c_tag->p_q_base == '-') {
                 continue;
             } else {
                 flag = 1;
             }
-            align_edge.t_pos = c_tag->t_pos;
-            align_edge.delta = c_tag->delta;
-            align_edge.q_base = c_tag->q_base;
-            align_edge.p_t_pos = c_tag->p_t_pos;
-            align_edge.p_delta = c_tag->p_delta;
-            align_edge.p_q_base = c_tag->p_q_base;
-            align_edge.coverage = 1;
-            align_edge.count = 1;
-            align_edge.score = 0.0;
-            kv_push(align_edge_t, NULL, all_edges, align_edge);
+           
+            ctag_key = get_tag_key(c_tag->t_pos,  c_tag->delta,  c_tag->q_base);
+            ptag_key = get_tag_key(c_tag->p_t_pos, c_tag->p_delta, c_tag->p_q_base);
+            k1 = kh_get(CTAG, ctag_to_ptag, ctag_key);
+            if (k1 == kh_end(ctag_to_ptag)) { 
+                k1 = kh_put(CTAG, ctag_to_ptag, ctag_key, &absent);
+                ptag_to_count = kh_init(PTAG);
+                kh_val(ctag_to_ptag, k1) = ptag_to_count;
+                k2 = kh_put(PTAG, ptag_to_count, ptag_key, &absent);
+                kh_val(ptag_to_count, k2) = 1;
+            } else {
+                ptag_to_count = kh_val(ctag_to_ptag, k1);
+                k2 = kh_get(PTAG, ptag_to_count, ptag_key);
+                if (k2 == kh_end(ptag_to_count)) {
+                    k2 = kh_put(PTAG, ptag_to_count, ptag_key, &absent);
+                    kh_val(ptag_to_count, k2) = 1;
+                } else {
+                    kh_val(ptag_to_count, k2) += 1;
+                }
+            }
+
             if (c_tag->delta == 0) {
                 t_pos = c_tag->t_pos;
                 coverage[t_pos] ++;
@@ -387,7 +341,45 @@ consensus_data * get_cns_from_align_tags(
         }
     }
 
-    sort_accumulate_tags(&edges, &all_edges);
+    uint64_v ctag_keys = {0, 0, 0};
+    for (k1 = kh_begin(ctag_to_ptag); k1 != kh_end(ctag_to_ptag); k1++) {
+        if (!kh_exist(ctag_to_ptag, k1)) continue;
+        ctag_key = kh_key(ctag_to_ptag, k1);
+        kv_push(uint64_t, NULL, ctag_keys, ctag_key); 
+    }
+
+    qsort(ctag_keys.a, ctag_keys.n, sizeof(uint64_t), uint64_comp);
+    for (size_t i = 0; i < ctag_keys.n; i++) {
+        //fprintf(stderr, "test %lu\n", ctag_keys.a[i]);
+        k1 = kh_get(CTAG, ctag_to_ptag, ctag_keys.a[i]);
+        ptag_to_count = kh_val(ctag_to_ptag, k1);
+
+        uint64_v ptag_keys = {0, 0, 0};
+        for (k2 = kh_begin(ptag_to_count); k2 != kh_end(ptag_to_count); k2++) {
+            if (!kh_exist(ptag_to_count, k2)) continue;
+            ptag_key = kh_key(ptag_to_count, k2);
+            kv_push(uint64_t, NULL, ptag_keys, ptag_key); 
+        }
+        qsort(ptag_keys.a, ptag_keys.n, sizeof(uint64_t), uint64_comp);
+        for (size_t j = 0; j < ptag_keys.n; j++) {
+            k2 = kh_get(PTAG, ptag_to_count, ptag_keys.a[j]);
+            uint32_t count = kh_val(ptag_to_count, k2);
+            // fprintf(stderr, "test %lu %lu %u\n", ctag_keys.a[i], ptag_keys.a[j], count);
+            ctag_key = ctag_keys.a[i];
+            ptag_key = ptag_keys.a[j];
+            align_edge_t align_edge;
+            align_edge.t_pos = (seq_coor_t) (ctag_key >> 32);
+            align_edge.delta = (uint8_t)((ctag_key >> 8) & 0xFF);
+            align_edge.q_base = (char)( ctag_key & 0xFF);
+            align_edge.p_t_pos = (seq_coor_t) (ptag_key >> 32); 
+            align_edge.p_delta = (uint8_t)((ptag_key >> 8) & 0xFF); 
+            align_edge.p_q_base = (char)( ptag_key & 0xFF);
+            align_edge.count = count;
+            align_edge.score = 0.0;
+            kv_push(align_edge_t, NULL, edges, align_edge); 
+        }
+    }
+
     uint64_t best_node_key;
     best_node_key = get_node_score(node_map, &edges, coverage);
     consensus = backtracking(node_map, best_node_key, &edges, coverage ,min_cov);
@@ -399,7 +391,6 @@ consensus_data * get_cns_from_align_tags(
     }
     kh_destroy(NODE, node_map);
     kv_destroy(edges);
-    kv_destroy(all_edges);
     free(coverage);
     return consensus;
 }
