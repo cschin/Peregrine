@@ -66,7 +66,7 @@ rng = ffi.new("aln_range[1]")
 
 # TODO: we need to refactor this loop
 for ctg in contig_to_read_map:
-    print("ctg {}".format(ref_idx[ctg]["name"]), file=sys.stderr)
+    print("-\n", "ctg {}".format(ref_idx[ctg]["name"]), file=sys.stderr)
     contig_to_read_map[ctg].sort(key=lambda x: x[1])
     read_map_groups = []
     left_anchor = 1000
@@ -107,7 +107,7 @@ for ctg in contig_to_read_map:
     cns_segments = []
     j = 0
     for left, right, mapped in read_map_groups:
-        print("-", j, left, right, right-left, len(mapped), file=sys.stderr)
+        print(f"--\n sg{j:03d}", left, right, right-left, len(mapped), file=sys.stderr)
 
         j += 1
         left = left-1000
@@ -123,8 +123,18 @@ for ctg in contig_to_read_map:
             rmap[(read_id, read_strand)].append(read_offset)
 
         reads = []
+
         for (read_id, read_strand), v in rmap.items():
-            reads.append((read_id, read_strand, np.min(v)-left, len(v)))
+            v.sort()
+            v_current = v[0]
+            reads.append((read_id, read_strand, v_current - left, len(v)))
+            print( (read_id, read_strand), v_current, file=sys.stderr);
+            for vv in v:
+                if vv > v_current + 500:
+                    v_current = vv
+                    reads.append((read_id, read_strand, v_current - left, len(v)))
+                    print( (read_id, read_strand), v_current, file=sys.stderr);
+
 
         reads.sort(key=lambda x: x[2])
         s = ref_idx[ctg]["offset"] + left
@@ -136,16 +146,12 @@ for ctg in contig_to_read_map:
 
         shimmer.decode_biseq(bseq0, ref_seq, ref_len, 0)
 
-        print("ctg {}".format(ref_idx[ctg]["name"]),
-              len(read_map_groups),
-              len(mapped), file=sys.stderr)
-
         tags = ffi.new("align_tags_t * [{}]".format(len(reads)+1))
 
         # need a back bone for some boundary case
         aln = falcon.align(ref_seq, ref_len,
                            ref_seq, ref_len,
-                           150, 1)
+                           50, 1)
         rng[0].s1 = aln.aln_q_s
         rng[0].e1 = aln.aln_q_e
         rng[0].s2 = aln.aln_t_s
@@ -178,7 +184,7 @@ for ctg in contig_to_read_map:
                                    read_len - abs(read_shift),
                                    ref_seq,
                                    ref_len,
-                                   150, 1)
+                                   50, 1)
 
                 if abs(abs(aln.aln_q_e-aln.aln_q_s) -
                        (read_len - abs(read_shift))) < 48:
@@ -196,7 +202,7 @@ for ctg in contig_to_read_map:
                                    read_len,
                                    ref_seq[read_shift:ref_len],
                                    ref_len-read_shift,
-                                   150, 1)
+                                   50, 1)
 
                 if abs(abs(aln.aln_q_e-aln.aln_q_s)-read_len) < 48 or \
                    abs(ref_len-read_shift-abs(aln.aln_q_e-aln.aln_q_s)) < 48:
