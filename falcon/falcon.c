@@ -84,28 +84,20 @@ align_tags_t * get_align_tags(
     p_j = -1;
     p_jj = 0;
     p_q_base = '.';
-
-    for (k = 0; k < aln_seq_len; k++) {
+    /*
+    for (k=0; k < aln_seq_len; k++) {
         if (aln_q_seq[k] != '-') {
             i ++;
-            if (jj < 12) {  // we cap the biggest insert gap up to 12 bases
-                jj ++;
-            } else {
-                continue;
-            }
+            jj ++;
         }
         if (aln_t_seq[k] != '-') {
             break;
         }
-    }
-    for (; k < aln_seq_len; k++) {
+    }*/
+    for (k=0; k < aln_seq_len; k++) {
         if (aln_q_seq[k] != '-') {
             i ++;
-            if (jj < 12) {  // we cap the biggest insert gap up to 12 bases
-                jj ++;
-            } else {
-                continue;
-            }
+            jj ++;
         }
         if (aln_t_seq[k] != '-') {
             j ++;
@@ -235,7 +227,7 @@ uint64_t get_node_score(
     for (size_t i = 0; i < edges->n; i++){
         align_edge_t * e;
         e = edges->a+i;
-        e->score = (double) e->count - 0.5 * ((double) coverage[e->t_pos]+1);
+        e->score = (double) e->count - 0.4 * ((double) coverage[e->t_pos]+1);
         /* 
            fprintf(stderr,"E2 %d %d %c %d %d %c %d %0.3f\n", 
            e->t_pos, e->delta, e->q_base, 
@@ -275,7 +267,7 @@ uint64_t get_node_score(
             node->best_score = new_score;
             node->best_edge = e;
             /*
-               fprintf(stderr, "N %d %d %c %d %d %c %0.3f\n", 
+               fprintf(stderr, "N0 %d %d %c %d %d %c %0.3f\n", 
                node->t_pos, node->delta, node->q_base, 
                p_node->t_pos, p_node->delta, p_node->q_base, node->best_score); 
                */
@@ -322,16 +314,16 @@ consensus_data * backtracking(
                 cns[idx] = tolower(node->q_base);
             }
             idx++;
-        }
+        } 
 
         align_edge_t * e;
         e = node->best_edge;
+        if (node->best_edge == NULL || e->p_q_base == '.') break;
         /*
            fprintf(stderr, "N2 %d %d %c %d %d %c %0.3f\n", 
            e->t_pos, e->delta, e->q_base, 
            e->p_t_pos, e->p_delta, e->p_q_base, node->best_score); 
            */
-        if (node->best_edge == NULL || e->p_q_base == '.') break;
         node_key = get_tag_key( e->p_t_pos, e->p_delta, e->p_q_base );
         k = kh_get(NODE, node_map, node_key);
         node = kh_val(node_map, k);
@@ -369,8 +361,14 @@ consensus_data * get_cns_from_align_tags(
     // loop through every alignment
     for (unsigned ii = 0; ii < n_tag_seqs; ii++) {
         // for each alignment position, insert the alignment tag to the table
+        int flag = 0;
         for (int jj = 0; jj < tag_seqs[ii]->len; jj++) {
             c_tag = tag_seqs[ii]->align_tags + jj; 
+            if (flag == 0 && c_tag->p_q_base == "-") {
+                continue;
+            } else {
+                flag = 1;
+            }
             align_edge.t_pos = c_tag->t_pos;
             align_edge.delta = c_tag->delta;
             align_edge.q_base = c_tag->q_base;
