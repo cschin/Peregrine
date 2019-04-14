@@ -359,49 +359,49 @@ consensus_data * get_cns_from_align_tags(
     align_tag_t * c_tag;
     align_edge_t align_edge;
     align_edge_v all_edges = {0, 0, 0};  // initial k_vec with {0, 0, 0}
-align_edge_v edges = {0, 0, 0};
-align_node_map_t * node_map = kh_init(NODE);
+    align_edge_v edges = {0, 0, 0};
+    align_node_map_t * node_map = kh_init(NODE);
 
-coverage = calloc( t_len, sizeof(unsigned int) );
+    coverage = calloc( t_len, sizeof(unsigned int) );
 
-// loop through every alignment
-for (unsigned ii = 0; ii < n_tag_seqs; ii++) {
-    // for each alignment position, insert the alignment tag to the table
-    for (int jj = 0; jj < tag_seqs[ii]->len; jj++) {
-        c_tag = tag_seqs[ii]->align_tags + jj; 
-        align_edge.t_pos = c_tag->t_pos;
-        align_edge.delta = c_tag->delta;
-        align_edge.q_base = c_tag->q_base;
-        align_edge.p_t_pos = c_tag->p_t_pos;
-        align_edge.p_delta = c_tag->p_delta;
-        align_edge.p_q_base = c_tag->p_q_base;
-        align_edge.coverage = 1;
-        align_edge.count = 1;
-        align_edge.score = 0.0;
-        kv_push(align_edge_t, NULL, all_edges, align_edge);
-        if (c_tag->delta == 0) {
-            t_pos = c_tag->t_pos;
-            coverage[t_pos] ++;
+    // loop through every alignment
+    for (unsigned ii = 0; ii < n_tag_seqs; ii++) {
+        // for each alignment position, insert the alignment tag to the table
+        for (int jj = 0; jj < tag_seqs[ii]->len; jj++) {
+            c_tag = tag_seqs[ii]->align_tags + jj; 
+            align_edge.t_pos = c_tag->t_pos;
+            align_edge.delta = c_tag->delta;
+            align_edge.q_base = c_tag->q_base;
+            align_edge.p_t_pos = c_tag->p_t_pos;
+            align_edge.p_delta = c_tag->p_delta;
+            align_edge.p_q_base = c_tag->p_q_base;
+            align_edge.coverage = 1;
+            align_edge.count = 1;
+            align_edge.score = 0.0;
+            kv_push(align_edge_t, NULL, all_edges, align_edge);
+            if (c_tag->delta == 0) {
+                t_pos = c_tag->t_pos;
+                coverage[t_pos] ++;
+            }
+
         }
-
     }
-}
 
-sort_accumulate_tags(&edges, &all_edges);
-uint64_t best_node_key;
-best_node_key = get_node_score(node_map, &edges, coverage);
-consensus = backtracking(node_map, best_node_key, &edges, coverage ,min_cov);
+    sort_accumulate_tags(&edges, &all_edges);
+    uint64_t best_node_key;
+    best_node_key = get_node_score(node_map, &edges, coverage);
+    consensus = backtracking(node_map, best_node_key, &edges, coverage ,min_cov);
 
-// need to clean the nodes here
-for (khiter_t __i = kh_begin(node_map); __i != kh_end(node_map); ++__i) {
-    if (!kh_exist(node_map,__i)) continue;
-    free(kh_val(node_map, __i));
-}
-kh_destroy(NODE, node_map);
-kv_destroy(edges);
-kv_destroy(all_edges);
-free(coverage);
-return consensus;
+    // need to clean the nodes here
+    for (khiter_t __i = kh_begin(node_map); __i != kh_end(node_map); ++__i) {
+        if (!kh_exist(node_map,__i)) continue;
+        free(kh_val(node_map, __i));
+    }
+    kh_destroy(NODE, node_map);
+    kv_destroy(edges);
+    kv_destroy(all_edges);
+    free(coverage);
+    return consensus;
 }
 
 
