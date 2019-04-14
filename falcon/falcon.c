@@ -227,7 +227,7 @@ uint64_t get_node_score(
     for (size_t i = 0; i < edges->n; i++){
         align_edge_t * e;
         e = edges->a+i;
-        e->score = (double) e->count - 0.4 * ((double) coverage[e->t_pos]+1);
+        e->score = (double) e->count - 0.5 * ((double) coverage[e->t_pos]+1);
         /* 
            fprintf(stderr,"E2 %d %d %c %d %d %c %d %0.3f\n", 
            e->t_pos, e->delta, e->q_base, 
