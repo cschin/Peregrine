@@ -69,7 +69,7 @@ for ctg in contig_to_read_map:
     print("ctg {}".format(ref_idx[ctg]["name"]), file=sys.stderr)
     contig_to_read_map[ctg].sort(key=lambda x: x[1])
     read_map_groups = []
-    left_anchor = 500
+    left_anchor = 1000
     map_group = []
 
     for row in contig_to_read_map[ctg]:
@@ -110,7 +110,7 @@ for ctg in contig_to_read_map:
         print("-", j, left, right, right-left, len(mapped), file=sys.stderr)
 
         j += 1
-        left = left-500
+        left = left-1000
         assert(left >= 0)
         rmap = {}
 
@@ -245,11 +245,11 @@ for ctg in contig_to_read_map:
     stiched_segments = [s0]
     p = 0
     for s1 in cns_segments[1:]:
-        aln = falcon.align(s0[-500:], 500,
-                           s1[:525], 525, 100, 0)
+        aln = falcon.align(s0[-1000:], 1000,
+                           s1[:1050], 1050, 400, 0)
         # print(aln.aln_q_s, aln.aln_q_e, aln.aln_t_s, aln.aln_t_e, aln.dist)
-        if aln.aln_q_e < 500:
-            stiched_segments[-1] = stiched_segments[-1][:-(500-aln.aln_q_e)]
+        if aln.aln_q_e < 1000:
+            stiched_segments[-1] = stiched_segments[-1][:-(1000-aln.aln_q_e)]
 
         stiched_segments.append(s1[aln.aln_t_e:])
         p += len(s1[aln.aln_t_e:])
