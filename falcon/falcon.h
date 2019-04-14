@@ -24,9 +24,9 @@ typedef struct {
     seq_coor_t p_t_pos;   // the tag position of the previous base
     uint8_t p_delta; // the tag delta of the previous base
     char p_q_base;        // the previous base
-	uint16_t coverage;
+    uint16_t coverage;
     uint16_t count;
-	double score;
+    double score;
 } align_edge_t; 
 
 typedef struct { size_t n, m; align_edge_t *a; } align_edge_v;
@@ -35,8 +35,8 @@ typedef struct {
     seq_coor_t t_pos;
     uint8_t delta;
     char q_base;
-	align_edge_t * best_edge;
-	double best_score;
+    align_edge_t * best_edge;
+    double best_score;
 } align_node_t;
 
 
