@@ -173,6 +173,8 @@ void sort_accumulate_tags(
     align_tag_t c_tag =  {0, 0, '.', 0, 0, '.'};
     align_edge_t align_edge;
 
+    // which using a qsort to sore the whole array is convinient,
+    // there are other better way to get better performance
     qsort(input_edges->a, input_edges->n, sizeof(align_edge_t), tag_key_comp);
 
     for (size_t i = 0; i < input_edges->n; i++){
@@ -403,7 +405,6 @@ consensus_data * get_cns_from_align_tags(
     free(coverage);
     return consensus;
 }
-
 
 void free_consensus_data( consensus_data * consensus ){
     free(consensus->sequence);
