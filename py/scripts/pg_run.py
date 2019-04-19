@@ -34,6 +34,7 @@ Usage:
                             [--shimmer-k <shimmer_k>]
                             [--shimmer-w <shimmer_w>]
                             [--shimmer-r <shimmer_r>]
+                            [--shimmer-l <shimmer_l>]
                             [--best_n_ovlp <n_ovlp>]
                             [--mc_lower <mc_lower>]
                             [--mc_upper <mc_upper>]
@@ -50,6 +51,7 @@ Options:
   --shimmer-k <shimmer_k>     Level 0 k-mer size [default: 16]
   --shimmer-w <shimmer_w>     Level 0 window size [default: 80]
   --shimmer-r <shimmer_r>     Reduction factore for high level SHIMMER [default: 6]
+  --shimmer-l <shimmer_l>     number of level of shimmer used, the value should be 1 or 2 [default: 2]
   --best_n_ovlp <n_ovlp>      Find best n_ovlp overlap [default: 4]
   --mc_lower <mc_lower>       Does not cosider SHIMMER with count less than mc_low [default: 2]
   --mc_upper <mc_upper>       Does not cosider SHIMMER with count greater than mc_upper [default: 240]
@@ -215,6 +217,7 @@ def run_build_db(wf, args, seq_dataset_lst_fn):
 def run_build_idx(wf, args, read_db_abs_prefix):
     n_chunk = int(args["<index_nchunk>"])
     n_proc = int(args["<index_nproc>"])
+    shimmer_l = int(args["--shimmer-l"])
 
     build_idx = """
 /usr/bin/time shmr_index\
@@ -222,23 +225,37 @@ def run_build_idx(wf, args, read_db_abs_prefix):
     -k {params.shimmer_k}\
     -w {params.shimmer_w}\
     -r {params.shimmer_r}\
+    -l {params.shimmer_l}\
     -t {params.n_chunk}\
     -c {params.my_chunk}\
     -o {params.index_prefix}
 ln -s {params.index_prefix}* {params.index_dir}
 """
     index_dir = os.path.join(os.path.abspath(args["--output"]), "1-index")
-    index_abs_prefix = os.path.join(index_dir, "shmr-L2")
+    if shimmer_l == 2:
+        index_abs_prefix = os.path.join(index_dir, "shmr-L2")
+    elif shimmer_l == 1:
+        index_abs_prefix = os.path.join(index_dir, "shmr-L1")
+    else:
+        sys.exit(1)
+
     outputs = {}
     for my_chunk in range(1, n_chunk+1):
         index_chunk_dir = os.path.join(index_dir, f"chunk-{my_chunk:02d}")
         index_chunk_abs_prefix = os.path.join(index_chunk_dir, "shmr")
         index_L0_fn = f"{index_chunk_abs_prefix}-L0-{my_chunk:02d}-of-{n_chunk:02d}.dat"
         index_L0_MC_fn = f"{index_chunk_abs_prefix}-L0-MC-{my_chunk:02d}-of-{n_chunk:02d}.dat"
-        index_L2_fn = f"{index_chunk_abs_prefix}-L2-{my_chunk:02d}-of-{n_chunk:02d}.dat"
-        index_L2_MC_fn = f"{index_chunk_abs_prefix}-L2-MC-{my_chunk:02d}-of-{n_chunk:02d}.dat"
-        outputs[f'index_L2_{my_chunk:02d}'] = index_L2_fn
-        outputs[f'index_L2_MC_{my_chunk:02d}'] = index_L2_MC_fn
+        if shimmer_l == 2:
+            index_shmr_fn = f"{index_chunk_abs_prefix}-L2-{my_chunk:02d}-of-{n_chunk:02d}.dat"
+            index_shmr_MC_fn = f"{index_chunk_abs_prefix}-L2-MC-{my_chunk:02d}-of-{n_chunk:02d}.dat"
+        elif shimmer_l == 1:
+            index_shmr_fn = f"{index_chunk_abs_prefix}-L1-{my_chunk:02d}-of-{n_chunk:02d}.dat"
+            index_shmr_MC_fn = f"{index_chunk_abs_prefix}-L1-MC-{my_chunk:02d}-of-{n_chunk:02d}.dat"
+        else:
+            sys.exit(1)
+
+        outputs[f'index_shmr_{my_chunk:02d}'] = index_shmr_fn
+        outputs[f'index_shmr_MC_{my_chunk:02d}'] = index_shmr_MC_fn
         wf.addTask(Task(
             script=build_idx,
             inputs={
@@ -248,8 +265,8 @@ ln -s {params.index_prefix}* {params.index_dir}
             outputs={
                 'index_L0': index_L0_fn,
                 'index_L0_MC': index_L0_MC_fn,
-                'index_L2': index_L2_fn,
-                'index_L2_MC': index_L2_MC_fn
+                'index_shmr': index_shmr_fn,
+                'index_shmr_MC': index_shmr_MC_fn
             },
             parameters={
                 'read_db_prefix': read_db_abs_prefix,
@@ -258,6 +275,7 @@ ln -s {params.index_prefix}* {params.index_dir}
                 'shimmer_k': int(args["--shimmer-k"]),
                 'shimmer_w': int(args["--shimmer-w"]),
                 'shimmer_r': int(args["--shimmer-r"]),
+                'shimmer_l': int(args["--shimmer-l"]),
                 'n_chunk': n_chunk,
                 'my_chunk': my_chunk
             },
@@ -359,6 +377,7 @@ def run_cns(wf, args, read_db_abs_prefix, read_db,
     shimmer_k = int(args["--shimmer-k"])
     shimmer_w = int(args["--shimmer-w"])
     shimmer_r = int(args["--shimmer-r"])
+    shimmer_l = int(args["--shimmer-l"])
     build_index_script = """\
 echo {input.p_ctg} > p_ctg.lst
 
@@ -366,12 +385,13 @@ echo {input.p_ctg} > p_ctg.lst
     -d p_ctg.lst 2> build_p_ctg_db.log
 """
 
-    build_index_script +=f"""
+    build_index_script += f"""
 /usr/bin/time shmr_index \
     -p p_ctg -t 1 -c 1 \
     -k {shimmer_k}\
     -w {shimmer_w}\
     -r {shimmer_r}\
+    -l {shimmer_l}\
     -o p_ctg 2> build_p_ctg_index.log
 """
     cns_dir = os.path.join(os.path.abspath(args["--output"]), "4-cns")
@@ -381,9 +401,14 @@ echo {input.p_ctg} > p_ctg.lst
     outputs = {}
     outputs["p_ctg_db"] = os.path.join(output_dir, "p_ctg.seqdb")
     outputs["p_ctg_idx"] = os.path.join(output_dir, "p_ctg.idx")
-    outputs["p_ctg_L2_idx"] = os.path.join(output_dir, "p_ctg-L2-01-of-01.dat")
+    if shimmer_l == 2:
+        outputs["p_ctg_shmr_idx"] = os.path.join(output_dir, "p_ctg-L2-01-of-01.dat")
+        p_ctg_idx_abs_prefix = os.path.join(output_dir, "p_ctg-L2")
+    elif shimmer_l == 1:
+        outputs["p_ctg_shmr_idx"] = os.path.join(output_dir, "p_ctg-L1-01-of-01.dat")
+        p_ctg_idx_abs_prefix = os.path.join(output_dir, "p_ctg-L1")
+
     p_ctg_db_abs_prefix = os.path.join(output_dir, "p_ctg")
-    p_ctg_idx_abs_prefix = os.path.join(output_dir, "p_ctg-L2")
 
     wf.addTask(Task(
         script=build_index_script,
@@ -409,7 +434,7 @@ echo {input.p_ctg} > p_ctg.lst
     inputs = {}
     inputs["p_ctg_db"] = outputs["p_ctg_db"]
     inputs["p_ctg_idx"] = outputs["p_ctg_idx"]
-    inputs["p_ctg_L2_idx"] = outputs["p_ctg_L2_idx"]
+    inputs["p_ctg_shmr_idx"] = outputs["p_ctg_shmr_idx"]
     inputs.update(read_db)
     inputs.update(read_index)
     outputs = {}
