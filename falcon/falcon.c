@@ -226,7 +226,7 @@ consensus_data * backtracking(
     seq_coor_t t_pos;
 
     consensus = (consensus_data *) calloc(1, sizeof(consensus_data));
-    consensus->sequence = calloc( edges->n, sizeof(char) );
+    consensus->sequence = calloc( edges->n + 1, sizeof(char) );
     // consensus->eqv = calloc(1, sizeof(uint8_t)); //not used, reserve for future QV output
     cns = consensus->sequence; // just an alias
     // eqv = consensus->eqv;  // just an alias
