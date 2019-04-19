@@ -646,4 +646,8 @@ I agree that I am not using this software for any commericial purposes (yes/no):
     logging.basicConfig(level=logging.INFO)
     args = docopt(__doc__, version=__version__)
     print(f"Peregrine Assembler ({__version__}) has been started with the following option:\n", args, file=sys.stderr)
+    if not int(args["--shimmer-l"]) in (1, 2):
+        print(f"\nERROR: <shimmer-l> should be 1 or 2, stopping\n", file=sys.stderr)
+        sys.exit(128)
+
     main(args)
