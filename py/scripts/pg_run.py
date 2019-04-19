@@ -356,15 +356,23 @@ def run_cns(wf, args, read_db_abs_prefix, read_db,
     cns_nchunk = int(args["<cns_nchunk>"])
     cns_nproc = int(args["<cns_nproc>"])
     sort_nproc = int(args["<sort_nproc>"])
+    shimmer_k = int(args["--shimmer-k"])
+    shimmer_w = int(args["--shimmer-w"])
+    shimmer_r = int(args["--shimmer-r"])
     build_index_script = """\
 echo {input.p_ctg} > p_ctg.lst
 
 /usr/bin/time shmr_mkseqdb -p p_ctg \
     -d p_ctg.lst 2> build_p_ctg_db.log
+"""
 
-/usr/bin/time shmr_index -p p_ctg -t 1 -c 1 \
+    build_index_script +=f"""
+/usr/bin/time shmr_index \
+    -p p_ctg -t 1 -c 1 \
+    -k {shimmer_k}\
+    -w {shimmer_w}\
+    -r {shimmer_r}\
     -o p_ctg 2> build_p_ctg_index.log
-
 """
     cns_dir = os.path.join(os.path.abspath(args["--output"]), "4-cns")
     inputs = {}
