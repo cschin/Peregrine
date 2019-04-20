@@ -2,7 +2,11 @@
 
 import mmap
 import sys
+import numpy
 from peregrine._shimmer4py import ffi, lib
+
+basemap = {1:"A",2:"C",4:"G",8:"T"}
+stitching_overhang_size = 500
 
 if __name__ == "__main__":
     seqdb_prefix = sys.argv[1]
@@ -32,12 +36,11 @@ if __name__ == "__main__":
             tiling_path_data.setdefault(row[0], [])
             tiling_path_data[row[0]].append(row)
 
-    sub_seq = []
     for ctg in tiling_path_data:
         segments = []
         # I don't like to have the first read as it breaks the string formulation,
         # but poeple like it for no reason, so I will just do it
-        ctg_id, v, w, r, s, e, olen, idt = tiling_path_data[ctg][0]
+        ctg_id, v, w, r, s, e, olen, idt, _1, _2 = tiling_path_data[ctg][0]
         v = v.split(":")
         rid0 = int(v[0])
         s0 = read_idx[rid0]["offset"]
@@ -48,9 +51,11 @@ if __name__ == "__main__":
 
         seq = ffi.new("char[{}]".format(slen0))
         lib.decode_biseq(bseq0, seq, slen0, strand0)
-        segments.append(seq)
+
+        ctg_len = len(seq)
+        segments.append((ctg_len, 0, seq))
         for row in tiling_path_data[ctg]:
-            ctg_id, v, w, r, s, e, olen, idt = row
+            ctg_id, v, w, r, s, e, olen, idt, _1, _2 = row
             v = v.split(":")
             w = w.split(":")
             s = int(s)
@@ -72,25 +77,34 @@ if __name__ == "__main__":
             bseq1 = seqdb[s1:e1]
             strand1 = 0 if w[1] == "E" else 1
 
-            offset1 = slen0 - 500
-            offset2 = slen1 - abs(e-s) - 500
+            offset1 = slen0 - stitching_overhang_size
+            offset2 = slen1 - abs(e-s) - stitching_overhang_size
             match = lib.ovlp_match(bseq0[offset1:], slen0 - offset1, strand0,
                                    bseq1[offset2:], slen1 - offset2, strand1,
-                                   500)
-            s -= match.t_end - match.q_end
-            lib.free_ovlp_match(match)
+                                   100)
 
-            seq = ffi.new("char[{}]".format(abs(e-s)))
             if strand1 == 1:
                 s, e = slen1 - s, slen1 - e
-            if e > s:
-                lib.decode_biseq(bseq1[s:e], seq, e-s, strand1)
-                segments.append(seq)
-            else:
-                seq = ffi.new("char[1]", b"N")
-                segments.append(seq)
-                print(row, file=sys.stderr)
+            assert(e > s)
+            seg_size = e - s + stitching_overhang_size - match.t_lm_end
+            seq = ffi.new("char[{}]".format(seg_size))
+            lib.decode_biseq(bseq1[e-seg_size:e],
+                             seq,
+                             seg_size,
+                             strand1)
+            segments.append((ctg_len,
+                            ctg_len - stitching_overhang_size + match.q_lm_end,
+                            seq))
+            ctg_len += match.q_lm_end - match.t_lm_end + e - s
+
+            lib.free_ovlp_match(match)
+
+        ctg_str = numpy.zeros(ctg_len, dtype=numpy.byte)
         print(">{}".format(ctg_id))
-        print(b"".join([ffi.buffer(seq) for seq in segments]).decode("ascii"))
-        for seq in segments:
-            ffi.release(seq)
+        for seg in segments:
+            s = seg[1]
+            e = seg[1] + len(ffi.string(seg[2]))
+            ctg_str[s:e] = list(ffi.string(seg[2]))
+            ffi.release(seg[2])
+        print("".join((chr(x) for x in ctg_str)))
+
