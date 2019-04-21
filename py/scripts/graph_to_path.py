@@ -104,14 +104,15 @@ def compose_ctg(edge_data, ctg_id, path_edges, proper_ctg):
     edge_lines = []
 
     # Splice-in the rest of the path sequence.
+    ctg_length = 0
     for vv, ww in path_edges:
         rid, s, t, aln_score, idt = edge_data[(vv, ww)]
-        edge_lines.append('%s %s %s %s %d %d %d %0.2f' % (
-            ctg_id, vv, ww, rid, s, t, aln_score, idt))
-        total_length += abs(s - t)
+        dl = abs(s-t)
+        edge_lines.append('%s %s %s %s %d %d %d %0.2f %d %d' % (
+            ctg_id, vv, ww, rid, s, t, aln_score, idt, ctg_length, dl))
+        ctg_length += dl
         total_score += aln_score
-
-    return edge_lines, total_score, total_length
+    return edge_lines, total_score, ctg_length
 
 
 def get_read_index(idx_fn):
