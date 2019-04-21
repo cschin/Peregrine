@@ -9,7 +9,7 @@ make clean
 popd
 
 tar czvf src.tgz src/ falcon/ py/ .git/
-mv src.tgz docker_jc/
+mv src.tgz docker_dev/
 
 pushd docker_dev/
 tag=$(git describe --abbrev=0 --tags)
