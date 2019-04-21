@@ -130,7 +130,7 @@ for ctg in contig_to_read_map:
             reads.append((read_id, read_strand, v_current - left, len(v)))
             print( (read_id, read_strand), v_current, file=sys.stderr);
             for vv in v:
-                if vv > v_current + 500:
+                if vv > v_current + 50:
                     v_current = vv
                     reads.append((read_id, read_strand, v_current - left, len(v)))
                     print( (read_id, read_strand), v_current, file=sys.stderr);
@@ -184,7 +184,7 @@ for ctg in contig_to_read_map:
                                    read_len - abs(read_shift),
                                    ref_seq,
                                    ref_len,
-                                   50, 1)
+                                   150, 1)
 
                 if abs(abs(aln.aln_q_e-aln.aln_q_s) -
                        (read_len - abs(read_shift))) < 48:
@@ -202,7 +202,7 @@ for ctg in contig_to_read_map:
                                    read_len,
                                    ref_seq[read_shift:ref_len],
                                    ref_len-read_shift,
-                                   50, 1)
+                                   150, 1)
 
                 if abs(abs(aln.aln_q_e-aln.aln_q_s)-read_len) < 48 or \
                    abs(ref_len-read_shift-abs(aln.aln_q_e-aln.aln_q_s)) < 48:
@@ -215,9 +215,11 @@ for ctg in contig_to_read_map:
                 else:
                     falcon.free_alignment(aln)
             if aligned:
-                # print(ffi.string(aln.q_aln_str))
-                # print(ffi.string(aln.t_aln_str))
-                # print(rng[0].s1 , rng[0].e1, rng[0].s2, rng[0].e2 )
+                print(f"{read_id} is algined",
+                      rng[0].s1 , rng[0].e1, rng[0].s2, rng[0].e2, file=sys.stderr)
+                # print(ffi.string(aln.q_aln_str), file=sys.stderr)
+                # rint(ffi.string(aln.t_aln_str), file=sys.stderr)
+                sys.stderr.flush()
                 tag = falcon.get_align_tags(aln.q_aln_str,
                                             aln.t_aln_str,
                                             aln.aln_str_size,
@@ -227,9 +229,12 @@ for ctg in contig_to_read_map:
                 aln_base += abs(rng[0].e2 - rng[0].s2)
                 falcon.free_alignment(aln)
 
-            ffi.release(read_seq)
 
-        print(aln_count, aln_base, aln_base/ref_len, file=sys.stderr)
+
+
+            ffi.release(read_seq)
+        aln_cov = aln_base/ref_len
+        print(f"aln_count:{aln_count}, aln_base: {aln_base}, aln_cov: {aln_cov}", file=sys.stderr)
 
         if aln_base/ref_len < 3:
             cns_seq = ffi.string(ref_seq)

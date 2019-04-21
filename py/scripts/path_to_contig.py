@@ -93,13 +93,19 @@ if __name__ == "__main__":
                              seg_size,
                              strand1)
             segments.append((ctg_len,
-                            ctg_len - stitching_overhang_size + match.q_m_end,
+                             ctg_len - stitching_overhang_size + match.q_m_end,
                             seq))
-            ctg_len += match.q_m_end - match.t_m_end + e - s
+            # print(row)
+            # print((ctg_len, match.q_m_end, match.t_m_end,
+            #       ctg_len - stitching_overhang_size + match.q_m_end,
+            #       ffi.string(seq)))
+            ctg_len -= (stitching_overhang_size - match.q_m_end)
+            ctg_len += (stitching_overhang_size - match.t_m_end) + e - s
 
             lib.free_ovlp_match(match)
 
-        ctg_str = numpy.zeros(ctg_len, dtype=numpy.byte)
+        ctg_str = numpy.ones(ctg_len, dtype=numpy.byte)
+        ctg_str *= ord('N')
         print(">{}".format(ctg_id))
         for seg in segments:
             s = seg[1]
