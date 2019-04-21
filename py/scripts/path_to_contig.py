@@ -86,16 +86,16 @@ if __name__ == "__main__":
             if strand1 == 1:
                 s, e = slen1 - s, slen1 - e
             assert(e > s)
-            seg_size = e - s + stitching_overhang_size - match.t_lm_end
+            seg_size = e - s + stitching_overhang_size - match.t_m_end
             seq = ffi.new("char[{}]".format(seg_size))
             lib.decode_biseq(bseq1[e-seg_size:e],
                              seq,
                              seg_size,
                              strand1)
             segments.append((ctg_len,
-                            ctg_len - stitching_overhang_size + match.q_lm_end,
+                            ctg_len - stitching_overhang_size + match.q_m_end,
                             seq))
-            ctg_len += match.q_lm_end - match.t_lm_end + e - s
+            ctg_len += match.q_m_end - match.t_m_end + e - s
 
             lib.free_ovlp_match(match)
 

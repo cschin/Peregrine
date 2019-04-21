@@ -106,6 +106,8 @@ ovlp_match_t * ovlp_match(uint8_t * query_seq, seq_coor_t q_len, uint8_t q_stran
     rtn->q_end = 0;
     rtn->t_bgn = 0;
     rtn->t_end = 0;
+    rtn->q_m_end = 0;
+    rtn->t_m_end = 0;
 
     //printf("max_d: %lu, band_size: %lu\n", max_d, band_size);
     best_m = -1;
@@ -137,6 +139,11 @@ ovlp_match_t * ovlp_match(uint8_t * query_seq, seq_coor_t q_len, uint8_t q_stran
 				rtn->t_bgn = y1;
 				start = true;
 			}
+
+            if ( (x - x1 > 16) ) {
+                rtn->q_m_end = x;
+                rtn->t_m_end = y;
+            }
 
             V[ k + k_offset ] = x;
             U[ k + k_offset ] = x + y;

@@ -12,9 +12,10 @@ void decode_biseq(uint8_t * src, char * seq,
 typedef int32_t seq_coor_t;
 
 typedef struct {
-    seq_coor_t m_size, dist ;
-    seq_coor_t q_bgn, q_end;
-    seq_coor_t t_bgn, t_end;
+	seq_coor_t m_size, dist ;
+	seq_coor_t q_bgn, q_end;
+	seq_coor_t t_bgn, t_end;
+    seq_coor_t t_m_end, q_m_end;
 } ovlp_match_t;
 
 ovlp_match_t * ovlp_match(uint8_t * query_seq,
