@@ -81,22 +81,36 @@ def decode_seq(encoded_seq, strand):
     return seq
 
 
+def yield_first_seq(one_path_edges, seqs, read_idx):
+    if one_path_edges and one_path_edges[0][0] != one_path_edges[-1][1]:
+        # If non-empty, and non-circular,
+        # prepend the entire first read.
+        (vv, ww) = one_path_edges[0]
+        (vv_rid, vv_letter) = vv.split(":")
+        s = read_idx[int(vv_rid)]["offset"]
+        e = s + read_idx[int(vv_rid)]["length"]
+        seq = decode_seq(seqs[s:e], 0)
+
+        if vv_letter == 'E':
+            first_seq = seq
+        else:
+            assert vv_letter == 'B'
+            first_seq = "".join([RCMAP[c] for c in seq])
+        yield first_seq
+
 def compose_ctg(edge_data, ctg_id, path_edges, proper_ctg):
     total_score = 0
     total_length = 0
     edge_lines = []
 
     # Splice-in the rest of the path sequence.
-    s_pos = 0
     for vv, ww in path_edges:
         rid, s, t, aln_score, idt = edge_data[(vv, ww)]
-        dl = abs(s-t)
-        edge_lines.append('%s %s %s %s %d %d %d %0.2f %d %d' % (
-            ctg_id, vv, ww, rid, s, t, aln_score, idt, s_pos, s_pos + dl))
-        s_pos += dl
+        edge_lines.append('%s %s %s %s %d %d %d %0.2f' % (
+            ctg_id, vv, ww, rid, s, t, aln_score, idt))
+        total_length += abs(s - t)
         total_score += aln_score
 
-    total_length = s_pos
     return edge_lines, total_score, total_length
 
 
