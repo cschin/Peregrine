@@ -25,4 +25,4 @@ make all
 make install
 popd
 
-python3 -m pip install cffi==1.12.2
+#python3 -m pip install cffi==1.12.2
