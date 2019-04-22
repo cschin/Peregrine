@@ -1,4 +1,6 @@
-# Peregrine &  SHIMMER Genome Assembly Toolkit
+<img src="misc/logo.png" alt="PeregrineLogo" width="120"/>
+
+# Peregrine & SHIMMER Genome Assembly Toolkit
 
 Peregrine is a fast genome assembler for accurate long
 reads (length > 10kb, accuraccy > 99%). It can assemble
@@ -31,7 +33,7 @@ environemnt.
 
 ## LICENSE
 
-### Peregrine &  SHIMMER Genome Assembly Toolkit
+### Peregrine & SHIMMER Genome Assembly Toolkit
 
 Peregrine Assembler and SHIMMER Genome Assembly Toolkit
 Copyright (c) 2019- by Jason, Chen-Shan, Chin
