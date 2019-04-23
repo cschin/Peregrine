@@ -42,10 +42,10 @@ int main(int argc, char *argv[])
 				if (optopt == 'd') {
 					fprintf(stderr, "Option -%c not specified, using 'seq_dataset.lst' as the input file\n", optopt);
 				}
-				else if (optopt == 'i') {
-					fprintf(stderr, "Option -%c not specified, using 'seq_dataset.idx' as the output index path\n", optopt);
+				else if (optopt == 'p') {
+					fprintf(stderr, "Option -%c not specified, using 'seq_dataset' as the output prefix\n", optopt);
 				} else {
-					fprintf(stderr, "Usage: build_read_index -d seq_dataset.lst -i seq_dataset.idxi\n");
+					fprintf(stderr, "Usage: build_read_index -d seq_dataset.lst -p seq_dataset\n");
 				}
 				return 1;
 			default:
