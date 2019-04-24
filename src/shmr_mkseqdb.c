@@ -45,7 +45,7 @@ int main(int argc, char *argv[])
 				else if (optopt == 'p') {
 					fprintf(stderr, "Option -%c not specified, using 'seq_dataset' as the output prefix\n", optopt);
 				} else {
-					fprintf(stderr, "Usage: build_read_index -d seq_dataset.lst -p seq_dataset\n");
+					fprintf(stderr, "Usage: build_read_index -d seq_dataset.lst -p seq_dataset_prefix\n");
 				}
 				return 1;
 			default:
