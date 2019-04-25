@@ -92,9 +92,6 @@ int main(int argc, char *argv[])
 				if (optopt == 'p') {
 					fprintf (stderr, "Option -%c not specified, using 'seq_dataset' as the sequence db prefix\n", optopt);
 				}
-				else if (optopt == 'i') {
-					fprintf(stderr, "Option -%c not specified, using 'seq_dataset.idx' as the input index path\n", optopt);
-                }
 				else if (optopt == 'o') {
 					fprintf (stderr, "Option -%c not specified, using 'shimmer' as the output prefix\n", optopt);
 				}
