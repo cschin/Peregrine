@@ -78,12 +78,13 @@ shmr_aln_v * shmr_aln(
             mmer0 = mmers0->a[idx_tmp->a[i]];
             int64_t delta0, delta1;
             int64_t mm_dist;
-            uint32_t grouped = 0;
             if (direction == 1) {
                 delta0 = abs(mmer_pos(&mmer0) + mmer_pos(&mmer1));
             } else {
                 delta0 = abs(mmer_pos(&mmer0) - mmer_pos(&mmer1));
             }
+            uint32_t best_aln_idx = UINT32_MAX;
+            double min_diff=1.1;
             for (uint32_t aln_idx = 0; aln_idx < alns->n; aln_idx ++ ){
                 mm128_t m0, m1;
                 shmr_aln_t * aln; 
@@ -97,18 +98,21 @@ shmr_aln_v * shmr_aln(
                     delta1 = abs(mmer_pos(&m0) - mmer_pos(&m1));
                 }
                 mm_dist = abs(mmer_pos(&mmer0) - mmer_pos(&m0));
-                // should we group the new miminiizer pair to the min-diff one?
-                if ( (double) abs(delta0 - delta1) / (double) (mm_dist) < maxdiff ) {
-                    kv_push(mm128_t, 0, aln->m0, mmer0);
-                    kv_push(mm128_t, 0, aln->m1, mmer1);
-                    kv_push(mm_idx_t, 0, aln->idx0, idx_tmp->a[i]);
-                    kv_push(mm_idx_t, 0, aln->idx1, s); 
-                    grouped = 1;
-
-                    break;
+                double diff = (double) abs(delta0 - delta1) / (double) (mm_dist);
+                if ( diff <  maxdiff && diff < min_diff ) {
+                    min_diff = diff;
+                    best_aln_idx = aln_idx;
                 }
             }
-            if (grouped == 0) {
+            if (best_aln_idx != UINT32_MAX) {
+                shmr_aln_t * aln; 
+                aln = alns->a + best_aln_idx;
+                kv_push(mm128_t, 0, aln->m0, mmer0);
+                kv_push(mm128_t, 0, aln->m1, mmer1);
+                kv_push(mm_idx_t, 0, aln->idx0, idx_tmp->a[i]);
+                kv_push(mm_idx_t, 0, aln->idx1, s); 
+                // printf("best %d %d %d\n", best_aln_idx, idx_tmp->a[i], s);
+            } else {
                 shmr_aln_t *aln;
                 aln = calloc(sizeof(shmr_aln_t),1);
                 kv_push(mm128_t, 0, aln->m0, mmer0);
@@ -116,6 +120,7 @@ shmr_aln_v * shmr_aln(
                 kv_push(mm_idx_t, 0, aln->idx0, idx_tmp->a[i]);
                 kv_push(mm_idx_t, 0, aln->idx1, s); 
                 kv_push(shmr_aln_t, 0, *alns, *aln);
+                // printf("new %d %d %d\n", best_aln_idx, idx_tmp->a[i], s);
             }
         }
         ss++;
