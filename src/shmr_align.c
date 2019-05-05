@@ -97,22 +97,18 @@ shmr_aln_v * shmr_aln(
                     delta1 = abs(mmer_pos(&m0) - mmer_pos(&m1));
                 }
                 mm_dist = abs(mmer_pos(&mmer0) - mmer_pos(&m0));
-                printf("YY2 idx n %ld %d %ld %d %d %d\n", alns -> n, aln_idx, aln->m0.n, delta0, delta1, mm_dist);
                 // should we group the new miminiizer pair to the min-diff one?
                 if ( (double) abs(delta0 - delta1) / (double) (mm_dist) < maxdiff ) {
-                    printf("_YY3 aln_idx %d add1 %ld\n", aln_idx, aln->m0.n);
                     kv_push(mm128_t, 0, aln->m0, mmer0);
                     kv_push(mm128_t, 0, aln->m1, mmer1);
                     kv_push(mm_idx_t, 0, aln->idx0, idx_tmp->a[i]);
                     kv_push(mm_idx_t, 0, aln->idx1, s); 
                     grouped = 1;
 
-                    printf("YY3 aln_idx %d add1 %ld \n", aln_idx, aln->m0.n);
                     break;
                 }
             }
             if (grouped == 0) {
-                printf("YY4 grouped %d\n", grouped);
                 shmr_aln_t *aln;
                 aln = calloc(sizeof(shmr_aln_t),1);
                 kv_push(mm128_t, 0, aln->m0, mmer0);
@@ -131,7 +127,6 @@ shmr_aln_v * shmr_aln(
         kv_destroy(*idx_tmp);
 	}
     kh_destroy(MMIDX, mmidx_map);
-    printf("YY alns.n m %ld %ld\n", alns->n, alns->m);
     return alns;
 }
 

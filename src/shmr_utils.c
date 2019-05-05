@@ -435,7 +435,6 @@ void get_ridmm(khash_t(RIDMM) * ridmm, mm128_v *mmers) {
 
         k = kh_get(RIDMM, ridmm, rid);
         if (k == kh_end(ridmm)) {
-            printf("XX %d\n", rid);
             _v = calloc(sizeof(mm128_v), 1);
             _v->a = mmers->a + s;
             _v->n ++;
@@ -446,7 +445,6 @@ void get_ridmm(khash_t(RIDMM) * ridmm, mm128_v *mmers) {
             _v = kh_val(ridmm, k);
             _v->n ++;
             _v->m ++;
-            printf("XX n %ld m %ld\n", _v->n, _v->m);
         }
 		s++;
 	}
