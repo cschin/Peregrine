@@ -66,8 +66,6 @@ typedef uint32_t mm_idx_t;
 typedef struct { size_t n, m; mm_idx_t *a; } mm_idx_v;
 
 typedef struct {
-        mm128_v m0;
-        mm128_v m1;
         mm_idx_v idx0;
         mm_idx_v idx1;
 } shmr_aln_t;

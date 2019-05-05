@@ -88,9 +88,12 @@ shmr_aln_v * shmr_aln(
             for (uint32_t aln_idx = 0; aln_idx < alns->n; aln_idx ++ ){
                 mm128_t m0, m1;
                 shmr_aln_t * aln; 
+                size_t n;
                 aln = alns->a + aln_idx;
-                m0 = aln->m0.a[aln->m0.n-1];
-                m1 = aln->m1.a[aln->m1.n-1];
+                n = aln->idx0.n;
+                m0 = mmers0->a[aln->idx0.a[n-1]];
+                m1 = mmers1->a[aln->idx1.a[n-1]];
+            
 
                 if (direction == 1) {
                     delta1 = abs(mmer_pos(&m0) + mmer_pos(&m1));
@@ -107,16 +110,12 @@ shmr_aln_v * shmr_aln(
             if (best_aln_idx != UINT32_MAX) {
                 shmr_aln_t * aln; 
                 aln = alns->a + best_aln_idx;
-                kv_push(mm128_t, 0, aln->m0, mmer0);
-                kv_push(mm128_t, 0, aln->m1, mmer1);
                 kv_push(mm_idx_t, 0, aln->idx0, idx_tmp->a[i]);
                 kv_push(mm_idx_t, 0, aln->idx1, s); 
                 // printf("best %d %d %d\n", best_aln_idx, idx_tmp->a[i], s);
             } else {
                 shmr_aln_t *aln;
                 aln = calloc(sizeof(shmr_aln_t),1);
-                kv_push(mm128_t, 0, aln->m0, mmer0);
-                kv_push(mm128_t, 0, aln->m1, mmer1);
                 kv_push(mm_idx_t, 0, aln->idx0, idx_tmp->a[i]);
                 kv_push(mm_idx_t, 0, aln->idx1, s); 
                 kv_push(shmr_aln_t, 0, *alns, *aln);
@@ -138,8 +137,6 @@ shmr_aln_v * shmr_aln(
 void free_shmr_alns(shmr_aln_v * alns) {
     for (uint32_t aln_idx = 0; aln_idx < alns->n; aln_idx ++ ){
         for (uint32_t idx =0; idx < alns[aln_idx].n; idx ++) {
-            kv_destroy(alns[aln_idx].a[idx].m0);
-            kv_destroy(alns[aln_idx].a[idx].m1);
             kv_destroy(alns[aln_idx].a[idx].idx0);
             kv_destroy(alns[aln_idx].a[idx].idx1);
         }

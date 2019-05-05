@@ -185,7 +185,7 @@ void get_shimmer_hits(mp256_v * mpv_out, py_mmer_t * py_mmer, uint64_t mhash0, u
 
 	k = kh_get(MMER0, mmer0_map_, mhash0);
 	if ( k == kh_end(mmer0_map_) ) {
-		return mpv_out;
+		return;
 	}
 	mmer1_map = kh_val(mmer0_map_, k);
 	for (khiter_t __j = kh_begin(mmer1_map); __j != kh_end(mmer1_map); ++__j) {

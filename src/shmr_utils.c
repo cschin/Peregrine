@@ -422,7 +422,6 @@ uint32_t mmer_pos(mm128_t *mmer) {
 void get_ridmm(khash_t(RIDMM) * ridmm, mm128_v *mmers) {
     mm128_t mmer0;
     uint32_t rid;
-    size_t n, m;
 	khiter_t k;
     mm128_v * _v;
     int32_t absent;
