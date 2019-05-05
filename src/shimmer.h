@@ -118,7 +118,8 @@ typedef struct {
 typedef kvec_t(shmr_aln_t) shmr_aln_v; 
 
 KHASH_MAP_INIT_INT64(MMIDX, mm_idx_v *);
-shmr_aln_v * shmr_aln( mm128_v *, mm128_v *, uint8_t, double);
+shmr_aln_v * shmr_aln( mm128_v *, mm128_v *, uint8_t, uint32_t, uint32_t, uint32_t);
+
 void free_shmr_alns(shmr_aln_v *);
 
 KHASH_MAP_INIT_INT(RIDMM, mm128_v *);
