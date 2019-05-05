@@ -122,6 +122,10 @@ KHASH_MAP_INIT_INT64(MMIDX, mm_idx_v *);
 shmr_aln_v * shmr_aln( mm128_v *, mm128_v *, uint8_t, double);
 void free_shmr_alns(shmr_aln_v *);
 
+KHASH_MAP_INIT_INT(RIDMM, mm128_v *);
+void get_ridmm(khash_t(RIDMM) *, mm128_v *);
+
+
 #ifdef __cplusplus
 }
 #endif

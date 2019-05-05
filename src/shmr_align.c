@@ -22,7 +22,40 @@ inline uint32_t mmer_pos(mm128_t *mmer) {
     return (mmer->y & 0xFFFFFFFF) >> 1;
 }
 
-shmr_aln_v * shmr_aln( mm128_v *mmers0, mm128_v *mmers1, uint8_t direction, double maxdiff) {
+void get_ridmm(khash_t(RIDMM) * ridmm, mm128_v *mmers) {
+    mm128_t mmer0;
+    uint32_t rid;
+    size_t n, m;
+	khiter_t k;
+    mm128_v * _v;
+    size_t s=0;
+
+	for(;;) {
+		if (s >= mmers->n) break;
+		mmer0 = mmers->a[s];
+		rid = (uint32_t) (mmer0.y >> 32);
+
+        k = kh_get(RIDMM, ridmm, rid);
+        if (k == kh_end(ridmm)) {
+            _v = calloc(sizeof(mm128_v), 1);
+            _v->a = mmers->a + s;
+            _v->n ++;
+            _v->m ++;
+            kh_val(ridmm, k) = _v;
+        } else {
+            _v = kh_val(ridmm, k);
+            _v->n ++;
+            _v->m ++;
+        }
+		s++;
+	}
+}
+
+shmr_aln_v * shmr_aln( 
+        mm128_v *mmers0, 
+        mm128_v *mmers1, 
+        uint8_t direction, 
+        double maxdiff) {
     /* generate a list of co-aligned mimimizer from two 
      * minimizer lists: mv1 and mv2
      */
