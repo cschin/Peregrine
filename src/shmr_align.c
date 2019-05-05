@@ -91,9 +91,11 @@ shmr_aln_v * shmr_aln(
                 size_t n;
                 aln = alns->a + aln_idx;
                 n = aln->idx0.n;
+
+                if (idx_tmp->a[i] < aln->idx0.a[n-1]) continue;
+
                 m0 = mmers0->a[aln->idx0.a[n-1]];
                 m1 = mmers1->a[aln->idx1.a[n-1]];
-            
 
                 if (direction == 1) {
                     delta1 = abs(mmer_pos(&m0) + mmer_pos(&m1));
