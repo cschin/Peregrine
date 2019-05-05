@@ -58,6 +58,23 @@ typedef struct { size_t n, m; mp256_t *a; } mp256_v;
 uint32_t get_mmer_count(py_mmer_t * , uint64_t);
 void get_shimmer_hits(mp256_v *, py_mmer_t *, uint64_t, uint32_t);
 
+
+typedef uint32_t mm_idx_t;
+typedef struct { size_t n, m; mm_idx_t *a; } mm_idx_v;
+
+typedef struct {
+        mm128_v m0;
+        mm128_v m1;
+        mm_idx_v idx0;
+        mm_idx_v idx1;
+} shmr_aln_t;
+
+typedef struct { size_t n, m; shmr_aln_t *a; } shmr_aln_v;
+
+
+shmr_aln_v * shmr_aln( mm128_v *, mm128_v *, uint8_t, double);
+void free_shmr_alns(shmr_aln_v *);
+
 """)
 
 ffibuilder.set_source("peregrine._shimmer4py",
@@ -66,6 +83,7 @@ ffibuilder.set_source("peregrine._shimmer4py",
                """,
                sources=[f'{basedir}/src/shimmer4py.c',
                         f'{basedir}/src/DWmatch.c',
+                        f'{basedir}/src/shmr_align.c',
                         f'{basedir}/src/shmr_utils.c',
                         f'{basedir}/src/kalloc.c'])   # library name, for the linker
 
