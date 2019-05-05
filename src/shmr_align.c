@@ -17,40 +17,6 @@
 #include <fcntl.h>
 
 
-
-inline uint32_t mmer_pos(mm128_t *mmer) {
-    return (mmer->y & 0xFFFFFFFF) >> 1;
-}
-
-void get_ridmm(khash_t(RIDMM) * ridmm, mm128_v *mmers) {
-    mm128_t mmer0;
-    uint32_t rid;
-    size_t n, m;
-	khiter_t k;
-    mm128_v * _v;
-    size_t s=0;
-
-	for(;;) {
-		if (s >= mmers->n) break;
-		mmer0 = mmers->a[s];
-		rid = (uint32_t) (mmer0.y >> 32);
-
-        k = kh_get(RIDMM, ridmm, rid);
-        if (k == kh_end(ridmm)) {
-            _v = calloc(sizeof(mm128_v), 1);
-            _v->a = mmers->a + s;
-            _v->n ++;
-            _v->m ++;
-            kh_val(ridmm, k) = _v;
-        } else {
-            _v = kh_val(ridmm, k);
-            _v->n ++;
-            _v->m ++;
-        }
-		s++;
-	}
-}
-
 shmr_aln_v * shmr_aln( 
         mm128_v *mmers0, 
         mm128_v *mmers1, 
@@ -61,7 +27,7 @@ shmr_aln_v * shmr_aln(
      */
     uint64_t mhash;
     mm128_t mmer0, mmer1;
-    khash_t(MMIDX) *mmidx_map;
+    khash_t(MMIDX) *mmidx_map = kh_init(MMIDX);
     shmr_aln_v *alns;
 	khiter_t k;
 	int32_t absent;
@@ -104,15 +70,15 @@ shmr_aln_v * shmr_aln(
 		mhash = mmer1.x >> 8;
         k = kh_get(MMIDX, mmidx_map, mhash);
         if (k == kh_end(mmidx_map)) {
-            s++;
+            ss++;
             continue;
         }
         idx_tmp = kh_val(mmidx_map, k);
         for (uint32_t i=0; i < idx_tmp -> n; i++) {
-            mmer0 = mmers1->a[idx_tmp->a[i]];
+            mmer0 = mmers0->a[idx_tmp->a[i]];
             int64_t delta0, delta1;
             int64_t mm_dist;
-            bool grouped = false;
+            uint32_t grouped = 0;
             if (direction == 1) {
                 delta0 = abs(mmer_pos(&mmer0) + mmer_pos(&mmer1));
             } else {
@@ -120,27 +86,33 @@ shmr_aln_v * shmr_aln(
             }
             for (uint32_t aln_idx = 0; aln_idx < alns->n; aln_idx ++ ){
                 mm128_t m0, m1;
-                shmr_aln_t aln; 
-                aln = alns->a[aln_idx];
-                m0 = aln.m0.a[aln.m0.n-1];
-                m1 = aln.m1.a[aln.m1.n-1];
+                shmr_aln_t * aln; 
+                aln = alns->a + aln_idx;
+                m0 = aln->m0.a[aln->m0.n-1];
+                m1 = aln->m1.a[aln->m1.n-1];
+
                 if (direction == 1) {
                     delta1 = abs(mmer_pos(&m0) + mmer_pos(&m1));
                 } else {
                     delta1 = abs(mmer_pos(&m0) - mmer_pos(&m1));
                 }
                 mm_dist = abs(mmer_pos(&mmer0) - mmer_pos(&m0));
+                printf("YY2 idx n %ld %d %ld %d %d %d\n", alns -> n, aln_idx, aln->m0.n, delta0, delta1, mm_dist);
                 // should we group the new miminiizer pair to the min-diff one?
                 if ( (double) abs(delta0 - delta1) / (double) (mm_dist) < maxdiff ) {
-                    kv_push(mm128_t, 0, aln.m0, mmer0);
-                    kv_push(mm128_t, 0, aln.m1, mmer1);
-                    kv_push(mm_idx_t, 0, aln.idx0, idx_tmp->a[i]);
-                    kv_push(mm_idx_t, 0, aln.idx1, s); 
-                    grouped = true;
+                    printf("_YY3 aln_idx %d add1 %ld\n", aln_idx, aln->m0.n);
+                    kv_push(mm128_t, 0, aln->m0, mmer0);
+                    kv_push(mm128_t, 0, aln->m1, mmer1);
+                    kv_push(mm_idx_t, 0, aln->idx0, idx_tmp->a[i]);
+                    kv_push(mm_idx_t, 0, aln->idx1, s); 
+                    grouped = 1;
+
+                    printf("YY3 aln_idx %d add1 %ld \n", aln_idx, aln->m0.n);
                     break;
                 }
             }
-            if (grouped == false) {
+            if (grouped == 0) {
+                printf("YY4 grouped %d\n", grouped);
                 shmr_aln_t *aln;
                 aln = calloc(sizeof(shmr_aln_t),1);
                 kv_push(mm128_t, 0, aln->m0, mmer0);
@@ -150,7 +122,7 @@ shmr_aln_v * shmr_aln(
                 kv_push(shmr_aln_t, 0, *alns, *aln);
             }
         }
-    s++;
+        ss++;
     }
 
 	for (khiter_t __i = kh_begin(mmidx_map); __i != kh_end(mmidx_map); ++__i) {
@@ -159,6 +131,7 @@ shmr_aln_v * shmr_aln(
         kv_destroy(*idx_tmp);
 	}
     kh_destroy(MMIDX, mmidx_map);
+    printf("YY alns.n m %ld %ld\n", alns->n, alns->m);
     return alns;
 }
 

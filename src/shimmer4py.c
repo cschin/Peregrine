@@ -62,6 +62,7 @@ void build_shimmer_map4py(py_mmer_t * py_mmer,
 	khash_t(RLEN) *rlmap_; 
 	khash_t(MMC) *mcmap_ = kh_init(MMC);
 	khash_t(MMER0) * mmer0_map_;
+    khash_t(RIDMM) *ridmm_ = kh_init(RIDMM);
 
 	assert(total_chunk > 0);
 	assert(mychunk > 0 && mychunk <= total_chunk);
@@ -105,6 +106,7 @@ void build_shimmer_map4py(py_mmer_t * py_mmer,
 		kv_destroy(mmers_);
 	}
 	wordfree(&p);	
+    get_ridmm(ridmm_, py_mmer->mmers);
 
 
 	written = snprintf(mmc_file_path, sizeof(mmc_file_path), "%s-MC-[0-9]*-of-[0-9]*.dat", shimmer_prefix);
@@ -134,6 +136,25 @@ void build_shimmer_map4py(py_mmer_t * py_mmer,
 	py_mmer->mmer0_map = (void *) mmer0_map_;
 	py_mmer->rlmap = (void *) rlmap_;
 	py_mmer->mcmap = (void *) mcmap_;
+    py_mmer->ridmm = (void *) ridmm_;
+}
+
+void get_shimmers_for_read(mm128_v *mmer, py_mmer_t * py_mmer, uint32_t rid) {
+    khiter_t k;
+    khash_t(RIDMM) *ridmm;
+    mm128_v * mmer_;
+    ridmm = (khash_t(RIDMM) *) py_mmer->ridmm;
+    k = kh_get(RIDMM, ridmm, rid);
+    if (k != kh_end(ridmm)) {
+        mmer_ = kh_val(ridmm, k);
+    } else {
+        mmer_ = calloc(sizeof(mm128_v), 1);
+    }
+    mmer->n = mmer_->n;
+    mmer->m = mmer_->m;
+    mmer->a = mmer_->a;
+    
+    printf("XX2 %ld\n", mmer->n);
 }
 
 
@@ -147,8 +168,6 @@ uint32_t get_mmer_count( py_mmer_t * py_mmer, uint64_t mhash ) {
 	}
 
 }
-
-
 
 void get_shimmer_hits(mp256_v * mpv_out, py_mmer_t * py_mmer, uint64_t mhash0, uint32_t span) {
 

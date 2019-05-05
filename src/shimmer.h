@@ -102,7 +102,8 @@ typedef struct {
     mm128_v * mmers;
     void * mmer0_map;
     void * rlmap;
-    void * mcmap;} py_mmer_t;
+    void * mcmap;
+    void * ridmm;} py_mmer_t;
 
 
 //for shmr_align
@@ -124,6 +125,7 @@ void free_shmr_alns(shmr_aln_v *);
 
 KHASH_MAP_INIT_INT(RIDMM, mm128_v *);
 void get_ridmm(khash_t(RIDMM) *, mm128_v *);
+uint32_t mmer_pos(mm128_t *);
 
 
 #ifdef __cplusplus

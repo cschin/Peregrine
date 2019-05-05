@@ -46,11 +46,14 @@ typedef struct {
     mm128_v * mmers;
     void * mmer0_map;
     void * rlmap;
-    void * mcmap;} py_mmer_t;
+    void * mcmap;
+    void * ridmm;} py_mmer_t;
 
 void build_shimmer_map4py(py_mmer_t *,
         char *, char *,
         uint32_t, uint32_t, uint32_t, uint32_t);
+
+void get_shimmers_for_read(mm128_v *, py_mmer_t *, uint32_t);
 
 typedef struct { uint64_t x0, x1, y0, y1; uint8_t direction;} mp256_t;
 typedef struct { size_t n, m; mp256_t *a; } mp256_v;
@@ -70,7 +73,6 @@ typedef struct {
 } shmr_aln_t;
 
 typedef struct { size_t n, m; shmr_aln_t *a; } shmr_aln_v;
-
 
 shmr_aln_v * shmr_aln( mm128_v *, mm128_v *, uint8_t, double);
 void free_shmr_alns(shmr_aln_v *);
