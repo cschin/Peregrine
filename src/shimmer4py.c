@@ -153,8 +153,6 @@ void get_shimmers_for_read(mm128_v *mmer, py_mmer_t * py_mmer, uint32_t rid) {
     mmer->n = mmer_->n;
     mmer->m = mmer_->m;
     mmer->a = mmer_->a;
-    
-    printf("XX2 %ld\n", mmer->n);
 }
 
 
