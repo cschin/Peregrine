@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include "khash.h"
+#include "kvec.h"
 
 #define ORIGINAL 0
 #define REVERSED 1
@@ -102,6 +103,24 @@ typedef struct {
     void * mmer0_map;
     void * rlmap;
     void * mcmap;} py_mmer_t;
+
+
+//for shmr_align
+typedef uint32_t mm_idx_t;
+typedef kvec_t(mm_idx_t) mm_idx_v; 
+
+typedef struct {
+    mm128_v m0;
+    mm128_v m1;
+    mm_idx_v idx0;
+    mm_idx_v idx1;
+} shmr_aln_t;
+
+typedef kvec_t(shmr_aln_t) shmr_aln_v; 
+
+KHASH_MAP_INIT_INT64(MMIDX, mm_idx_v *);
+shmr_aln_v * shmr_aln( mm128_v *, mm128_v *, uint8_t, double);
+void free_shmr_alns(shmr_aln_v *);
 
 #ifdef __cplusplus
 }
