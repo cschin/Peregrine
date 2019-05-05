@@ -17,19 +17,6 @@
 #include <fcntl.h>
 
 
-typedef uint32_t mm_idx_t;
-typedef kvec_t(mm_idx_t) mm_idx_v; 
-
-typedef struct {
-    mm128_v m0;
-    mm128_v m1;
-    mm_idx_v idx0;
-    mm_idx_v idx1;
-} shmr_aln_t;
-
-typedef kvec_t(shmr_aln_t) shmr_aln_v; 
-
-KHASH_MAP_INIT_INT64(MMIDX, mm_idx_v *);
 
 inline uint32_t mmer_pos(mm128_t *mmer) {
     return (mmer->y & 0xFFFFFFFF) >> 1;
