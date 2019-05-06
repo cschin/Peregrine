@@ -17,7 +17,7 @@
 #include <fcntl.h>
 
 
-#define MAX_SMALL_ALNS 2400
+#define MAX_SMALL_ALNS 4800
 
 shmr_aln_v * shmr_aln( 
         mm128_v *mmers0, 
