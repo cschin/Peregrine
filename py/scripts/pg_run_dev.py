@@ -519,6 +519,7 @@ cat {params.map_files} | \
 
     gather_cns_script = """\
 cat {params.cns_chunk_files} > {output.cns_file}
+ln -sf {params.cns_merge_dir}/{output.cns_file} {params.workdir}
 """
     cns_chunk_files = " ".join(sorted([v for v in outputs.values()]))
     inputs = outputs
@@ -530,7 +531,9 @@ cat {params.cns_chunk_files} > {output.cns_file}
         inputs=inputs,
         outputs=outputs,
         parameters={
-            'cns_chunk_files': cns_chunk_files
+            'cns_chunk_files': cns_chunk_files,
+            'workdir': os.path.abspath(args["--output"]),
+            'cns_merge_dir': "./4-cns/cns-merge"
         },
         dist=Dist(NPROC=1, local=True)
     ))
