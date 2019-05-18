@@ -30,6 +30,7 @@ Usage:
                             <cns_nchunk> <cns_nproc>
                             <sort_nproc>
                             [--with-consensus]
+                            [--with-L0-index]
                             [--output <output>]
                             [--shimmer-k <shimmer_k>]
                             [--shimmer-w <shimmer_w>]
@@ -47,6 +48,7 @@ Options:
   -h --help                   Show this help
   --version                   Show version
   --with-consensus            Generate consensus after getting the draft contigs
+  --with-L0-index             Keep level-0 index
   --output <output>           Set output directory (will be created if not exist) [default: ./wd]
   --shimmer-k <shimmer_k>     Level 0 k-mer size [default: 16]
   --shimmer-w <shimmer_w>     Level 0 window size [default: 80]
@@ -149,7 +151,9 @@ License for code from FALCON
 #################################################################################$$
 """
 
+
 LOG = logging.getLogger(__name__)
+
 
 def Task(script="", inputs={}, outputs={}, parameters=None, dist=None):
     if parameters is None:
@@ -221,6 +225,7 @@ def run_build_idx(wf, args, read_db_abs_prefix):
 
     build_idx = """
 /usr/bin/time shmr_index\
+    -m {params.output_L0_index}\
     -p {params.read_db_prefix}\
     -k {params.shimmer_k}\
     -w {params.shimmer_w}\
@@ -243,8 +248,8 @@ ln -s {params.index_prefix}* {params.index_dir}
     for my_chunk in range(1, n_chunk+1):
         index_chunk_dir = os.path.join(index_dir, f"chunk-{my_chunk:02d}")
         index_chunk_abs_prefix = os.path.join(index_chunk_dir, "shmr")
-        index_L0_fn = f"{index_chunk_abs_prefix}-L0-{my_chunk:02d}-of-{n_chunk:02d}.dat"
-        index_L0_MC_fn = f"{index_chunk_abs_prefix}-L0-MC-{my_chunk:02d}-of-{n_chunk:02d}.dat"
+        # index_L0_fn = f"{index_chunk_abs_prefix}-L0-{my_chunk:02d}-of-{n_chunk:02d}.dat"
+        # index_L0_MC_fn = f"{index_chunk_abs_prefix}-L0-MC-{my_chunk:02d}-of-{n_chunk:02d}.dat"
         if shimmer_l == 2:
             index_shmr_fn = f"{index_chunk_abs_prefix}-L2-{my_chunk:02d}-of-{n_chunk:02d}.dat"
             index_shmr_MC_fn = f"{index_chunk_abs_prefix}-L2-MC-{my_chunk:02d}-of-{n_chunk:02d}.dat"
@@ -263,8 +268,6 @@ ln -s {params.index_prefix}* {params.index_dir}
                 'seqidx': f"{read_db_abs_prefix}.idx"
             },
             outputs={
-                'index_L0': index_L0_fn,
-                'index_L0_MC': index_L0_MC_fn,
                 'index_shmr': index_shmr_fn,
                 'index_shmr_MC': index_shmr_MC_fn
             },
@@ -272,6 +275,7 @@ ln -s {params.index_prefix}* {params.index_dir}
                 'read_db_prefix': read_db_abs_prefix,
                 'index_prefix': index_chunk_abs_prefix,
                 'index_dir': index_dir,
+                'output_L0_index': 1 if args["--with-L0-index"] else 0,
                 'shimmer_k': int(args["--shimmer-k"]),
                 'shimmer_w': int(args["--shimmer-w"]),
                 'shimmer_r': int(args["--shimmer-r"]),
@@ -559,8 +563,6 @@ def main(args):
     read_db_abs_prefix, read_db = run_build_db(wf, args, seq_dataset_lst)
     LOG.info('Finished: {}'.format(read_db_abs_prefix))
 
-    nchunk = int(args['<index_nchunk>'])
-    nproc = int(args['<index_nproc>'])
     index_abs_prefix, read_idx = run_build_idx(wf, args,
                                                read_db_abs_prefix)
     LOG.info('Finished: {}'.format(index_abs_prefix))
@@ -568,8 +570,6 @@ def main(args):
     ovlp_in = {}
     ovlp_in.update(read_db)
     ovlp_in.update(read_idx)
-    nchunk = int(args['<ovlp_nchunk>'])
-    nproc = int(args['<ovlp_nproc>'])
     ovlp_out = run_overlapper(wf, args,
                               read_db_abs_prefix,
                               index_abs_prefix,
@@ -584,11 +584,6 @@ def main(args):
     LOG.info('Finished: {}'.format(ctg_out))
 
     if args['--with-consensus']:
-        mapping_nchunk = int(args["<mapping_nchunk>"])
-        mapping_nproc = int(args["<mapping_nproc>"])
-        cns_nchunk = int(args["<cns_nchunk>"])
-        cns_nproc = int(args["<cns_nproc>"])
-        sort_nproc = int(args["<sort_nproc>"])
         cns_out = run_cns(wf, args,
                           read_db_abs_prefix,
                           read_db,
