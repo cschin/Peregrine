@@ -6,13 +6,9 @@ COPY src.tgz /opt/build
 COPY install_with_conda.sh /opt/build
 RUN cd /opt/build; tar zxvf src.tgz; bash install_with_conda.sh
 RUN . /opt/conda/bin/activate; conda clean -all
-RUN cd /; tar czvf conda_clone.tgz /opt/conda/
-
 
 FROM continuumio/miniconda3
-COPY --from=0 conda_clone.tgz .
-RUN cd /; tar zxvf conda_clone.tgz
-RUN rm /conda_clone.tgz
+COPY --from=0 -a -L /opt/conda /opt/conda
 RUN apt-get update
 RUN apt-get install -y parallel time
 RUN . /opt/conda/bin/activate; conda activate peregrine; python3 -m pip install cffi==1.12.2
