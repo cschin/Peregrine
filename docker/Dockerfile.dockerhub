@@ -3,7 +3,9 @@ RUN apt-get update
 RUN apt-get install -y build-essential zlib1g zlib1g-dev
 RUN mkdir /opt/build
 COPY docker/install_with_conda.sh /opt/build
-RUN cd /opt/build; tar zxvf src.tgz; bash install_with_conda.sh
+COPY py/ /opt/build/py/
+COPY src/ /opt/build/src/
+RUN cd /opt/build; bash install_with_conda.sh
 RUN . /opt/conda/bin/activate; conda clean -all
 RUN cd /; tar czvf conda_clone.tgz /opt/conda/
 
