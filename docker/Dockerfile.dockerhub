@@ -9,7 +9,7 @@ RUN cd /opt/build; bash install_with_conda.sh
 RUN . /opt/conda/bin/activate; conda clean -all
 
 FROM continuumio/miniconda3
-COPY -a -L --from=0 /opt/conda /opt/conda
+COPY --from=0 /opt/conda /opt/conda
 RUN apt-get update
 RUN apt-get install -y parallel time
 RUN . /opt/conda/bin/activate; conda activate peregrine; python3 -m pip install cffi==1.12.2
