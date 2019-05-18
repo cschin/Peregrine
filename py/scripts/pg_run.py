@@ -490,7 +490,7 @@ cat {params.map_files} | \
     ))
 
     cns_script = """\
-/usr/bin/time cns_prototype.py {params.read_db_prefix} \
+/usr/bin/time pg_asm_cns.py {params.read_db_prefix} \
     {params.p_ctg_db_prefix} {input.merged_mapping_file} \
     {params.n_chunk} {params.my_chunk} > {output.cns_file} 2> cns.log
 """
