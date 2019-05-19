@@ -88,6 +88,14 @@ shmr_aln_v * shmr_aln(
             mmer0 = mmers0->a[idx_tmp->a[i]];
             int64_t delta0, delta1;
             int64_t mm_dist;
+            if (direction == 0 && (mmer0.y & 0x1) != (mmer1.y & 0x1)) {
+                continue;
+            } 
+            
+            if (direction == 1 && (mmer0.y & 0x1) == (mmer1.y & 0x1)) {
+                continue;
+            } 
+
             if (direction == 1) {
                 delta0 = abs(mmer_pos(&mmer0) + mmer_pos(&mmer1));
             } else {
