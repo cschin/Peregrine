@@ -228,10 +228,6 @@ for ctg in contig_to_read_map:
                 aln_count += 1
                 aln_base += abs(rng[0].e2 - rng[0].s2)
                 falcon.free_alignment(aln)
-
-
-
-
             ffi.release(read_seq)
         aln_cov = aln_base/ref_len
         print(f"aln_count:{aln_count}, aln_base: {aln_base}, aln_cov: {aln_cov}", file=sys.stderr)
