@@ -75,6 +75,12 @@ shmr_aln_v * shmr_aln( mm128_v *, mm128_v *, uint8_t, uint32_t, uint32_t, uint32
 
 void free_shmr_alns(shmr_aln_v *);
 
+// from mm_sketch.c
+void mm_sketch(void *, const char *, int , int, int , uint32_t , int , mm128_v *);
+
+// from shmr_reduce.c
+void mm_reduce(mm128_v *, mm128_v *, uint8_t);
+
 """)
 
 ffibuilder.set_source("peregrine._shimmer4py",
@@ -85,6 +91,8 @@ ffibuilder.set_source("peregrine._shimmer4py",
                         f'{basedir}/src/DWmatch.c',
                         f'{basedir}/src/shmr_align.c',
                         f'{basedir}/src/shmr_utils.c',
+                        f'{basedir}/src/shmr_reduce.c',
+                        f'{basedir}/src/mm_sketch.c',
                         f'{basedir}/src/kalloc.c'])   # library name, for the linker
 
 if __name__ == "__main__":
