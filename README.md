@@ -24,15 +24,19 @@ running single thread mode.
 See the `docker/Dockerfile` and `docker/install_with_conda.sh` as examples to
 install from scratch within a Conda environemnt.
 
-We don't recommend that you install the software from the source code unless
-you have extensive understanding of how to handle the dependences
-independently. As independent deverloper, we cannot provide free support for
-solving dependence problem of your specific system.
+We do not recommend that you install the software from the source code unless
+you are confortable handling the required dependences for your system
+independently. As independent deverlopers with limit resource, we cannot
+provide free support for solving dependence problem of your specific system.
 
 Instead, we can provide docker image so you can run the executables and their
 dependency using Docker.  
 
 ## Run the assembler
+
+Peregrine is designed to run on single compute node. It does not need a grid
+computing job scheduling system. It uses Pypeflow to coordinate multiple
+concurrent processes.  
 
 Here is the usage for `pg_run.py` which starts the workflow for assembling a
 genome from input `fasta`, `fastq`, `fasta.gz` or `fastq.gz` files. 
@@ -76,7 +80,7 @@ Options:
   --ovlp_upper <ovlp_upper>   Ignore cluster with overlap count greater ovlp_upper [default: 120]
 ```
 
-The first required options is `reads.lst`.  The `reads.list` should a
+The first required option is `reads.lst`.  The `reads.list` should a
 path to a file that contains the list of the paths of the input sequence files.
 
 The rest required options specify how to partition the data for different part
@@ -115,8 +119,6 @@ contigs map.
 `<cns_nchunk>` and  `<cns_nproc>` control the partitioning and the number of
 cores used for generating the consensus from draft contigs.
 
-
- 
 
 ## Runing Peregrine Using Docker
 
