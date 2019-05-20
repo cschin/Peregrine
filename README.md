@@ -34,45 +34,9 @@ dependency using Docker.
 
 ## Run the assembler
 
-Here is the usage information for `pg_run.py` which starts the workflow for
-assembling a genome from input `fasta`, `fastq`, `fasta.gz` or `fastq.gz`
-files. The first required options is `reads.lst`.  The `reads.list` should a
-path to a file that contains the list of the paths of the input sequence files.
-The rest required options specify how to partition the data for different part
-of the pipeline and the number of the processors used for each of the step.
+Here is the usage for `pg_run.py` which starts the workflow for assembling a
+genome from input `fasta`, `fastq`, `fasta.gz` or `fastq.gz` files. 
 
-`<index_nchunk>`  and `<index_nproc>` control the number of "chunks" and the
-number of cpu used concurrently for the initial SHIMMER index generation.
-
-`<ovlp_nchunk>`  and `<ovlp_nproc>` control the number of "chunks" and the
-number of cpu used concurrently for generating overlap inforrmation between
-reads. This part typically use the most memory and the exact size of RAM used
-concurrently depends on the size of input sequence data and the index file
-size. You can use larger number of `<ovlp_nchunk>` and smaller number of
-`<ovlp_nproc>` on a smaller memory mechine. For example, I was able to finish
-this part using a machine with 32G RAM with `ovlp_nchunk=24` and
-`ovlp_nproc=1`. On the other hand, i if there is enough memory, for example,
-AWS bothe m5d.metal and r5d.12xlarge have 384G RAM, they can support running 24
-to 48 cpu cores at once. However, the overlap step needs to do random access
-the sequence data through shared memory mapped file, it will be great to
-reserve some RAM to cache the sequence in memory in RAM. In our test, 48 cores
-does not provide significant speeding comparing to use 24 cores. Also, if there
-is not enough memory, you may need fast SSD or nvme drives and reduce the
-number or CPU core concurrently accessing the sequence data.
-
-`<mapping_nchunk>` and `<mapping_nproc>` controll the partitioning and the
-number of cores used for mapping the sequence reads to draft contigs for the
-following consensus step.
-
-`<sort_nproc>` controls the number of cpu cores used for sorting the reads to
-contigs map.
-
-`<cns_nchunk>` and  `<cns_nproc>` control the partitioning and the number of
-cores used for generating the consensus from draft contigs.
-
-
-The usage information:
- 
 ```
 Usage:
   pg_run.py asm <reads.lst> <index_nchunk> <index_nproc>
@@ -112,9 +76,52 @@ Options:
   --ovlp_upper <ovlp_upper>   Ignore cluster with overlap count greater ovlp_upper [default: 120]
 ```
 
+The first required options is `reads.lst`.  The `reads.list` should a
+path to a file that contains the list of the paths of the input sequence files.
+
+The rest required options specify how to partition the data for different part
+of the pipeline and the number of the processors used for each of the step.
+
+`<index_nchunk>`  and `<index_nproc>` control the number of "chunks" and the
+number of cpu used concurrently for the initial SHIMMER index generation.
+
+`<ovlp_nchunk>`  and `<ovlp_nproc>` control the number of "chunks" and the
+number of cpu used concurrently for generating overlap inforrmation between
+reads. This part typically use the most memory and the exact size of RAM used
+concurrently depends on the size of input sequence data and the index file
+size. 
+
+You can use larger number of `<ovlp_nchunk>` and smaller number of
+`<ovlp_nproc>` on a smaller memory mechine. For example, I was able to finish
+this part using a machine with 32G RAM with `ovlp_nchunk=24` and
+`ovlp_nproc=1`. 
+
+If there is enough memory, for example, AWS bothe m5d.metal and r5d.12xlarge
+have 384G RAM, they can support running 24 to 48 cpu cores at once. However,
+the overlap step needs to do random access the sequence data through shared
+memory mapped file, it will be great to reserve some RAM to cache the sequence
+in memory in RAM. In our test, 48 cores does not provide significant speeding
+comparing to use 24 cores. Also, if there is not enough memory, you may need
+fast SSD or nvme drives and reduce the number or CPU core concurrently
+accessing the sequence data.
+
+`<mapping_nchunk>` and `<mapping_nproc>` control the partitioning and the
+number of cores used for mapping the sequence reads to draft contigs for the
+following consensus step.
+
+`<sort_nproc>` controls the number of cpu cores used for sorting the reads to
+contigs map.
+
+`<cns_nchunk>` and  `<cns_nproc>` control the partitioning and the number of
+cores used for generating the consensus from draft contigs.
+
+
+ 
+
 ## Runing Peregrine Using Docker
 
-Here is an example running Peregrine with Docker:
+Here is an example running Peregrine with Docker for a Peregrin build 
+of tag 0.1.5.0:
 
 ```
 find /wd/chm13--fastq/ -name "*.fastq" | sort > chm13-seqdata.lst 
@@ -127,7 +134,6 @@ docker run -it -v /wd:/wd --user $(id -u):$(id -g) cschin/peregrine:0.1.5.0 asm 
 
 Note that the paths in the `<reads.lst>` should be the full paths to the
 sequuence files inside the docker container.
-
 
 
 ## LICENSE
