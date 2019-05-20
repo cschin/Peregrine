@@ -123,10 +123,12 @@ cores used for generating the consensus from draft contigs.
 ## Runing Peregrine Using Docker
 
 Here is an example running Peregrine with Docker for a Peregrin build 
-of tag 0.1.5.0:
+of tag 0.1.5.0 using an AWS m5d.metal or r5d.12xlarge instance. (You will
+need to configure the AWS instance to utilize the NVME drives and a 
+docker environment.)
 
 ```
-find /wd/chm13--fastq/ -name "*.fastq" | sort > chm13-seqdata.lst 
+find /wd/chm13-fastq/ -name "*.fastq" | sort > chm13-seqdata.lst 
 
 docker run -it -v /wd:/wd --user $(id -u):$(id -g) cschin/peregrine:0.1.5.0 asm \
     /wd/chm13-seqdata.lst 24 24 24 24 24 24 24 24 24 \ 
