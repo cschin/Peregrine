@@ -1,4 +1,4 @@
-#/usr/bin/env pypy3
+#!/usr/bin/env pypy3
 
 """
 TODO: (from convo w/ Ivan)
