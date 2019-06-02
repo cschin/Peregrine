@@ -21,16 +21,21 @@ running single thread mode.
 
 ## Install
 
-See the `docker/Dockerfile` and `docker/install_with_conda.sh` as examples to
-install from scratch within a Conda environemnt.
+We *do not* recommend that you install the software from the source code unless
+you are comfortable handling the required dependences for your system
+independently. Unless you have full control (e.g. root access) of the computer 
+system you use to build Peregrine and you can install the proper GCC 
+compiler/python/pypy/conda version, then you should try to learn to use [Docker 
+images](https://cloud.docker.com/u/cschin/repository/docker/cschin/peregrine) 
+we provide, it will make your life and our life easier. 
 
-We do not recommend that you install the software from the source code unless
-you are confortable handling the required dependences for your system
-independently. As independent deverlopers with limit resource, we cannot
-provide free support for solving dependence problem of your specific system.
+As independent deverlopers with limit resource, we cannot provide free support for 
+solving dependence problem of your specific system. Instead, we can provide 
+docker image so you can run the executables and their dependency using Docker.  
 
-Instead, we can provide docker image so you can run the executables and their
-dependency using Docker.  
+If you want to build for your system without using Docker, please see the 
+`docker/Dockerfile` and `docker/install_with_conda.sh` as examples to
+install from scratch within a clean Conda environemnt.
 
 ## Run the assembler
 
