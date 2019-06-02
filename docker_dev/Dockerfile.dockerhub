@@ -4,6 +4,7 @@ RUN apt-get install -y build-essential zlib1g zlib1g-dev
 RUN mkdir /opt/build
 COPY docker_build/install_with_conda.sh /opt/build
 COPY src/ /opt/build/src/
+COPY falcon/ /opt/build/falcon/
 COPY py/ /opt/build/py/
 RUN cd /opt/build; bash install_with_conda.sh
 RUN . /opt/conda/bin/activate; conda clean -all

@@ -5,6 +5,7 @@ RUN mkdir /opt/build
 COPY docker/install_with_conda.sh /opt/build
 COPY py/ /opt/build/py/
 COPY src/ /opt/build/src/
+COPY falcon/ /opt/build/falcon/
 RUN cd /opt/build; bash install_with_conda.sh
 RUN . /opt/conda/bin/activate; conda clean -all
 
