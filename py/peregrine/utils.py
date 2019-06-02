@@ -177,7 +177,6 @@ def get_cns_from_reads(seqs, levels=2, k=16, w=80, max_dist=150):
                 aln_count += 1
         shimmer4py.free(shimmers1.a)
         shimmer_ffi.release(shimmers1)
-    print("tag len:", len(tags), aln_count)
     cns = falcon4py.get_cns_from_align_tags(tags,
                                             aln_count,
                                             len(seq0), 1)
