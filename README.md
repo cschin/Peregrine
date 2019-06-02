@@ -1,4 +1,4 @@
-<img src="misc/logo.png" alt="PeregrineLogo" width="120"/>
+  <img src="misc/logo.png" alt="PeregrineLogo" width="120"/>
 
 # Peregrine & SHIMMER Genome Assembly Toolkit
 
@@ -26,7 +26,7 @@ you are comfortable handling the required dependences for your system
 independently. Unless you have full control (e.g. root access) of the computer 
 system you use to build Peregrine and you can install the proper GCC 
 compiler/python/pypy/conda version, then you should try to learn to use [Docker 
-images](https://cloud.docker.com/u/cschin/repository/docker/cschin/peregrine) 
+images](https://hub.docker.com/r/cschin/peregrine/builds) that 
 we provide, it will make your life and our life easier. 
 
 As independent deverlopers with limit resource, we cannot provide free support for 
