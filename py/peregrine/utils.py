@@ -72,8 +72,7 @@ def get_shimmer_alns(shimmers0, shimmers1, direction=0,
     shimmer4py.free_shmr_alns(aln)
     return aln_chains
 
-
-def get_tag_from_seqs(read_seq, ref_seq, read_offset):
+def get_tag_from_seqs(read_seq, ref_seq, read_offset, max_dist=150):
     rng = falcon_ffi.new("aln_range[1]")
     read_len = len(read_seq)
     ref_len = len(ref_seq)
@@ -83,7 +82,7 @@ def get_tag_from_seqs(read_seq, ref_seq, read_offset):
                               read_len - abs(read_offset),
                               ref_seq,
                               len(ref_seq),
-                              150, 1)
+                              max_dist, 1)
         if abs(abs(aln.aln_q_e-aln.aln_q_s) -
                 (read_len - abs(read_offset))) < 48:
             aligned = True
@@ -99,7 +98,7 @@ def get_tag_from_seqs(read_seq, ref_seq, read_offset):
                               read_len,
                               ref_seq[read_offset:ref_len],
                               ref_len-read_offset,
-                              150, 1)
+                              max_dist, 1)
         if abs(abs(aln.aln_q_e-aln.aln_q_s)-read_len) < 48 or \
             abs(ref_len-read_offset-abs(aln.aln_q_e-aln.aln_q_s)) < 48:
             aligned = True
@@ -122,13 +121,15 @@ def get_tag_from_seqs(read_seq, ref_seq, read_offset):
     return tag
 
 
-def get_cns_from_reads(seqs):
+def get_cns_from_reads(seqs, levels=2, k=16, w=80, max_dist=150):
 
     aln_count = 0
     tags = falcon_ffi.new("align_tags_t * [{}]".format(len(seqs)+1))
     seq0 = seqs[0]
-    shimmers0 = get_shimmers_from_seq(seq0, rid=0, levels=2)
-
+    shimmers0 = get_shimmers_from_seq(seq0,
+                                      rid=0,
+                                      levels=levels,
+                                      k=k, w=w)
     alns = get_shimmer_alns(shimmers0, shimmers0, 0)
     aln = alns[0]
     read_offset = aln[0][0][0][3] - aln[0][0][1][3]
@@ -141,14 +142,17 @@ def get_cns_from_reads(seqs):
         if i == 0:
             continue
         rid = i * 2
-        shimmers1 = get_shimmers_from_seq(seq, rid=rid, levels=2)
+        shimmers1 = get_shimmers_from_seq(seq,
+                                          rid=rid,
+                                          levels=levels,
+                                          k=k, w=w)
         alns = get_shimmer_alns(shimmers0, shimmers1, 0)
         alns.sort(key=lambda x: -len(x[0]))
         if len(alns) > 0:
             aln = alns[0]
             read_offset = aln[0][0][0][3] - aln[0][0][1][3]
-            seq = seq0
-            tag = get_tag_from_seqs(seq, seq0, read_offset)
+            tag = get_tag_from_seqs(seq, seq0, read_offset,
+                                    max_dist=max_dist)
             if tag is not None:
                 tags[aln_count] = tag
                 aln_count += 1
@@ -157,19 +161,23 @@ def get_cns_from_reads(seqs):
 
         rid = i * 2 + 1
         seq = rc(seq)
-        shimmers1 = get_shimmers_from_seq(seq, rid=rid, levels=2)
+        shimmers1 = get_shimmers_from_seq(seq,
+                                          rid=rid,
+                                          levels=levels,
+                                          k=k, w=w)
         alns = get_shimmer_alns(shimmers0, shimmers1, 0)
         if len(alns) > 0:
             alns.sort(key=lambda x: -len(x[0]))
             aln = alns[0]
             read_offset = aln[0][0][0][3] - aln[0][0][1][3]
-            tag = get_tag_from_seqs(seq, seq0, read_offset)
+            tag = get_tag_from_seqs(seq, seq0, read_offset,
+                                    max_dist=max_dist)
             if tag is not None:
                 tags[aln_count] = tag
                 aln_count += 1
         shimmer4py.free(shimmers1.a)
         shimmer_ffi.release(shimmers1)
-
+    print("tag len:", len(tags), aln_count)
     cns = falcon4py.get_cns_from_align_tags(tags,
                                             aln_count,
                                             len(seq0), 1)
