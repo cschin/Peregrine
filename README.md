@@ -43,8 +43,23 @@ Peregrine is designed to run on single compute node. It does not need a grid
 computing job scheduling system. It uses Pypeflow to coordinate multiple
 concurrent processes.  
 
-Here is the usage for `pg_run.py` which starts the workflow for assembling a
-genome from input `fasta`, `fastq`, `fasta.gz` or `fastq.gz` files. 
+After revsion 0.1.5.3, You can test a small assembly using simulated E. Coli 
+reads with Docker:
+
+```
+# please substitue $PWD and $IMAGETAG with proper values
+docker run -it --rm -v $PWD:/wd cschin/peregrine:$IMAGETAG test
+```
+
+The assembly results are in `$PWD/ecoli_test_results/`. The testing case will
+download an E. Coli reference and generate simulated reads. After the assembly
+is done, it also installs `nucmer` to run `dandiff` comparing the assembled 
+contigs with the original E. coli reference. You can check the ouput by using 
+`cat $PWD/ecoli_test_results/out.report` command.
+
+Here is the general usage for `pg_run.py` which starts the workflow for 
+assembling a genome from input `fasta`, `fastq`, `fasta.gz` or 
+`fastq.gz` files. 
 
 ```
 Usage:
