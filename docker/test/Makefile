@@ -19,5 +19,15 @@ test-pypeflow:
 	find ${PWD}/reads/ -name "reads_*.fa" > seq_dataset.lst
 	/usr/bin/time pg_run.py asm seq_dataset.lst 12 4 8 4 1 1 1 1 1 --with-consensus --output ./wd-pf
 
+test-pypeflow-with-L0:
+	rm -rf ./wd-pf
+	find ${PWD}/reads/ -name "reads_*.fa" > seq_dataset.lst
+	/usr/bin/time pg_run.py asm seq_dataset.lst 12 4 8 4 1 1 1 1 1 --with-L0-index --with-consensus --output ./wd-pf
+
+test-pypeflow-l1:
+	rm -rf ./wd-pf-l1
+	find ${PWD}/reads/ -name "reads_*.fa" > seq_dataset.lst
+	/usr/bin/time pg_run.py asm seq_dataset.lst 12 4 8 4 1 1 1 1 1 --shimmer-r 24 --with-consensus --shimmer-l 1 --output ./wd-pf-l1
+
 clean:
 	rm -rf ./wd/ ./logs/ ./reads/ seq_dataset.lst
