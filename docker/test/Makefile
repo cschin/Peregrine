@@ -2,7 +2,7 @@ all: test test-pypeflow
 bogus: simreads clean test test-pypeflow
 
 K12MG1655.fa:
-	wget https://www.dropbox.com/s/wqqnzachbdk4d3r/K12MG1655.fa
+	wget https://s3.amazonaws.com//biologicaldatascience.org/data/ecoli-k12/K12MG1655.fa 
 
 simreads: K12MG1655.fa
 	mkdir -p ./reads
