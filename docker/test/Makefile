@@ -10,10 +10,6 @@ simreads: K12MG1655.fa
 
 reads_0.fa: simreads
 
-test:
-	rm -rf ./wd ./logs
-	/usr/bin/time ./run_test.sh > all.log 2>&1;  mkdir -p logs;  mv *.log logs 
-
 test-pypeflow:
 	rm -rf ./wd-pf
 	find ${PWD}/reads/ -name "reads_*.fa" > seq_dataset.lst
