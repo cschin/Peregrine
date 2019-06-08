@@ -146,37 +146,43 @@ def get_cns_from_reads(seqs, levels=2, k=16, w=80, max_dist=150):
                                           rid=rid,
                                           levels=levels,
                                           k=k, w=w)
-        alns = get_shimmer_alns(shimmers0, shimmers1, 0)
-        alns.sort(key=lambda x: -len(x[0]))
-        if len(alns) > 0:
-            aln = alns[0]
-            read_offset = aln[0][0][0][3] - aln[0][0][1][3]
-            tag = get_tag_from_seqs(seq, seq0, read_offset,
-                                    max_dist=max_dist)
-            if tag is not None:
-                tags[aln_count] = tag
-                aln_count += 1
+        alns_0 = get_shimmer_alns(shimmers0, shimmers1, 0)
+        alns_0.sort(key=lambda x: -len(x[0]))
         shimmer4py.free(shimmers1.a)
         shimmer_ffi.release(shimmers1)
 
+        rseq = rc(seq)
         rid = i * 2 + 1
-        seq = rc(seq)
-        shimmers1 = get_shimmers_from_seq(seq,
+        shimmers1 = get_shimmers_from_seq(rseq,
                                           rid=rid,
                                           levels=levels,
                                           k=k, w=w)
-        alns = get_shimmer_alns(shimmers0, shimmers1, 0)
-        if len(alns) > 0:
-            alns.sort(key=lambda x: -len(x[0]))
-            aln = alns[0]
-            read_offset = aln[0][0][0][3] - aln[0][0][1][3]
-            tag = get_tag_from_seqs(seq, seq0, read_offset,
-                                    max_dist=max_dist)
-            if tag is not None:
-                tags[aln_count] = tag
-                aln_count += 1
+        alns_1 = get_shimmer_alns(shimmers0, shimmers1, 0)
+        alns_1.sort(key=lambda x: -len(x[0]))
         shimmer4py.free(shimmers1.a)
         shimmer_ffi.release(shimmers1)
+
+        if len(alns_0) > 0 and len(alns_1) > 0:
+            if len(alns_0[0]) > len(alns_1[0]):
+                aln = alns_0[0]
+            else:
+                aln = alns_1[0]
+                seq = rseq
+        elif len(alns_0) > 0:
+            aln = alns_0[0]
+        elif len(alns_1) > 0:
+            aln = alns_1[0]
+            seq = rseq
+        else:
+            continue
+
+        read_offset = aln[0][0][0][3] - aln[0][0][1][3]
+        tag = get_tag_from_seqs(seq, seq0, read_offset,
+                                max_dist=max_dist)
+        if tag is not None:
+            tags[aln_count] = tag
+            aln_count += 1
+
     cns = falcon4py.get_cns_from_align_tags(tags,
                                             aln_count,
                                             len(seq0), 1)
