@@ -167,6 +167,7 @@ void free_shmr_alns(shmr_aln_v * alns) {
     for (uint32_t aln_idx = 0; aln_idx < alns->n; aln_idx ++ ){
             kv_destroy(alns->a[aln_idx].idx0);
             kv_destroy(alns->a[aln_idx].idx1);
+            free(alns->a[aln_idx]);
     }
     free(alns);
 }
