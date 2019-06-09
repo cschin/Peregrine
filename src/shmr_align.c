@@ -33,19 +33,19 @@ shmr_aln_v * shmr_aln(
     mm128_t mmer0, mmer1;
     khash_t(MMIDX) *mmidx_map = kh_init(MMIDX);
     shmr_aln_v *alns;
-	khiter_t k;
-	int32_t absent;
+    khiter_t k;
+    int32_t absent;
 
     mm_idx_v * idx_tmp;
 
     alns = calloc(sizeof(shmr_aln_v), 1);
 
-	mm_idx_t s=0;
+    mm_idx_t s=0;
     /* build a hasmap from mhash to the index of the minimizer array */
-	for(;;) {
-		if (s >= mmers0->n) break;
-		mmer0 = mmers0->a[s];
-		mhash = mmer0.x >> 8;
+    for(;;) {
+        if (s >= mmers0->n) break;
+        mmer0 = mmers0->a[s];
+        mhash = mmer0.x >> 8;
 
         k = kh_put(MMIDX, mmidx_map, mhash, &absent);
         if (absent) {
@@ -58,21 +58,21 @@ shmr_aln_v * shmr_aln(
             idx_tmp = kh_val(mmidx_map, k);
             kv_push(mm_idx_t, 0, *idx_tmp, s);
         }
-		s++;
-	}
+        s++;
+    }
 
     /* loop through 2nd shimmer list to build alginements */
-	mm_idx_t ss=0;
+    mm_idx_t ss=0;
     uint32_t small_aln_count = 0;
-	for(;;) {
-		if (ss >= mmers1->n) break;
+    for(;;) {
+        if (ss >= mmers1->n) break;
         if (direction == 1) {  // reversed
             s =  mmers1->n - ss; 
         } else {
             s = ss;
         }
-		mmer1 = mmers1->a[s];
-		mhash = mmer1.x >> 8;
+        mmer1 = mmers1->a[s];
+        mhash = mmer1.x >> 8;
         k = kh_get(MMIDX, mmidx_map, mhash);
         if (k == kh_end(mmidx_map)) {
             ss++;
@@ -154,11 +154,12 @@ shmr_aln_v * shmr_aln(
         if (small_aln_count > MAX_SMALL_ALNS) break;
     }
 
-	for (khiter_t __i = kh_begin(mmidx_map); __i != kh_end(mmidx_map); ++__i) {
-		if (!kh_exist(mmidx_map,__i)) continue;
-		idx_tmp = kh_val(mmidx_map, __i);
+    for (khiter_t __i = kh_begin(mmidx_map); __i != kh_end(mmidx_map); ++__i) {
+        if (!kh_exist(mmidx_map,__i)) continue;
+        idx_tmp = kh_val(mmidx_map, __i);
         kv_destroy(*idx_tmp);
-	}
+        free(idx_tmp);
+    }
     kh_destroy(MMIDX, mmidx_map);
     return alns;
 }
@@ -167,7 +168,7 @@ void free_shmr_alns(shmr_aln_v * alns) {
     for (uint32_t aln_idx = 0; aln_idx < alns->n; aln_idx ++ ){
             kv_destroy(alns->a[aln_idx].idx0);
             kv_destroy(alns->a[aln_idx].idx1);
-            free(alns->a[aln_idx]);
     }
+    kv_destroy(*alns);
     free(alns);
 }
