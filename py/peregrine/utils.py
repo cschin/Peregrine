@@ -122,7 +122,7 @@ def get_tag_from_seqs(read_seq, ref_seq, read_offset, max_dist=150):
     return tag
 
 
-def get_best_seq_idx(seqs, levels=2, k=16, w=80):
+def get_best_seqs(seqs, best_n=20, levels=2, k=16, w=80):
     all_mmers = []
     mer_count = Counter()
     for i, seq in enumerate(seqs):
@@ -142,24 +142,29 @@ def get_best_seq_idx(seqs, levels=2, k=16, w=80):
 
     best_i = -1
     best_count = -1
+    match_mmer_count = []
     for i, mmers in enumerate(all_mmers):
         count = 0
         for m in mmers:
             if mer_count[m] >= 2:
                 count += 1
-        if count > best_count:
-            best_i = i
-            best_count = count
+        match_mmer_count.append( (count, i) )
 
-    return best_i
+    match_mmer_count.sort(key = lambda x: -x[0])
+    seqs_out = []
+    for i in range(best_n):
+        if i >= len(seqs):
+            break
+        seqs_out.append(seqs[match_mmer_count[i][1]])
+
+    return seqs_out
 
 
 def get_cns_from_reads(seqs, levels=2, k=16, w=80, max_dist=150):
 
     aln_count = 0
     tags = falcon_ffi.new("align_tags_t * [{}]".format(len(seqs)+1))
-    best_i = get_best_seq_idx(seqs, levels=levels, k=k, w=w)
-    seqs[best_i], seqs[0] = seqs[0], seqs[best_i]
+    seqs = get_best_seqs(seqs, best_n=20, levels=levels, k=k, w=w)
     seq0 = seqs[0]
     shimmers0 = get_shimmers_from_seq(seq0,
                                       rid=0,
