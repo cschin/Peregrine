@@ -140,17 +140,15 @@ def get_best_seqs(seqs, best_n=20, levels=2, k=16, w=80):
         shimmer4py.free(shimmers0.a)
         shimmer_ffi.release(shimmers0)
 
-    best_i = -1
-    best_count = -1
     match_mmer_count = []
     for i, mmers in enumerate(all_mmers):
         count = 0
         for m in mmers:
             if mer_count[m] >= 2:
                 count += 1
-        match_mmer_count.append( (count, i) )
+        match_mmer_count.append((count, i))
 
-    match_mmer_count.sort(key = lambda x: -x[0])
+    match_mmer_count.sort(key=lambda x: -x[0])
     seqs_out = []
     for i in range(best_n):
         if i >= len(seqs):
@@ -160,11 +158,13 @@ def get_best_seqs(seqs, best_n=20, levels=2, k=16, w=80):
     return seqs_out
 
 
-def get_cns_from_reads(seqs, levels=2, k=16, w=80, max_dist=150):
+def get_cns_from_reads(seqs, sort_reads=True, best_n=20,
+                       levels=2, k=16, w=80, max_dist=150):
 
     aln_count = 0
     tags = falcon_ffi.new("align_tags_t * [{}]".format(len(seqs)+1))
-    seqs = get_best_seqs(seqs, best_n=20, levels=levels, k=k, w=w)
+    if sort_reads:
+        seqs = get_best_seqs(seqs, best_n=20, levels=levels, k=k, w=w)
     seq0 = seqs[0]
     shimmers0 = get_shimmers_from_seq(seq0,
                                       rid=0,
