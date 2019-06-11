@@ -5,6 +5,7 @@ from peregrine._shimmer4py import ffi as shimmer_ffi
 from peregrine._shimmer4py import lib as shimmer4py
 from peregrine._falcon4py import ffi as falcon_ffi
 from peregrine._falcon4py import lib as falcon4py
+from collections import Counter
 
 
 rmap = dict(list(zip(b"ACGT", b"TGCA")))
@@ -121,10 +122,42 @@ def get_tag_from_seqs(read_seq, ref_seq, read_offset, max_dist=150):
     return tag
 
 
+def get_best_seq_idx(seqs, levels=2, k=16, w=80):
+    all_mmers = []
+    mer_count = Counter()
+    for i, seq in enumerate(seqs):
+        shimmers0 = get_shimmers_from_seq(seq,
+                                          rid=0,
+                                          levels=levels,
+                                          k=k, w=w)
+        seq_mmer_set = set()
+        for i in range(shimmers0.n):
+            mmer = mmer2tuple(shimmers0.a[i])[0]
+            seq_mmer_set.add(mmer)
+        seq_mmer_set = list(seq_mmer_set)
+        mer_count.update(seq_mmer_set)
+        all_mmers.append(seq_mmer_set)
+
+    best_i = -1
+    best_count = -1
+    for i, mmers in enumerate(all_mmers):
+        count = 0
+        for m in mmers:
+            if mer_count[m] >= 2:
+                count += 1
+        if count > best_count:
+            best_i = i
+            best_count = count
+
+    return best_i
+
+
 def get_cns_from_reads(seqs, levels=2, k=16, w=80, max_dist=150):
 
     aln_count = 0
     tags = falcon_ffi.new("align_tags_t * [{}]".format(len(seqs)+1))
+    best_i = get_best_seq_idx(seqs, levels=levels, k=k, w=w)
+    seqs[best_i], seqs[0] = seqs[0], seqs[best_i]
     seq0 = seqs[0]
     shimmers0 = get_shimmers_from_seq(seq0,
                                       rid=0,
