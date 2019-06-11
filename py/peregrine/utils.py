@@ -163,7 +163,7 @@ def get_cns_from_reads(seqs, levels=2, k=16, w=80, max_dist=150):
         shimmer_ffi.release(shimmers1)
 
         if len(alns_0) > 0 and len(alns_1) > 0:
-            if len(alns_0[0][0]) > len(alns_1[0][0]):
+            if len(alns_0[0][0]) >= len(alns_1[0][0]):
                 aln = alns_0[0]
             else:
                 aln = alns_1[0]
