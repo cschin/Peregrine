@@ -137,6 +137,8 @@ def get_best_seq_idx(seqs, levels=2, k=16, w=80):
         seq_mmer_set = list(seq_mmer_set)
         mer_count.update(seq_mmer_set)
         all_mmers.append(seq_mmer_set)
+        shimmer4py.free(shimmers0.a)
+        shimmer_ffi.release(shimmers0)
 
     best_i = -1
     best_count = -1
