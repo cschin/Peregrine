@@ -164,7 +164,7 @@ def get_cns_from_reads(seqs, sort_reads=True, best_n=20,
     aln_count = 0
     tags = falcon_ffi.new("align_tags_t * [{}]".format(len(seqs)+1))
     if sort_reads:
-        seqs = get_best_seqs(seqs, best_n=20, levels=levels, k=k, w=w)
+        seqs = get_best_seqs(seqs, best_n=best_n, levels=levels, k=k, w=w)
     seq0 = seqs[0]
     shimmers0 = get_shimmers_from_seq(seq0,
                                       rid=0,
