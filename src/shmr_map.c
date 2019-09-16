@@ -244,7 +244,7 @@ int main(int argc, char *argv[]) {
 	}
 	
 	if (ref_shimmer_prefix == NULL) {
-		seqdb_prefix = (char *) calloc(8192, 1);
+		ref_shimmer_prefix = (char *) calloc(8192, 1);
 		snprintf( ref_shimmer_prefix, 8191, "ref-L2" );
 	}
 
@@ -254,7 +254,7 @@ int main(int argc, char *argv[]) {
 	}
 
 	if (shimmer_prefix == NULL) {
-		seqdb_prefix = (char *) calloc(8192, 1);
+		shimmer_prefix = (char *) calloc(8192, 1);
 		snprintf( shimmer_prefix, 8191, "shimmer-L2" );
 	}
 
