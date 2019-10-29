@@ -888,7 +888,7 @@ def generate_string_graph(args):
             nxsg.add_edge(v, w, label=label, length=length, score=score)
             edge_data[(v, w)] = (rid, sp, tp, length, score, identity, type_)
             if w in sg.best_in:
-                nxsg.node[w]["best_in"] = v
+                nxsg.nodes[w]["best_in"] = v
         elif (v, w) in chimer_edges:
             type_ = "C"
         elif (v, w) in removed_edges:
@@ -1315,7 +1315,7 @@ def construct_c_path_from_utgs(ug, u_edge_data, sg):
                 likelihood to be correct.)
                 """
                 if len(ug.in_edges(t, keys=True)) > 1:
-                    best_in_node = sg.node[t]["best_in"]
+                    best_in_node = sg.nodes[t]["best_in"]
 
                     if type_ == "simple" and best_in_node != path_or_edges[-2]:
                         break
