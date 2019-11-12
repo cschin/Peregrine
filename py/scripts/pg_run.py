@@ -41,6 +41,8 @@ Usage:
                             [--mc_upper <mc_upper>]
                             [--aln_bw <aln_bw>]
                             [--ovlp_upper <ovlp_upper>]
+                            [--min_len <min_len>]
+                            [--min_idt <min_idt>]
   pg_run.py (-h | --help)
   pg_run.py --verison
 
@@ -59,6 +61,8 @@ Options:
   --mc_upper <mc_upper>       Does not cosider SHIMMER with count greater than mc_upper [default: 240]
   --aln_bw <aln_bw>           Max off-diagonal gap allow during overlap confirmation [default: 100]
   --ovlp_upper <ovlp_upper>   Ignore cluster with overlap count greater ovlp_upper [default: 120]
+  --min_len <min_len>         Minimum overlap length for assembly graph construction [default: 4000]
+  --min_idt <min_idt>         Minimum identity for considering two reads that are properly overlaps [default: 96]
 
 Licenses:
 
@@ -344,7 +348,8 @@ def run_overlapper(wf, args,
 def run_ovlp_to_ctg(wf, args, read_db_abs_prefix, read_db, ovlps):
     asm_script = """\
 cat {params.ovlps} | shmr_dedup > preads.ovl; echo "-" >> preads.ovl
-/usr/bin/time ovlp_to_graph.py >& asm.log
+/usr/bin/time ovlp_to_graph.py --min_len {params.min_len} \
+    --min_idt {params.min_idt} >& asm.log
 /usr/bin/time graph_to_path.py >& to_path.log
 /usr/bin/time path_to_contig.py {params.read_db_prefix} \
     p_ctg_tiling_path > {output.p_ctg} 2> to_contig.log
@@ -362,7 +367,9 @@ cat {params.ovlps} | shmr_dedup > preads.ovl; echo "-" >> preads.ovl
         outputs=outputs,
         parameters={
             'read_db_prefix': read_db_abs_prefix,
-            'ovlps': ovlps_list
+            'ovlps': ovlps_list,
+            'min_len': int(args["--min_len"]),
+            'min_idt': int(args["--min_idt"])
         },
         dist=Dist(NPROC=1, local=True)
     ))
