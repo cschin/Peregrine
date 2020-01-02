@@ -30,6 +30,7 @@ Usage:
                             <cns_nchunk> <cns_nproc>
                             <sort_nproc>
                             [--with-consensus]
+                            [--with-alt]
                             [--with-L0-index]
                             [--output <output>]
                             [--shimmer-k <shimmer_k>]
@@ -50,6 +51,7 @@ Options:
   -h --help                   Show this help
   --version                   Show version
   --with-consensus            Generate consensus after getting the draft contigs
+  --with-alt                  Generate alt contigs
   --with-L0-index             Keep level-0 index
   --output <output>           Set output directory (will be created if not exist) [default: ./wd]
   --shimmer-k <shimmer_k>     Level 0 k-mer size [default: 16]
@@ -354,13 +356,19 @@ cat {params.ovlps} | shmr_dedup > preads.ovl; echo "-" >> preads.ovl
 /usr/bin/time path_to_contig.py {params.read_db_prefix} \
     p_ctg_tiling_path > {output.p_ctg} 2> to_contig.log
 """
+    if args['--with-alt']:
+        asm_script += """\
+/usr/bin/time path_to_contig.py {params.read_db_prefix} \
+a_ctg_tiling_path > {output.a_ctg} 2> to_alt_contig.log"""
     asm_dir = os.path.join(os.path.abspath(args["--output"]), "3-asm")
     ovlps_list = " ".join(sorted([v for v in ovlps.values()]))
     inputs = {}
     inputs.update(ovlps)
     inputs.update(read_db)
     outputs = {}
-    outputs["p_ctg"] = os.path.join(asm_dir,  "p_ctg.fa")
+    outputs["p_ctg"] = os.path.join(asm_dir, "p_ctg.fa")
+    if args['--with-alt']:
+        outputs["a_ctg"] = os.path.join(asm_dir, "a_ctg.fa")
     wf.addTask(Task(
         script=asm_script,
         inputs=inputs,
@@ -379,7 +387,8 @@ cat {params.ovlps} | shmr_dedup > preads.ovl; echo "-" >> preads.ovl
 
 
 def run_cns(wf, args, read_db_abs_prefix, read_db,
-            index_abs_prefix, read_index, p_ctg):
+            index_abs_prefix, read_index,
+            ctg, cns_dir_prefix, ctg_cns_fn):
     mapping_nchunk = int(args["<mapping_nchunk>"])
     mapping_nproc = int(args["<mapping_nproc>"])
     cns_nchunk = int(args["<cns_nchunk>"])
@@ -390,36 +399,36 @@ def run_cns(wf, args, read_db_abs_prefix, read_db,
     shimmer_r = int(args["--shimmer-r"])
     shimmer_l = int(args["--shimmer-l"])
     build_index_script = """\
-echo {input.p_ctg} > p_ctg.lst
+echo {input.ctg} > ctg.lst
 
-/usr/bin/time shmr_mkseqdb -p p_ctg \
-    -d p_ctg.lst 2> build_p_ctg_db.log
+/usr/bin/time shmr_mkseqdb -p ctg \
+    -d ctg.lst 2> build_ctg_db.log
 """
 
     build_index_script += f"""
 /usr/bin/time shmr_index \
-    -p p_ctg -t 1 -c 1 \
+    -p ctg -t 1 -c 1 \
     -k {shimmer_k}\
     -w {shimmer_w}\
     -r {shimmer_r}\
     -l {shimmer_l}\
-    -o p_ctg 2> build_p_ctg_index.log
+    -o ctg 2> build_ctg_index.log
 """
-    cns_dir = os.path.join(os.path.abspath(args["--output"]), "4-cns")
+    cns_dir = os.path.join(os.path.abspath(args["--output"]), cns_dir_prefix)
     inputs = {}
-    inputs.update(p_ctg)
-    output_dir = os.path.join(cns_dir, "p_ctg_index")
+    inputs.update(ctg)
+    output_dir = os.path.join(cns_dir, "ctg_index")
     outputs = {}
-    outputs["p_ctg_db"] = os.path.join(output_dir, "p_ctg.seqdb")
-    outputs["p_ctg_idx"] = os.path.join(output_dir, "p_ctg.idx")
+    outputs["ctg_db"] = os.path.join(output_dir, "ctg.seqdb")
+    outputs["ctg_idx"] = os.path.join(output_dir, "ctg.idx")
     if shimmer_l == 2:
-        outputs["p_ctg_shmr_idx"] = os.path.join(output_dir, "p_ctg-L2-01-of-01.dat")
-        p_ctg_idx_abs_prefix = os.path.join(output_dir, "p_ctg-L2")
+        outputs["ctg_shmr_idx"] = os.path.join(output_dir, "ctg-L2-01-of-01.dat")
+        ctg_idx_abs_prefix = os.path.join(output_dir, "ctg-L2")
     elif shimmer_l == 1:
-        outputs["p_ctg_shmr_idx"] = os.path.join(output_dir, "p_ctg-L1-01-of-01.dat")
-        p_ctg_idx_abs_prefix = os.path.join(output_dir, "p_ctg-L1")
+        outputs["ctg_shmr_idx"] = os.path.join(output_dir, "ctg-L1-01-of-01.dat")
+        ctg_idx_abs_prefix = os.path.join(output_dir, "ctg-L1")
 
-    p_ctg_db_abs_prefix = os.path.join(output_dir, "p_ctg")
+    ctg_db_abs_prefix = os.path.join(output_dir, "ctg")
 
     wf.addTask(Task(
         script=build_index_script,
@@ -436,16 +445,18 @@ echo {input.p_ctg} > p_ctg.lst
 
     mapping_script = """\
 /usr/bin/time shmr_map \
-    -r {params.p_ctg_db_prefix} \
-    -m {params.p_ctg_idx_prefix} \
+    -r {params.ctg_db_prefix} \
+    -m {params.ctg_idx_prefix} \
     -p {params.read_db_prefix} \
     -l {params.index_prefix} \
+    -M {params.mc_upper} \
+    -n {params.mc_lower} \
     -t {params.n_chunk} -c {params.my_chunk}  > {output.readmap}
 """
     inputs = {}
-    inputs["p_ctg_db"] = outputs["p_ctg_db"]
-    inputs["p_ctg_idx"] = outputs["p_ctg_idx"]
-    inputs["p_ctg_shmr_idx"] = outputs["p_ctg_shmr_idx"]
+    inputs["ctg_db"] = outputs["ctg_db"]
+    inputs["ctg_idx"] = outputs["ctg_idx"]
+    inputs["ctg_shmr_idx"] = outputs["ctg_shmr_idx"]
     inputs.update(read_db)
     inputs.update(read_index)
     outputs = {}
@@ -462,10 +473,12 @@ echo {input.p_ctg} > p_ctg.lst
             parameters={
                 'read_db_prefix': read_db_abs_prefix,
                 'index_prefix': index_abs_prefix,
-                'p_ctg_db_prefix': p_ctg_db_abs_prefix,
-                'p_ctg_idx_prefix': p_ctg_idx_abs_prefix,
+                'ctg_db_prefix': ctg_db_abs_prefix,
+                'ctg_idx_prefix': ctg_idx_abs_prefix,
                 'n_chunk': mapping_nchunk,
                 'my_chunk': my_chunk,
+                'mc_upper': int(args["--mc_upper"]),
+                'mc_lower': int(args["--mc_lower"])
             },
             dist=Dist(NPROC=1, local=True)
         ))
@@ -498,14 +511,14 @@ cat {params.map_files} | \
 
     cns_script = """\
 /usr/bin/time pg_asm_cns.py {params.read_db_prefix} \
-    {params.p_ctg_db_prefix} {input.merged_mapping_file} \
+    {params.ctg_db_prefix} {input.merged_mapping_file} \
     {params.n_chunk} {params.my_chunk} > {output.cns_file} 2> cns.log
 """
     inputs.update({"merged_mapping_file": merged_mapping_fn})
     outputs = {}
     for my_chunk in range(1, cns_nchunk+1):
         cns_chunk_dir = os.path.join(cns_dir, f"cns-{my_chunk:02d}")
-        cnd_chunk_abs_prefix = os.path.join(cns_chunk_dir, "p_ctg_cns")
+        cnd_chunk_abs_prefix = os.path.join(cns_chunk_dir, "ctg_cns")
         cns_fn = f"{cnd_chunk_abs_prefix}-{my_chunk:02d}.fa"
         outputs[f'cns_{my_chunk:02d}'] = cns_fn
         wf.addTask(Task(
@@ -514,7 +527,7 @@ cat {params.map_files} | \
             outputs={"cns_file": cns_fn},
             parameters={
                 'read_db_prefix': read_db_abs_prefix,
-                'p_ctg_db_prefix': p_ctg_db_abs_prefix,
+                'ctg_db_prefix': ctg_db_abs_prefix,
                 'n_chunk': cns_nchunk,
                 'my_chunk': my_chunk
             },
@@ -526,12 +539,13 @@ cat {params.map_files} | \
 
     gather_cns_script = """\
 cat {params.cns_chunk_files} > {output.cns_file}
-ln -sf {params.cns_merge_dir}/{output.cns_file} {params.workdir}
+ln -sf {params.cns_merge_dir}/{output.cns_file} \
+    {params.workdir}/{params.ctg_cns_fn}
 """
     cns_chunk_files = " ".join(sorted([v for v in outputs.values()]))
     inputs = outputs
     cns_merge_dir = os.path.join(cns_dir, f"cns-merge")
-    cns_fn = os.path.join(cns_merge_dir, "p_ctg_cns.fa")
+    cns_fn = os.path.join(cns_merge_dir, "ctg_cns.fa")
     outputs = {"cns_file": cns_fn}
     wf.addTask(Task(
         script=gather_cns_script,
@@ -540,7 +554,8 @@ ln -sf {params.cns_merge_dir}/{output.cns_file} {params.workdir}
         parameters={
             'cns_chunk_files': cns_chunk_files,
             'workdir': os.path.abspath(args["--output"]),
-            'cns_merge_dir': "./4-cns/cns-merge"
+            'cns_merge_dir': "./"+cns_dir_prefix+"/cns-merge",
+            'ctg_cns_fn': ctg_cns_fn
         },
         dist=Dist(NPROC=1, local=True)
     ))
@@ -548,7 +563,6 @@ ln -sf {params.cns_merge_dir}/{output.cns_file} {params.workdir}
     wf.refreshTargets()
 
     return outputs
-
 
 # Simple local-only submit-string.
 submit = 'bash -C ${CMD} >| ${STDOUT_FILE} 2>| ${STDERR_FILE}'
@@ -593,14 +607,31 @@ def main(args):
                               ovlp_out)
     LOG.info('Finished: {}'.format(ctg_out))
 
+    ctg_out2 = {}
+    ctg_out2["ctg"] = ctg_out["p_ctg"]
     if args['--with-consensus']:
         cns_out = run_cns(wf, args,
                           read_db_abs_prefix,
                           read_db,
                           index_abs_prefix,
                           read_idx,
-                          ctg_out)
+                          ctg_out2,
+                          "4-cns",
+                          "p_ctg_cns.fa")
         LOG.info('Finished: {}'.format(cns_out))
+        if args['--with-alt']:
+            a_ctg_stats = os.stat(ctg_out["a_ctg"])
+            if a_ctg_stats.st_size > 500000:
+                ctg_out2["ctg"] = ctg_out["a_ctg"]
+                cns_out = run_cns(wf, args,
+                                read_db_abs_prefix,
+                                read_db,
+                                index_abs_prefix,
+                                read_idx,
+                                ctg_out2,
+                                "4-cns-alt",
+                                "a_ctg_cns.fa")
+                LOG.info('Finished: {}'.format(cns_out))
 
 
 if __name__ == "__main__":

@@ -199,7 +199,7 @@ void process_overlaps(char * seqdb_file_path,
 	if (fstat(fd, &sb) == -1)           /* To obtain file size */
 		handle_error("fstat");
 
-	seq_p = (uint8_t *)  mmap((caddr_t)0, sb.st_size, PROT_READ, MAP_SHARED, fd, 0);
+	seq_p = (uint8_t *)  mmap((void *)0, sb.st_size, PROT_READ, MAP_SHARED, fd, 0);
 
 	khash_t(RPAIR) * rid_pairs = kh_init(RPAIR);
 	uint32_t iter_count = 0;
