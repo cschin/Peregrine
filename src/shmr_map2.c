@@ -52,8 +52,7 @@ void process_map(
 		khash_t(RLEN) * ref_lmap, 
 		khash_t(MMER0) * mmer0_map, 
 		khash_t(RLEN) * rlmap, 
-		khash_t(MMC) *mcmap,
-		uint32_t lowerbound, uint32_t upperbound) {
+		khash_t(MMC) *mcmap) {
 
 	int rfd, sfd;
 	struct stat rsb, ssb;
@@ -69,7 +68,7 @@ void process_map(
 	if (fstat(rfd, &rsb) == -1)           /* To obtain file size */
 		handle_error("fstat");
 
-	rseq_p = (uint8_t *)  mmap((void *)0, rsb.st_size, PROT_READ, MAP_SHARED, rfd, 0);
+	rseq_p = (uint8_t *)  mmap((caddr_t)0, rsb.st_size, PROT_READ, MAP_SHARED, rfd, 0);
 
 	sfd = open(seqdb_file_path, O_RDONLY);
 	if (sfd == -1)
@@ -78,7 +77,7 @@ void process_map(
 	if (fstat(sfd, &ssb) == -1)           /* To obtain file size */
 		handle_error("fstat");
 
-	seq_p = (uint8_t *)  mmap((void *)0, ssb.st_size, PROT_READ, MAP_SHARED, sfd, 0);
+	seq_p = (uint8_t *)  mmap((caddr_t)0, ssb.st_size, PROT_READ, MAP_SHARED, sfd, 0);
 
 	//clock_t begin = clock();
 	//clock_t end;
@@ -98,15 +97,8 @@ void process_map(
 	for( size_t i=s+1; i < ref_mmers->n; i++ ){
 
 		mmer1 = ref_mmers->a[i];
-		uint64_t mhash = mmer1.x >> 8;
-		k = kh_get(MMC, mcmap, mhash);
-		if (k == kh_end(mcmap))
-			continue;
-		uint32_t mcount = kh_val(mcmap, k);
-		if (mcount < lowerbound || mcount > upperbound)
-			continue;
 
-		if ((mmer0.y >> 32) != (mmer1.y >> 32)) {  
+	    if ((mmer0.y >> 32) != (mmer1.y >> 32)) {  
 			mmer0 = mmer1;
 			continue; // the pairs are in the same read
 		}
@@ -183,11 +175,8 @@ int main(int argc, char *argv[]) {
 	char refdb_file_path[8192];
 	char seq_idx_file_path[8192];
 	char seqdb_file_path[8192];
-        int c;	
+    int c;	
 	uint32_t total_chunk = 1, mychunk = 1;
-
-	uint32_t mc_upper = MMER_COUNT_UPPER_BOUND;
-	uint32_t mc_lower = MMER_COUNT_LOWER_BOUND;
 
 	wordexp_t p; 
 	char **mmc_fns; 
@@ -200,6 +189,7 @@ int main(int argc, char *argv[]) {
 
 	khash_t(RLEN) *ref_lmap; 
 	khash_t(RLEN) *rlmap; 
+    khash_t(RIDMM) *ridmm = kh_init(RIDMM);
 	khash_t(MMC) *mcmap = kh_init(MMC);
     
 	khash_t(MMER0) * mmer0_map;
@@ -209,7 +199,7 @@ int main(int argc, char *argv[]) {
 	
 	opterr = 0;
 
-	while ((c = getopt(argc, argv, "r:m:p:l:M:n:t:c:b:")) != -1) {
+	while ((c = getopt(argc, argv, "r:m:p:l:t:c:b:")) != -1) {
 		switch (c) {
 			case 'r':
 				refdb_prefix = optarg;
@@ -222,12 +212,6 @@ int main(int argc, char *argv[]) {
 				break;
 			case 'l':
 				shimmer_prefix = optarg;
-				break;
-			case 'M':
-				mc_upper = atoi(optarg);
-				break;
-			case 'n':
-				mc_lower = atoi(optarg);
 				break;
 			case 't':
 				total_chunk = atoi(optarg);
@@ -261,7 +245,7 @@ int main(int argc, char *argv[]) {
 	}
 	
 	if (ref_shimmer_prefix == NULL) {
-		ref_shimmer_prefix = (char *) calloc(8192, 1);
+		seqdb_prefix = (char *) calloc(8192, 1);
 		snprintf( ref_shimmer_prefix, 8191, "ref-L2" );
 	}
 
@@ -271,7 +255,7 @@ int main(int argc, char *argv[]) {
 	}
 
 	if (shimmer_prefix == NULL) {
-		shimmer_prefix = (char *) calloc(8192, 1);
+		seqdb_prefix = (char *) calloc(8192, 1);
 		snprintf( shimmer_prefix, 8191, "shimmer-L2" );
 	}
 
@@ -331,7 +315,6 @@ int main(int argc, char *argv[]) {
 
 	setvbuf(stdout, buffer, _IOFBF, sizeof(buffer));
 
-
 	written = snprintf(mmc_file_path, sizeof(mmc_file_path), 
 			"%s-MC-[0-9]*-of-[0-9]*.dat", shimmer_prefix);
 
@@ -346,18 +329,19 @@ int main(int argc, char *argv[]) {
 	}
 
 	wordfree(&p);	
+
+    get_ridmm(ridmm, &mmers);
 	
 	mmer0_map = kh_init(MMER0);
 
 	build_map(&mmers, mmer0_map, 
 			rlmap, mcmap,
 			mychunk, total_chunk, 
-			mc_lower, mc_upper);
+			MMER_COUNT_LOWER_BOUND, MMER_COUNT_UPPER_BOUND);
 
 	process_map(refdb_file_path, seqdb_file_path, 
 			&ref_mmers, ref_lmap, mmer0_map, 
-			rlmap, mcmap,
-			mc_lower, mc_upper);
+			rlmap, mcmap);
 
 	for (khiter_t __i = kh_begin(mmer0_map); __i != kh_end(mmer0_map); ++__i) {
 		if (!kh_exist(mmer0_map,__i)) continue;

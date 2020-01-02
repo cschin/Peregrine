@@ -138,7 +138,7 @@ int main(int argc, char *argv[])
 	if (fstat(fd, &sb) == -1)           /* To obtain file size */
 		handle_error("fstat");
 
-	seq_p = (uint8_t *)  mmap((caddr_t)0, sb.st_size, PROT_READ, MAP_SHARED, fd, 0);
+	seq_p = (uint8_t *)  mmap((void *)0, sb.st_size, PROT_READ, MAP_SHARED, fd, 0);
 
 	seq_index_file = fopen(seq_idx_file_path, "r");
 	char name_buf[512];
