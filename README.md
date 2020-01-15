@@ -47,7 +47,7 @@ After revsion 0.1.5.3, You can test a small assembly using simulated E. Coli
 reads with Docker:
 
 ```
-# please substitue $PWD and $IMAGETAG with proper values
+# please substitute $PWD and $IMAGETAG with proper values
 docker run -it --rm -v $PWD:/wd cschin/peregrine:$IMAGETAG test
 ```
 
