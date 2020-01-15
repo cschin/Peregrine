@@ -3,7 +3,7 @@
 # Peregrine & SHIMMER Genome Assembly Toolkit
 
 Peregrine is a fast genome assembler for accurate long reads (length > 10kb,
-accuraccy > 99%). It can assemble a human genome from 30x reads within 20 cpu
+accuracy > 99%). It can assemble a human genome from 30x reads within 20 cpu
 hours from reads to polished consensus. It uses Sparse HIereachical MimiMizER
 (SHIMMER) for fast read-to-read overlaping without quadratic comparisions used
 in other OLC assemblers.
@@ -16,7 +16,7 @@ approaches used in the FALCON assembler developed by Jason Chin and others in
 Pacific Biosciences, Inc. There are a number of other possible ways to generate
 contigs without a  string graph but it will need some research work to make it
 happening. The FALCON graph module is also not very efficient as python scripts
-running single thread mode.
+are running in single thread mode.
 
 
 ## Install
@@ -29,7 +29,7 @@ compiler/python/pypy/conda version, then you should try to learn to use [Docker
 images](https://hub.docker.com/r/cschin/peregrine/tags) that 
 we provide, it will make your life and our life easier. 
 
-As independent deverlopers with limit resource, we cannot provide free support for 
+As independent developers with limit resource, we cannot provide free support for 
 solving dependence problem of your specific system. Instead, we can provide 
 docker image so you can run the executables and their dependency using Docker.  
 
@@ -47,7 +47,7 @@ After revsion 0.1.5.3, You can test a small assembly using simulated E. Coli
 reads with Docker:
 
 ```
-# please substitue $PWD and $IMAGETAG with proper values
+# please substitute $PWD and $IMAGETAG with proper values
 docker run -it --rm -v $PWD:/wd cschin/peregrine:$IMAGETAG test
 ```
 
