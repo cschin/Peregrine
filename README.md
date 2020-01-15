@@ -3,7 +3,7 @@
 # Peregrine & SHIMMER Genome Assembly Toolkit
 
 Peregrine is a fast genome assembler for accurate long reads (length > 10kb,
-accuraccy > 99%). It can assemble a human genome from 30x reads within 20 cpu
+accuracy > 99%). It can assemble a human genome from 30x reads within 20 cpu
 hours from reads to polished consensus. It uses Sparse HIereachical MimiMizER
 (SHIMMER) for fast read-to-read overlaping without quadratic comparisions used
 in other OLC assemblers.
