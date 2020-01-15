@@ -29,7 +29,7 @@ compiler/python/pypy/conda version, then you should try to learn to use [Docker
 images](https://hub.docker.com/r/cschin/peregrine/tags) that 
 we provide, it will make your life and our life easier. 
 
-As independent deverlopers with limit resource, we cannot provide free support for 
+As independent developers with limit resource, we cannot provide free support for 
 solving dependence problem of your specific system. Instead, we can provide 
 docker image so you can run the executables and their dependency using Docker.  
 
