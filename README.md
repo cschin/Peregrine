@@ -16,7 +16,7 @@ approaches used in the FALCON assembler developed by Jason Chin and others in
 Pacific Biosciences, Inc. There are a number of other possible ways to generate
 contigs without a  string graph but it will need some research work to make it
 happening. The FALCON graph module is also not very efficient as python scripts
-running single thread mode.
+are running in single thread mode.
 
 
 ## Install
