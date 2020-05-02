@@ -132,15 +132,15 @@ void shimmer_to_overlap(mp128_v *mpv, khash_t(RLEN) * rlmap,
       // t_end);
 
       if ((q_bgn < READ_END_FUZZINESS && t_bgn < READ_END_FUZZINESS &&
-           (abs(slen0 - q_end) < READ_END_FUZZINESS ||
-            abs(slen1 - t_end) < READ_END_FUZZINESS)) &&
+           (abs((int64_t) slen0 - (int64_t) q_end) < READ_END_FUZZINESS ||
+            abs((int64_t) slen1 - (int64_t) t_end) < READ_END_FUZZINESS)) &&
           q_end > 500 && t_end > 500) {
         // printf("X3: %u %u %d %d %d %d\n", pos0, pos1, q_bgn, q_end, t_bgn,
         // t_end); printf("%s\n%s\n", seq0+pos0-pos1, seq1);
 
         uint8_t ovlp_type;
-        if (abs(rlen0 - (q_end - q_bgn)) < READ_END_FUZZINESS * 2 ||
-            abs(rlen1 - (t_end - t_bgn)) < READ_END_FUZZINESS * 2) {
+        if (abs((int64_t) rlen0 - ( (int64_t) q_end - (int64_t) q_bgn)) < READ_END_FUZZINESS * 2 ||
+            abs((int64_t) rlen1 - ( (int64_t) t_end - (int64_t) t_bgn)) < READ_END_FUZZINESS * 2) {
           if (rlen0 >= rlen1) {
             k = kh_put(RPAIR, rid_pairs, ridp, &absent);
             kh_val(rid_pairs, k) = CONTAINS;
