@@ -22,14 +22,14 @@ jobs:
       if: success()
       shell: bash
       run: |
-        mkdir $HOME/wd  
-        docker run -v $HOME/wd:/wd --entrypoint=/opt/test/run_test.sh cschin/peregrine:latest
+        mkdir -p $HOME/wd  
+        docker run -v $HOME/wd:/wd -v $HOME/$HOME --entrypoint=/opt/test/run_test.sh cschin/peregrine:latest
 
     - uses: actions/upload-artifact@v2
       if: success()
       with:
         name: E. coli dnadiff results
-        path: $HOME/wd/ecoli_test_results/out.report 
+        path: $HOME/out.report
    
     - name: push image to docker hub
       if: ${{ success() &&  github.event_name == 'push' && github.event.action == 'unassigned' }}
