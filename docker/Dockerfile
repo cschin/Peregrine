@@ -5,7 +5,7 @@ RUN mkdir /opt/build
 COPY src.tgz /opt/build
 COPY install_with_conda.sh /opt/build
 RUN cd /opt/build; tar zxvf src.tgz; bash install_with_conda.sh
-RUN . /opt/conda/bin/activate; conda clean -all
+RUN . /opt/conda/bin/activate; conda clean --all
 
 FROM continuumio/miniconda3
 COPY --from=0 /opt/conda /opt/conda
