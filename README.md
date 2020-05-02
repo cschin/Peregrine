@@ -1,5 +1,8 @@
   <img src="misc/logo.png" alt="PeregrineLogo" width="120"/>
 
+[![Actions Status](https://github.com/cschin/peregrine/workflows/test%20assembling%20E.%20coli/badge.svg)](https://github.com/cschin/peregrine/actions)
+[![Actions Status](https://github.com/cschin/peregrine/workflows/push%20image%20to%20docker%20hub/badge.svg)](https://github.com/cschin/peregrine/actions)
+
 # Peregrine & SHIMMER Genome Assembly Toolkit
 
 Peregrine is a fast genome assembler for accurate long reads (length > 10kb,
