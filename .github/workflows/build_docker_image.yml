@@ -33,7 +33,7 @@ jobs:
         path: wd/ecoli_test_results/out.report
    
     - name: push image to docker hub
-      if: ${{ success() &&  github.event_name == 'push' && github.event.action == 'unassigned' }}
+      if: ${{ success() &&  github.event_name == 'push' }}
       run: |
         echo '${{ secrets.docker_password }}' | docker login --username '${{ secrets.docker_user }}'  --password-stdin
         docker push cschin/peregrine:latest
