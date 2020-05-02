@@ -12,7 +12,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
 
-    - name: build docker
+    - name: build docker for the master branch
       shell: bash
       run: bash build_docker.sh tag
 
@@ -20,19 +20,20 @@ jobs:
       if: success()
       shell: bash
       run: |
-        mkdir $HOME/wd  
+        mkdir -p $HOME/wd  
         tag=$(git describe --always --abbrev=0 --tags)
         tag=${tag:2}
-        docker run -v $HOME/wd:/wd --entrypoint=/opt/test/run_test.sh cschin/peregrine:${tag}
+        docker run -v ${GITHUB_WORKSPACE}/wd:/wd --entrypoint=/opt/test/run_test.sh cschin/peregrine:${tag}
+        ls ${GITHUB_WORKSPACE}/wd/ecoli_test_results/
 
     - uses: actions/upload-artifact@v2
       if: success()
       with:
         name: E. coli dnadiff results
-        path: $HOME/wd/ecoli_test_results/out.report 
+        path: wd/ecoli_test_results/out.report
    
     - name: push image to docker hub
-      if: ${{ success() &&  github.event_name == 'create' && github.event.action == 'unassigned' }}
+      if: ${{ success() &&  github.event_name == 'push' }}
       run: |
         echo '${{ secrets.docker_password }}' | docker login --username '${{ secrets.docker_user }}'  --password-stdin
         tag=$(git describe --always --abbrev=0 --tags)
