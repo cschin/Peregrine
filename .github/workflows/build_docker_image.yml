@@ -26,7 +26,7 @@ jobs:
       if: success()
       with:
         name: E. coli dnadiff results
-        path: /wd/ecoli_test_results/out.report 
+        path: $HOME/wd/ecoli_test_results/out.report 
    
     - name: push image to docker hub
       if: ${{ success() &&  github.event_name == 'push' && github.event.action == 'unassigned' }}
