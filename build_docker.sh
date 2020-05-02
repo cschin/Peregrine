@@ -1,5 +1,5 @@
 #!/bin/bash
-
+set -e
 pushd py
 rm -rf .eggs/ dist/ build/ peregrine.egg-info/ peregrine_pypy.egg-info get-pip.py
 popd
@@ -12,7 +12,14 @@ tar czvf src.tgz src/ falcon/ py/ .git/
 mv src.tgz docker/
 
 pushd docker/
-tag=$(git describe --abbrev=0 --tags)
-tag=${tag:2}
+if [ $1 == 'tag'] 
+then
+    tag=$(git describe --always --abbrev=0 --tags)
+    tag=${tag:2}
+else
+    tag=latest
+fi
 docker build . --tag cschin/peregrine:${tag}
 popd
+
+
