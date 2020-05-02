@@ -1,5 +1,5 @@
 #!/bin/bash
-set -e o pipefail
+set -e -o pipefail
 . /root/.bashrc
 make simreads
 make test-pypeflow

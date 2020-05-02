@@ -1,5 +1,5 @@
 #!/bin/bash
-set -e o pipefail
+set -e -o pipefail
 pushd py
 rm -rf .eggs/ dist/ build/ peregrine.egg-info/ peregrine_pypy.egg-info get-pip.py
 popd
