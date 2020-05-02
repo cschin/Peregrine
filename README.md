@@ -1,6 +1,7 @@
   <img src="misc/logo.png" alt="PeregrineLogo" width="120"/>
 
 [![Actions Status](https://github.com/cschin/peregrine/workflows/build-and-test-docker-image-master-branch/badge.svg)](https://github.com/cschin/peregrine/actions)
+
 [![Actions Status](https://github.com/cschin/peregrine/workflows/build-and-test-docker-image-tagged-release/badge.svg)](https://github.com/cschin/peregrine/actions)
 
 # Peregrine & SHIMMER Genome Assembly Toolkit
