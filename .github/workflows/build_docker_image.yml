@@ -30,6 +30,6 @@ jobs:
     - name: push image
       if: success()
       run: |
-        echo '${{ secrets.docker_password }}' | docker login --username '${{ secrects.docker_user }}'  --password-stdin
+        echo '${{ secrets.docker_password }}' | docker login --username '${{ secrets.docker_user }}'  --password-stdin
         docker push cschin/peregrine:latest
 
