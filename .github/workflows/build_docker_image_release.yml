@@ -1,0 +1,41 @@
+name: build-and-test-docker-image-tagged-release
+
+on:
+  push:
+    tags:
+      - pg*
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: build docker
+      shell: bash
+      run: bash build_docker.sh tag
+
+    - name: test assembling E. coli
+      if: success()
+      shell: bash
+      run: |
+        mkdir $HOME/wd  
+        tag=$(git describe --always --abbrev=0 --tags)
+        tag=${tag:2}
+        docker run -v $HOME/wd:/wd --entrypoint=/opt/test/run_test.sh cschin/peregrine:${tag}
+
+    - uses: actions/upload-artifact@v2
+      if: success()
+      with:
+        name: E. coli dnadiff results
+        path: $HOME/wd/ecoli_test_results/out.report 
+   
+    - name: push image to docker hub
+      if: ${{ success() &&  github.event_name == 'create' && github.event.action == 'unassigned' }}
+      run: |
+        echo '${{ secrets.docker_password }}' | docker login --username '${{ secrets.docker_user }}'  --password-stdin
+        tag=$(git describe --always --abbrev=0 --tags)
+        tag=${tag:2}
+        docker push cschin/peregrine:${tag}
+
