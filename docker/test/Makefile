@@ -13,7 +13,7 @@ reads_0.fa: simreads
 test-pypeflow:
 	rm -rf ./wd-pf
 	find ${PWD}/reads/ -name "reads_*.fa" > seq_dataset.lst
-	/usr/bin/time pg_run.py asm seq_dataset.lst 12 4 8 4 1 1 1 1 1 --with-consensus --output ./wd-pf
+	echo yes | /usr/bin/time pg_run.py asm seq_dataset.lst 12 4 8 4 1 1 1 1 1 --with-consensus --output ./wd-pf
 
 clean:
 	rm -rf ./wd/ ./logs/ ./reads/ seq_dataset.lst
