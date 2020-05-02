@@ -1,5 +1,5 @@
 #!/bin/bash
-set -e
+set -e o pipefail
 . /root/.bashrc
 make simreads
 make test-pypeflow
@@ -12,4 +12,3 @@ dnadiff K12MG1655.fa p_ctg_cns.fa
 echo 
 echo dnadiff output of the assembled contig to the e. coli genome used for the simulated reads
 cat out.report
-cp out.report $HOME
