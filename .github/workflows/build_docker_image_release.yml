@@ -12,7 +12,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
 
-    - name: build docker for the tagged commit
+    - name: build docker image for the tagged commit
       shell: bash
       run: bash build_docker.sh tag
 
@@ -20,7 +20,7 @@ jobs:
       if: success()
       shell: bash
       run: |
-        mkdir -p $HOME/wd  
+        mkdir -p ${GITHUB_WORKSPACE}/wd  
         tag=$(git describe --always --abbrev=0 --tags)
         tag=${tag:2}
         docker run -v ${GITHUB_WORKSPACE}/wd:/wd cschin/peregrine:${tag} test
