@@ -23,7 +23,7 @@ jobs:
       shell: bash
       run: |
         mkdir -p $HOME/wd  
-        docker run -v ${GITHUB_WORKSPACE}/wd:/wd --entrypoint=/opt/test/run_test.sh cschin/peregrine:latest
+        docker run -v ${GITHUB_WORKSPACE}/wd:/wd cschin/peregrine:latest test
         ls ${GITHUB_WORKSPACE}/wd/ecoli_test_results/
 
     - uses: actions/upload-artifact@v2

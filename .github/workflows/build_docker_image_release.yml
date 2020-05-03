@@ -23,7 +23,7 @@ jobs:
         mkdir -p $HOME/wd  
         tag=$(git describe --always --abbrev=0 --tags)
         tag=${tag:2}
-        docker run -v ${GITHUB_WORKSPACE}/wd:/wd --entrypoint=/opt/test/run_test.sh cschin/peregrine:${tag}
+        docker run -v ${GITHUB_WORKSPACE}/wd:/wd cschin/peregrine:${tag} test
         ls ${GITHUB_WORKSPACE}/wd/ecoli_test_results/
 
     - uses: actions/upload-artifact@v2
