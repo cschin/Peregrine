@@ -1,4 +1,9 @@
-  <img src="misc/logo.png" alt="PeregrineLogo" width="120"/>
+# This Repo Is Archived (on Feb 6, 2022)
+
+If you are interested in an updated Peregrine Genome Assembler, please check [https://github.com/cschin/peregrine-2021](https://github.com/cschin/peregrine-2021)
+
+
+<img src="misc/logo.png" alt="PeregrineLogo" width="120"/>
 
 [![Actions Status](https://github.com/cschin/Peregrine/workflows/build-and-test-docker-image-master-branch/badge.svg)](https://github.com/cschin/peregrine/actions)
 
